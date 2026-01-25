@@ -46,7 +46,7 @@
 		"@rslib/core": "^0.19.3",
 		"@savvy-web/rslib-builder": "^0.2.2",
 		"@types/node": "^25.0.10",
-		"@typescript/native-preview": "7.0.0-dev.20260122.3",
+		"@typescript/native-preview": "7.0.0-dev.20260124.1",
 		"@vitest/coverage-v8": "^4.0.18",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.2.7",

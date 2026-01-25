@@ -22,16 +22,16 @@ importers:
         version: 7.55.2(@types/node@25.0.10)
       '@rslib/core':
         specifier: ^0.19.3
-        version: 0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3)
+        version: 0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3)
       '@savvy-web/rslib-builder':
         specifier: ^0.2.2
-        version: 0.2.2(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3))(@types/node@25.0.10)(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3)
+        version: 0.2.2(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3))(@types/node@25.0.10)(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3)
       '@types/node':
         specifier: ^25.0.10
         version: 25.0.10
       '@typescript/native-preview':
-        specifier: 7.0.0-dev.20260122.3
-        version: 7.0.0-dev.20260122.3
+        specifier: 7.0.0-dev.20260124.1
+        version: 7.0.0-dev.20260124.1
       '@vitest/coverage-v8':
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18(@types/node@25.0.10)(jiti@2.6.1)(yaml@2.8.2))
@@ -892,43 +892,43 @@ packages:
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-VVr3SHMzQTeQhtSlLnSjMK8kaE3f2SmOOkvuC8qGHQ2W28RF2ZvIFhbJgCAI++8S/L0GufF+ISA50M41yRiNOA==}
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-hFA0vQyyrmTwRLfZnC03QtCCwg/6kyM5qfOjEoIqKlAi7TllP4eLFSJz38X9fh/3Geh0krkZHeIh6h6QP0Jjfw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-3G2+xwNXu7cJtMavpuoJ3EdO0Dk1okrKQ28VNKrkV61+8Ei5Z6hNSU+rmEw7fn83EYGXMBpq8znO/U/Gvc3BDg==}
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-WvhTJ0YucAQpTQwy54tj8c8rzsPFXJeXAk04vYQSBBq7gv3k8CoLuVzghAYG2zGzAFEHA9FW/rT9NACqNJ8Iww==}
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-W5Ac4aYkKHf8ytEk969CjpWOT8WjVI7rbx5cwMCPKOLFnTyz4MJ2rK70IXWCssnZtz9KuSBdktAjhq7O1utF3w==}
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-YjhWXiQdCOMbWhZgOy4eYs5l6i6lKxtI8rsmzLiGyM7sgD7Uzq8hh9z1DCSpGwvDR7Bky9sjkjGHJ2r+KGaU2Q==}
     cpu: [arm64]
     os: [linux]
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-q/BqemIAcP7MjmtG8xXFnbC/MuCxzSL03kN2IrOybxetspCTEi5gKVLEm81LZUCLt3bVgBeVu1sSrQEGhunM6w==}
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-fJGwwQYldfeSO/rzXJMgRR+YhfBdGZgQN+n3vBX5/lCUWS1dtXI/8yWpBs/mc0UtYm0w2oY912eG4Xd0kJMElw==}
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-N+yHKKuaMKjKMtxDBj7fK1nxbbVjme30kEoRQnYTPCwX7mwCbGy/8WffhgNV+qCxtdxp5P0+iQFr8X/dxjWS3w==}
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-ReEuzIqgwydFCsRUmlPERfgt38m7Z+Lyw3MddOCT6mJFArZ4J+XxOFlPL3PLI1pSXJHeHc3oTSQGToODLR1bnw==}
     cpu: [x64]
     os: [linux]
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-QTT+YpIgPLl0TkVu2M/hGGR8MjVvfXDqA57R8ILS8+QjpzE+EB7P73MR7OAeCs+hI+Kw3OERoH3WtmdyHlYf5w==}
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-4jwjoKlsapGj0wFTxI/d9TLBK+kVHwn+qSdPIcuE2t8OsjpEXSvjvjHMX64ysyf6VGVKd9m/qJs8708qo4RYmg==}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-Q6N5274oq3WiSlNoox9uC7YNEivkbwzYintiAzb45d1rsoknNgkCMRecdEC1+kMg6uNnWrmHELg1yJuLaaIinA==}
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-dtUucoRDMi0bUbM2GkSF3qMbNRwE+K9udc6lTUj6+akXLqatuXm7PHVcqjrdXCyarc3CSNJE5Uq6GDHWzjDxyw==}
     cpu: [x64]
     os: [win32]
 
-  '@typescript/native-preview@7.0.0-dev.20260122.3':
-    resolution: {integrity: sha512-/G74DRDNrq2pkBjne3aGzycdy2bKa2Hs4DrkLMRq+cDODjyqvHJIZV7hjRRYph3cvGnd0bFd5G6LE5zNp+ap8w==}
+  '@typescript/native-preview@7.0.0-dev.20260124.1':
+    resolution: {integrity: sha512-VRIKr9caNPE8zZqQKyPaRB+3HZQVy5AECW2B8GMRqp2LQvE5eDKXsilXAcLc0LaaHDwXIKxMlvIVC1sWkJOYhw==}
     hasBin: true
 
   '@vitest/coverage-v8@4.0.18':
@@ -1052,8 +1052,8 @@ packages:
     resolution: {integrity: sha512-pbnl5XzGBdrFU/wT4jqmJVPn2B6UHPBOhzMQkY/SPUPB6QtUXtmBHBIwCbXJol93mOpGMnQyP/+BB19q04xj7g==}
     engines: {node: '>=4'}
 
-  bole@5.0.26:
-    resolution: {integrity: sha512-Psr3ttHqgOTRs3n492Ps4fsw0435ISA2OUw6ihN7qoCwSwNNcbxp61gXnCVJkLKMNCSZoKrXI/ddWKSggv2ZXw==}
+  bole@5.0.27:
+    resolution: {integrity: sha512-Hv/NnQSWwgo0yZ1tSi8B8fd2qk9LFRNqtpms7P6dZI67A7HTCy7MP1fwfmZgCbMNURf9+tdHHbbsORp/r0NjJA==}
 
   braces@3.0.3:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
@@ -2920,7 +2920,7 @@ snapshots:
 
   '@pnpm/logger@1001.0.1':
     dependencies:
-      bole: 5.0.26
+      bole: 5.0.27
       split2: 4.2.0
 
   '@pnpm/manifest-utils@1002.0.4(@pnpm/logger@1001.0.1)':
@@ -3056,10 +3056,10 @@ snapshots:
       core-js: 3.47.0
       jiti: 2.6.1
 
-  '@rslib/core@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3)':
+  '@rslib/core@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3)':
     dependencies:
       '@rsbuild/core': 1.7.2
-      rsbuild-plugin-dts: 0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@rsbuild/core@1.7.2)(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3)
+      rsbuild-plugin-dts: 0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@rsbuild/core@1.7.2)(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3)
     optionalDependencies:
       '@microsoft/api-extractor': 7.55.2(@types/node@25.0.10)
       typescript: 5.9.3
@@ -3160,15 +3160,15 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@savvy-web/rslib-builder@0.2.2(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3))(@types/node@25.0.10)(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3)':
+  '@savvy-web/rslib-builder@0.2.2(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3))(@types/node@25.0.10)(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3)':
     dependencies:
       '@microsoft/api-extractor': 7.55.2(@types/node@25.0.10)
       '@microsoft/tsdoc': 0.16.0
       '@microsoft/tsdoc-config': 0.18.0
       '@pnpm/exportable-manifest': 1000.3.1(@pnpm/logger@1001.0.1)
-      '@rslib/core': 0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3)
+      '@rslib/core': 0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3)
       '@types/node': 25.0.10
-      '@typescript/native-preview': 7.0.0-dev.20260122.3
+      '@typescript/native-preview': 7.0.0-dev.20260124.1
       glob: 13.0.0
       picocolors: 1.1.1
       sort-package-json: 3.6.0
@@ -3227,36 +3227,36 @@ snapshots:
 
   '@types/unist@2.0.11': {}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260122.3':
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260124.1':
     optional: true
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260122.3':
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260124.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260122.3':
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260124.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260122.3':
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260124.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260122.3':
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260124.1':
     optional: true
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260122.3':
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260124.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260122.3':
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260124.1':
     optional: true
 
-  '@typescript/native-preview@7.0.0-dev.20260122.3':
+  '@typescript/native-preview@7.0.0-dev.20260124.1':
     optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260122.3
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260122.3
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260122.3
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260122.3
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260122.3
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260122.3
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260122.3
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260124.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260124.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260124.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260124.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260124.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260124.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260124.1
 
   '@vitest/coverage-v8@4.0.18(vitest@4.0.18(@types/node@25.0.10)(jiti@2.6.1)(yaml@2.8.2))':
     dependencies:
@@ -3387,7 +3387,7 @@ snapshots:
     dependencies:
       is-windows: 1.0.2
 
-  bole@5.0.26:
+  bole@5.0.27:
     dependencies:
       fast-safe-stringify: 2.1.1
       individual: 3.0.0
@@ -4361,13 +4361,13 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.56.0
       fsevents: 2.3.3
 
-  rsbuild-plugin-dts@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@rsbuild/core@1.7.2)(@typescript/native-preview@7.0.0-dev.20260122.3)(typescript@5.9.3):
+  rsbuild-plugin-dts@0.19.3(@microsoft/api-extractor@7.55.2(@types/node@25.0.10))(@rsbuild/core@1.7.2)(@typescript/native-preview@7.0.0-dev.20260124.1)(typescript@5.9.3):
     dependencies:
       '@ast-grep/napi': 0.37.0
       '@rsbuild/core': 1.7.2
     optionalDependencies:
       '@microsoft/api-extractor': 7.55.2(@types/node@25.0.10)
-      '@typescript/native-preview': 7.0.0-dev.20260122.3
+      '@typescript/native-preview': 7.0.0-dev.20260124.1
       typescript: 5.9.3
 
   run-parallel@1.2.0:
