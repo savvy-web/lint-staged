@@ -38,6 +38,23 @@
 			"outputLogs": "full",
 			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
 		},
+		"test:coverage": {
+			"cache": false,
+			"dependsOn": ["types:check"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yml",
+				"$TURBO_ROOT$/pnpm-workspace.yml",
+				"package.json",
+				"tsconfig.json",
+				"src/**/*.ts",
+				"tests/**/*.ts",
+				"vitest.config.ts"
+			],
+			"outputLogs": "full",
+			"outputs": ["coverage/**"]
+		},
 		"types:check": {
 			"cache": true,
 			"dependsOn": [],
