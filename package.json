@@ -1,6 +1,6 @@
 {
 	"name": "@savvy-web/lint-staged",
-	"version": "0.1.0",
+	"version": "0.0.0",
 	"private": false,
 	"description": "Composable, configurable lint-staged handlers for pre-commit hooks. Provides reusable handlers for Biome, Markdown, YAML, TypeScript, and more.",
 	"keywords": [
@@ -19,7 +19,7 @@
 		"type": "git",
 		"url": "https://github.com/savvy-web/lint-staged.git"
 	},
-	"license": "UNLICENSED",
+	"license": "MIT",
 	"author": {
 		"name": "C. Spencer Beggs",
 		"email": "spencer@beggs.codes",
