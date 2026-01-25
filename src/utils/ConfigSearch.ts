@@ -199,7 +199,7 @@ export class ConfigSearch {
 
 			const result = explorer.search(searchFrom);
 
-			if (result && result.filepath) {
+			if (result?.filepath) {
 				return { filepath: result.filepath, found: true };
 			}
 		} catch {

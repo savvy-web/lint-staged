@@ -6,6 +6,8 @@
  * @packageDocumentation
  */
 
+import { readFileSync, writeFileSync } from "node:fs";
+import sortPackageJson from "sort-package-json";
 import type { LintStagedHandler, PackageJsonOptions } from "../types.js";
 import { Filter } from "../utils/Filter.js";
 
@@ -66,20 +68,22 @@ export class PackageJson {
 				return [];
 			}
 
-			const files = filtered.join(" ");
-			const commands: string[] = [];
-
+			// Sort package.json files in-place using the bundled library
 			if (!skipSort) {
-				commands.push(`sort-package-json ${files}`);
+				for (const filepath of filtered) {
+					const content = readFileSync(filepath, "utf-8");
+					const sorted = sortPackageJson(content);
+					writeFileSync(filepath, sorted, "utf-8");
+				}
 			}
 
+			// Return only the Biome formatting command
+			const files = filtered.join(" ");
 			const biomeCmd = options.biomeConfig
 				? `biome check --write --max-diagnostics=none --config=${options.biomeConfig} ${files}`
 				: `biome check --write --max-diagnostics=none ${files}`;
 
-			commands.push(biomeCmd);
-
-			return commands;
+			return biomeCmd;
 		};
 	}
 }

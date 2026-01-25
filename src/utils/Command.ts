@@ -138,7 +138,6 @@ export class Command {
 				return ["yarn", "exec"];
 			case "bun":
 				return ["bunx"];
-			case "npm":
 			default:
 				return ["npx", "--no"];
 		}
@@ -236,8 +235,7 @@ export class Command {
 		const result = Command.findTool(tool);
 		if (!result.available || !result.command) {
 			throw new Error(
-				errorMessage ??
-					`Required tool '${tool}' is not available. ` + `Install it globally or add it as a dev dependency.`,
+				errorMessage ?? `Required tool '${tool}' is not available. Install it globally or add it as a dev dependency.`,
 			);
 		}
 		return result.command;

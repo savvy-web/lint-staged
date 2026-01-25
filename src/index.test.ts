@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
 	Biome,
 	Command,
@@ -15,8 +17,25 @@ import {
 	createConfig,
 } from "./index.js";
 
+// Test fixtures directory for PackageJson tests
+const FIXTURES_DIR: string = join(import.meta.dirname, "__test_fixtures__");
+
 describe("Handler classes", () => {
 	describe("PackageJson", () => {
+		beforeAll(() => {
+			// Create test fixtures directory
+			if (!existsSync(FIXTURES_DIR)) {
+				mkdirSync(FIXTURES_DIR, { recursive: true });
+			}
+		});
+
+		afterAll(() => {
+			// Clean up test fixtures
+			if (existsSync(FIXTURES_DIR)) {
+				rmSync(FIXTURES_DIR, { recursive: true });
+			}
+		});
+
 		it("should have correct glob pattern", () => {
 			expect(PackageJson.glob).toBe("**/package.json");
 		});
@@ -26,19 +45,38 @@ describe("Handler classes", () => {
 			expect(PackageJson.defaultExcludes).toContain("__fixtures__");
 		});
 
-		it("should filter excluded files", () => {
+		it("should filter excluded files and sort in-place", () => {
+			// Create a test package.json with unsorted keys
+			const testFile = join(FIXTURES_DIR, "package.json");
+			const unsorted = '{"version": "1.0.0", "name": "test"}';
+			writeFileSync(testFile, unsorted, "utf-8");
+
 			const handler = PackageJson.create();
-			const result = handler(["package.json", "dist/package.json", "__fixtures__/package.json"]);
-			expect(result).toEqual([
-				"sort-package-json package.json",
-				"biome check --write --max-diagnostics=none package.json",
-			]);
+			const result = handler([testFile, "dist/package.json", "__fixtures__/package.json"]);
+
+			// Should return only the biome command (sorting is done in-place)
+			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile}`);
+
+			// File should have been sorted (name before version)
+			const sorted = readFileSync(testFile, "utf-8");
+			expect(sorted).toContain('"name"');
+			expect(sorted.indexOf('"name"')).toBeLessThan(sorted.indexOf('"version"'));
 		});
 
 		it("should skip sort when option is set", () => {
+			// Create a test package.json with unsorted keys
+			const testFile = join(FIXTURES_DIR, "skip-sort-package.json");
+			const unsorted = '{"version": "1.0.0", "name": "test"}';
+			writeFileSync(testFile, unsorted, "utf-8");
+
 			const handler = PackageJson.create({ skipSort: true });
-			const result = handler(["package.json"]);
-			expect(result).toEqual(["biome check --write --max-diagnostics=none package.json"]);
+			const result = handler([testFile]);
+
+			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile}`);
+
+			// File should NOT have been sorted
+			const content = readFileSync(testFile, "utf-8");
+			expect(content).toBe(unsorted);
 		});
 
 		it("should return empty array when all files excluded", () => {
