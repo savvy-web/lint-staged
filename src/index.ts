@@ -32,6 +32,7 @@ export { Markdown } from "./handlers/Markdown.js";
 export { PackageJson } from "./handlers/PackageJson.js";
 export { PnpmWorkspace } from "./handlers/PnpmWorkspace.js";
 export { ShellScripts } from "./handlers/ShellScripts.js";
+export type { TypeScriptCompiler } from "./handlers/TypeScript.js";
 export { TypeScript } from "./handlers/TypeScript.js";
 export { Yaml } from "./handlers/Yaml.js";
 // Types

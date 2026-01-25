@@ -201,9 +201,21 @@ describe("Handler classes", () => {
 		});
 
 		it("should use detected package manager for typecheck command", () => {
-			// This repo uses pnpm, so command should use pnpm exec
+			// This repo uses pnpm and @typescript/native-preview, so command should use pnpm exec tsgo
 			const cmd = TypeScript.getDefaultTypecheckCommand();
 			expect(cmd).toBe("pnpm exec tsgo --noEmit");
+		});
+
+		it("should detect tsgo compiler when @typescript/native-preview is installed", () => {
+			// This repo has @typescript/native-preview installed
+			const compiler = TypeScript.detectCompiler();
+			expect(compiler).toBe("tsgo");
+		});
+
+		it("should have isAvailable method", () => {
+			expect(typeof TypeScript.isAvailable).toBe("function");
+			// This repo has TypeScript installed
+			expect(TypeScript.isAvailable()).toBe(true);
 		});
 	});
 

@@ -6,10 +6,17 @@
  * @packageDocumentation
  */
 
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { LintStagedHandler, TypeScriptOptions } from "../types.js";
 import { Command } from "../utils/Command.js";
 import { ConfigSearch } from "../utils/ConfigSearch.js";
 import { Filter } from "../utils/Filter.js";
+
+/**
+ * TypeScript compiler to use.
+ */
+export type TypeScriptCompiler = "tsgo" | "tsc";
 
 /**
  * Handler for TypeScript files.
@@ -68,14 +75,73 @@ export class TypeScript {
 	static readonly defaultTsdocExcludes = [".test.", "__test__"] as const;
 
 	/**
-	 * Get the default type checking command for the detected package manager.
+	 * Detect which TypeScript compiler to use based on package.json dependencies.
 	 *
-	 * @returns Command string like `pnpm exec tsgo --noEmit` or `npx --no tsgo --noEmit`
+	 * Checks for:
+	 * 1. `\@typescript/native-preview` in dependencies/devDependencies → `tsgo`
+	 * 2. `typescript` in dependencies/devDependencies → `tsc`
+	 *
+	 * @param cwd - Directory to search for package.json (defaults to process.cwd())
+	 * @returns The compiler to use, or undefined if neither is installed
+	 */
+	static detectCompiler(cwd: string = process.cwd()): TypeScriptCompiler | undefined {
+		const packageJsonPath = join(cwd, "package.json");
+
+		if (!existsSync(packageJsonPath)) {
+			return undefined;
+		}
+
+		try {
+			const content = readFileSync(packageJsonPath, "utf-8");
+			const pkg = JSON.parse(content) as {
+				dependencies?: Record<string, string>;
+				devDependencies?: Record<string, string>;
+			};
+
+			const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+			// Check for native TypeScript (tsgo) first
+			if ("@typescript/native-preview" in allDeps) {
+				return "tsgo";
+			}
+
+			// Fall back to standard TypeScript (tsc)
+			if ("typescript" in allDeps) {
+				return "tsc";
+			}
+		} catch {
+			// Failed to read or parse package.json
+		}
+
+		return undefined;
+	}
+
+	/**
+	 * Check if a TypeScript compiler is available.
+	 *
+	 * @returns `true` if either tsgo or tsc is available
+	 */
+	static isAvailable(): boolean {
+		return TypeScript.detectCompiler() !== undefined;
+	}
+
+	/**
+	 * Get the default type checking command for the detected package manager and compiler.
+	 *
+	 * @returns Command string like `pnpm exec tsgo --noEmit` or `npx --no tsc --noEmit`
+	 * @throws Error if no TypeScript compiler is detected in package.json
 	 */
 	static getDefaultTypecheckCommand(): string {
+		const compiler = TypeScript.detectCompiler();
+		if (!compiler) {
+			throw new Error(
+				"No TypeScript compiler found. Install 'typescript' or '@typescript/native-preview' as a dev dependency.",
+			);
+		}
+
 		const pm = Command.detectPackageManager();
 		const prefix = Command.getExecPrefix(pm);
-		return [...prefix, "tsgo", "--noEmit"].join(" ");
+		return [...prefix, compiler, "--noEmit"].join(" ");
 	}
 
 	/**
