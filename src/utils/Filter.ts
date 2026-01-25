@@ -5,7 +5,7 @@
  * ```typescript
  * import { Filter } from '@savvy-web/lint-staged';
  *
- * const handler = (filenames: string[]) => {
+ * const handler = (filenames: readonly string[]) => {
  *   const filtered = Filter.exclude(filenames, ['dist/', '__fixtures__']);
  *   return filtered.length > 0 ? `biome check ${filtered.join(' ')}` : [];
  * };
@@ -31,9 +31,9 @@ export class Filter {
 	 * // Result: ['src/index.ts']
 	 * ```
 	 */
-	static exclude(filenames: string[], patterns: string[]): string[] {
+	static exclude(filenames: readonly string[], patterns: readonly string[]): string[] {
 		if (patterns.length === 0) {
-			return filenames;
+			return [...filenames];
 		}
 		return filenames.filter((file) => !patterns.some((pattern) => file.includes(pattern)));
 	}
@@ -52,7 +52,7 @@ export class Filter {
 	 * // Result: ['src/index.ts', 'lib/utils.ts']
 	 * ```
 	 */
-	static include(filenames: string[], patterns: string[]): string[] {
+	static include(filenames: readonly string[], patterns: readonly string[]): string[] {
 		if (patterns.length === 0) {
 			return [];
 		}
@@ -77,13 +77,13 @@ export class Filter {
 	 * ```
 	 */
 	static apply(
-		filenames: string[],
+		filenames: readonly string[],
 		options: {
-			include?: string[];
-			exclude?: string[];
+			include?: readonly string[];
+			exclude?: readonly string[];
 		},
 	): string[] {
-		let result = filenames;
+		let result: string[] = [...filenames];
 
 		if (options.include && options.include.length > 0) {
 			result = Filter.include(result, options.include);

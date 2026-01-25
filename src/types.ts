@@ -4,17 +4,25 @@
  * @packageDocumentation
  */
 
+import type { Configuration } from "lint-staged";
+
 /**
  * A lint-staged handler function.
  * Receives an array of staged filenames and returns command(s) to execute.
+ * Uses `readonly string[]` to match lint-staged's type signature.
  */
-export type LintStagedHandler = (filenames: string[]) => string | string[] | Promise<string | string[]>;
+export type LintStagedHandler = (filenames: readonly string[]) => string | string[] | Promise<string | string[]>;
 
 /**
  * A lint-staged configuration object.
  * Maps glob patterns to handlers.
  */
 export type LintStagedConfig = Record<string, LintStagedHandler | string | string[]>;
+
+/**
+ * Re-export lint-staged's Configuration type for convenience.
+ */
+export type { Configuration };
 
 /**
  * Base options shared by all handlers.

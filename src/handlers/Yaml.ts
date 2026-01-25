@@ -97,7 +97,7 @@ export class Yaml {
 		const skipFormat = options.skipFormat ?? options.skipPrettier ?? false;
 		const skipValidate = options.skipValidate ?? options.skipLint ?? false;
 
-		return (filenames: string[]): string | string[] => {
+		return (filenames: readonly string[]): string | string[] => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {

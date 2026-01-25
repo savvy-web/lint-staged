@@ -61,7 +61,7 @@ export class PackageJson {
 		const excludes = options.exclude ?? [...PackageJson.defaultExcludes];
 		const skipSort = options.skipSort ?? false;
 
-		return (filenames: string[]): string | string[] => {
+		return (filenames: readonly string[]): string | string[] => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {

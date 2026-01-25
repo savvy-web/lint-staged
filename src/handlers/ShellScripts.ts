@@ -58,7 +58,7 @@ export class ShellScripts {
 		const excludes = options.exclude ?? [...ShellScripts.defaultExcludes];
 		const makeExecutable = options.makeExecutable ?? false;
 
-		return (filenames: string[]): string | string[] => {
+		return (filenames: readonly string[]): string | string[] => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {

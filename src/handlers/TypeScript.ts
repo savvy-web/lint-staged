@@ -192,7 +192,7 @@ export class TypeScript {
 			return typecheckCommand;
 		};
 
-		return async (filenames: string[]): Promise<string | string[]> => {
+		return async (filenames: readonly string[]): Promise<string | string[]> => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {

@@ -115,7 +115,7 @@ export class Markdown {
 		// Resolve config: explicit > auto-discovered
 		const config = options.config ?? Markdown.findConfig();
 
-		return (filenames: string[]): string | string[] => {
+		return (filenames: readonly string[]): string | string[] => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {

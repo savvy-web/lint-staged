@@ -494,12 +494,12 @@ describe("Configuration utilities", () => {
 			expect(typeof handler).toBe("function");
 
 			// Test that the custom exclude is applied
-			const result = (handler as (f: string[]) => string)(["src/index.ts", "custom/file.ts"]);
+			const result = (handler as (f: readonly string[]) => string)(["src/index.ts", "custom/file.ts"]);
 			expect(result).toBe("biome check --write --no-errors-on-unmatched src/index.ts");
 		});
 
 		it("should include custom handlers", () => {
-			const customHandler = (files: string[]): string => `custom-tool ${files.join(" ")}`;
+			const customHandler = (files: readonly string[]): string => `custom-tool ${files.join(" ")}`;
 			const config = createConfig({
 				custom: {
 					"*.css": customHandler,
