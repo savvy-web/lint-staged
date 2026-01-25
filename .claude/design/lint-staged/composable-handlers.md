@@ -8,6 +8,7 @@ last-synced: 2026-01-25
 completeness: 100
 related: []
 dependencies: []
+implementation-status: implemented
 ---
 
 # Composable Lint-Staged Handlers - Architecture
@@ -55,97 +56,81 @@ customization.
 
 ## Current State
 
-### Source Analysis
+### Implementation Summary
 
-The existing `lib/configs/lint-staged.config.js` contains nine distinct handler patterns:
+The `@savvy-web/lint-staged` package is **fully implemented** with all eight handler
+classes, utility classes, and configuration presets. The package dogfoods itself via
+`lib/configs/lint-staged.config.js`.
 
-#### 1. Command Availability Check
+### Source Files
 
-```typescript
-function isCommandAvailable(command: string): boolean
+```text
+src/
+├── index.ts              # Public API exports
+├── index.test.ts         # Public API tests
+├── types.ts              # TypeScript type definitions
+├── Handler.ts            # Abstract base Handler class
+├── utils/
+│   ├── Command.ts        # Command availability and package manager detection
+│   ├── ConfigSearch.ts   # Configuration file discovery using cosmiconfig
+│   ├── EntryExtractor.ts # Package exports entry point extraction
+│   ├── Filter.ts         # File filtering utilities
+│   ├── ImportGraph.ts    # Import dependency tracing
+│   ├── TsDocLinter.ts    # Bundled ESLint TSDoc linter
+│   └── TsDocResolver.ts  # Workspace-aware TSDoc file resolution
+├── handlers/
+│   ├── Biome.ts          # JS/TS/JSON formatting
+│   ├── DesignDocs.ts     # Design doc validation
+│   ├── Markdown.ts       # Markdown linting
+│   ├── PackageJson.ts    # package.json sorting/formatting
+│   ├── PnpmWorkspace.ts  # pnpm-workspace.yaml handling
+│   ├── ShellScripts.ts   # Shell script permissions
+│   ├── TypeScript.ts     # TSDoc validation + type checking
+│   └── Yaml.ts           # YAML formatting/validation
+└── config/
+    ├── createConfig.ts   # Full config factory
+    └── Preset.ts         # Preset configurations (minimal/standard/full)
 ```
 
-Utility function that checks if a CLI command exists in the system PATH using
-`command -v`. Used to conditionally include optional tools like `yq`.
+### Handler Classes (Implemented)
 
-#### 2. Package.json Handler
+All eight handler classes follow the static class pattern with:
 
-**Glob:** `**/package.json`
-**Tools:** sort-package-json, biome
-**Excludes:** `dist/package.json`, `__fixtures__`
+- `glob` - Recommended file pattern
+- `defaultExcludes` - Default exclusion patterns
+- `handler` - Pre-configured handler instance
+- `create(options)` - Factory for custom configuration
 
-Sorts package.json fields and formats with Biome. Filters out generated
-package.json files in dist directories and test fixtures.
+| Handler | Glob | Implementation |
+| :--- | :--- | :--- |
+| PackageJson | `**/package.json` | Bundled sort-package-json + Biome |
+| Biome | `*.{js,ts,cjs,mjs,...}` | Auto-discovers command and config |
+| DesignDocs | `.claude/design/**/*.md` | Shell script validation |
+| Markdown | `**/*.{md,mdx}` | Auto-discovers markdownlint-cli2 |
+| PnpmWorkspace | `pnpm-workspace.yaml` | Bundled yaml package |
+| ShellScripts | `**/*.sh` | chmod permission management |
+| Yaml | `**/*.{yml,yaml}` | Bundled yaml package |
+| TypeScript | `*.{ts,cts,mts,tsx}` | Bundled ESLint + workspace-aware TSDoc |
 
-#### 3. Biome Formatting Handler
+### Utility Classes (Implemented)
 
-**Glob:** `*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}`
-**Tools:** biome
-**Excludes:** `package-lock.json`, `__fixtures__`
+| Utility | Purpose |
+| :--- | :--- |
+| Command | Package manager detection, tool availability checks |
+| ConfigSearch | cosmiconfig-based config file discovery |
+| Filter | Include/exclude pattern filtering |
+| TsDocLinter | Programmatic ESLint for TSDoc validation |
+| TsDocResolver | Workspace-aware TSDoc file resolution |
+| ImportGraph | Import dependency tracing from package exports |
+| EntryExtractor | Package.json exports field parsing |
 
-Formats JavaScript/TypeScript and JSON files with Biome, excluding lock files
-and test fixtures.
+### Key Implementation Decisions Made
 
-#### 4. Design Doc Validation Handler
-
-**Glob:** `.claude/design/**/*.md`
-**Tools:** validate-design-doc.sh, update-timestamp.sh
-**Excludes:** `design.config.json`
-
-Validates design document structure and updates `last-synced` timestamps.
-Runs custom shell scripts from the skills directory.
-
-#### 5. Markdown Linting Handler
-
-**Glob:** `**/*.{md,mdx}`
-**Tools:** markdownlint-cli2
-**Config:** `./lib/configs/.markdownlint-cli2.jsonc`
-
-Lints and fixes markdown files using markdownlint-cli2 with project-specific
-configuration.
-
-#### 6. pnpm-workspace.yaml Handler
-
-**Glob:** `pnpm-workspace.yaml`
-**Tools:** yq (optional), prettier, yaml-lint
-
-Sorts workspace packages alphabetically with yq (if installed), then formats
-with Prettier and validates with yaml-lint. yq is optional because it's not
-commonly installed globally.
-
-#### 7. Shell Script Chmod Handler
-
-**Glob:** `**/*.sh`
-**Excludes:** `.claude/scripts/`
-
-Removes executable bits from shell scripts (except those in `.claude/scripts/`
-which need to remain executable for lint-staged hooks).
-
-#### 8. YAML Formatting Handler
-
-**Glob:** `**/*.{yml,yaml}`
-**Tools:** prettier, yaml-lint
-**Excludes:** `pnpm-lock.yaml`, `pnpm-workspace.yaml`
-
-Formats YAML files with Prettier and validates with yaml-lint. Excludes pnpm
-files which have their own handlers or shouldn't be modified.
-
-#### 9. TypeScript TSDoc/Typecheck Handler
-
-**Glob:** `*.{ts,cts,mts,tsx}`
-**Tools:** eslint (tsdoc), tsgo
-**Filters:** Only `src/` files for TSDoc, excludes `.test.` files
-
-Validates TSDoc syntax with ESLint plugin and runs type checking with tsgo.
-TSDoc validation is limited to source files (not tests).
-
-### Current Limitations
-
-- **Copy-paste proliferation**: Configuration is copied across template repositories
-- **Version drift**: Updates require manual synchronization across repos
-- **pnpm dlx overhead**: Several tools run via `pnpm dlx`, adding latency
-- **No configuration reuse**: No way to extend or override defaults
-- **Hardcoded paths**: Scripts and config paths are hardcoded
+1. **Bundled dependencies** - yaml, sort-package-json, ESLint are bundled (no pnpm dlx)
+2. **Programmatic ESLint** - TsDocLinter uses ESLint Node.js API, not CLI
+3. **Workspace-aware TSDoc** - Uses workspace-tools to detect monorepo packages
+4. **Auto-discovery** - Commands and configs auto-discovered via cosmiconfig
+5. **Deprecated option aliases** - Old option names supported for backward compatibility
 
 ---
 
@@ -299,111 +284,166 @@ TSDoc validation is limited to source files (not tests).
 
 ## System Architecture
 
-### Module Structure
+### Module Structure (Actual)
 
 ```text
 @savvy-web/lint-staged/
 ├── src/
-│   ├── index.ts              # Public API exports (all classes)
+│   ├── index.ts              # Public API exports (classes, types, utilities)
+│   ├── index.test.ts         # Public API tests
 │   ├── types.ts              # TypeScript type definitions
 │   ├── Handler.ts            # Abstract base Handler class
 │   ├── utils/
-│   │   ├── Command.ts        # Command utility class
-│   │   └── Filter.ts         # Filter utility class
+│   │   ├── Command.ts        # Package manager detection, tool finding
+│   │   ├── ConfigSearch.ts   # cosmiconfig-based config discovery
+│   │   ├── EntryExtractor.ts # Package.json exports parsing
+│   │   ├── Filter.ts         # Include/exclude file filtering
+│   │   ├── ImportGraph.ts    # Import dependency tracing
+│   │   ├── TsDocLinter.ts    # Bundled ESLint TSDoc linter
+│   │   └── TsDocResolver.ts  # Workspace-aware TSDoc resolution
 │   ├── handlers/
-│   │   ├── PackageJson.ts    # PackageJson handler class
-│   │   ├── Biome.ts          # Biome handler class
-│   │   ├── DesignDocs.ts     # DesignDocs handler class
-│   │   ├── Markdown.ts       # Markdown handler class
-│   │   ├── PnpmWorkspace.ts  # PnpmWorkspace handler class
-│   │   ├── ShellScripts.ts   # ShellScripts handler class
-│   │   ├── Yaml.ts           # Yaml handler class
-│   │   └── TypeScript.ts     # TypeScript handler class
-│   ├── config/
-│   │   ├── createConfig.ts   # Full config factory
-│   │   └── Preset.ts         # Preset configurations class
-│   └── index.test.ts         # Public API tests
-├── configs/
-│   └── eslint.config.ts      # TSDoc ESLint config (bundled)
-└── scripts/
-    └── validate-design-doc.sh # Design doc validation (optional)
+│   │   ├── Biome.ts          # JS/TS/JSON formatting (auto-discovers)
+│   │   ├── DesignDocs.ts     # Design doc validation
+│   │   ├── Markdown.ts       # Markdown linting (auto-discovers)
+│   │   ├── PackageJson.ts    # Bundled sort-package-json
+│   │   ├── PnpmWorkspace.ts  # Bundled yaml sorting
+│   │   ├── ShellScripts.ts   # chmod permission management
+│   │   ├── TypeScript.ts     # Bundled TSDoc + typecheck
+│   │   ├── Yaml.ts           # Bundled yaml formatting
+│   │   └── index.ts          # Re-exports
+│   └── config/
+│       ├── createConfig.ts   # Full config factory
+│       ├── Preset.ts         # Preset configurations (minimal/standard/full)
+│       └── index.ts          # Re-exports
+├── lib/configs/
+│   ├── lint-staged.config.js # Dogfooding config
+│   ├── eslint.config.ts      # TSDoc ESLint config
+│   └── .markdownlint-cli2.jsonc
+├── dist/
+│   ├── dev/                  # Development build with source maps
+│   └── npm/                  # Production build for npm
+└── package.json
 ```
 
-### Component Diagram
+### Component Diagram (Actual)
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    @savvy-web/lint-staged                       │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │                    Abstract Handler                       │  │
-│  │  • filterFiles()  • glob  • defaultExcludes  • handler   │  │
-│  └──────────────────────────┬───────────────────────────────┘  │
-│                             │ extends                           │
-│  ┌──────────────────────────┴───────────────────────────────┐  │
-│  │                    Handler Classes                        │  │
-│  │                                                           │  │
-│  │  PackageJson │ Biome │ Markdown │ Yaml │ TypeScript      │  │
-│  │  DesignDocs  │ PnpmWorkspace │ ShellScripts              │  │
-│  │                                                           │  │
-│  │  Each exposes: .glob  .defaultExcludes  .handler  .create│  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                                                                 │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌────────────────┐  │
-│  │  Utility Classes │  │  Config Factory │  │    Presets    │  │
-│  │  • Command      │  │  • createConfig │  │  • minimal()  │  │
-│  │  • Filter       │  │                 │  │  • standard() │  │
-│  └─────────────────┘  └─────────────────┘  │  • full()     │  │
-│                                             └────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     Consumer Project                            │
-│                                                                 │
-│  lint-staged.config.js                                         │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ import { PackageJson, Biome, Markdown } from '@savvy...';│   │
-│  │                                                          │   │
-│  │ export default {                                         │   │
-│  │   [PackageJson.glob]: PackageJson.handler,               │   │
-│  │   [Biome.glob]: Biome.create({ exclude: ['vendor/'] }),  │   │
-│  │   [Markdown.glob]: Markdown.handler,                     │   │
-│  │ };                                                       │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                       @savvy-web/lint-staged                         │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │                      Handler Classes                            │ │
+│  │                                                                 │ │
+│  │  PackageJson │ Biome │ Markdown │ Yaml │ TypeScript            │ │
+│  │  DesignDocs  │ PnpmWorkspace │ ShellScripts                    │ │
+│  │                                                                 │ │
+│  │  Static API: .glob  .defaultExcludes  .handler  .create()      │ │
+│  │  Static methods: findConfig() isAvailable() (some handlers)    │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │                      Utility Classes                            │ │
+│  │                                                                 │ │
+│  │  Command         - Package manager detection, tool finding      │ │
+│  │  ConfigSearch    - cosmiconfig-based config discovery           │ │
+│  │  Filter          - Include/exclude pattern filtering            │ │
+│  │  TsDocLinter     - Programmatic ESLint for TSDoc               │ │
+│  │  TsDocResolver   - Workspace-aware TSDoc file resolution       │ │
+│  │  ImportGraph     - Import dependency tracing                    │ │
+│  │  EntryExtractor  - Package.json exports parsing                │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+│                                                                      │
+│  ┌────────────────────┐  ┌───────────────────────────────────────┐ │
+│  │   Config Factory    │  │              Presets                  │ │
+│  │                     │  │                                       │ │
+│  │  createConfig()     │  │  Preset.minimal()  - formatting only  │ │
+│  │  - All handlers     │  │  Preset.standard() - + linting        │ │
+│  │  - Custom additions │  │  Preset.full()     - + TSDoc/design   │ │
+│  │  - Per-handler opts │  │  Preset.get(name)  - by name          │ │
+│  └────────────────────┘  └───────────────────────────────────────┘ │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │                    Bundled Dependencies                         │ │
+│  │                                                                 │ │
+│  │  yaml             - YAML parsing/formatting (Yaml, PnpmWS)     │ │
+│  │  sort-package-json - package.json sorting (PackageJson)        │ │
+│  │  eslint           - Programmatic TSDoc linting (TypeScript)    │ │
+│  │  eslint-plugin-tsdoc - TSDoc rule (TypeScript)                 │ │
+│  │  cosmiconfig      - Config file discovery (ConfigSearch)       │ │
+│  │  workspace-tools  - Monorepo workspace detection               │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Data Flow
+### Data Flow (Actual)
 
 ```text
-1. Consumer imports handler class (e.g., Biome)
+1. Consumer imports handler class (e.g., Biome, TypeScript)
 2. Consumer uses static .handler or calls .create(options)
 3. Static factory returns lint-staged handler function with options captured
 4. Consumer assigns handler to glob key in config object
 5. lint-staged matches staged files against glob patterns
 6. lint-staged calls handler function with matched filenames
-7. Handler uses Filter.exclude() to remove unwanted files
-8. Handler builds and returns command string(s)
-9. lint-staged executes commands on filtered files
+7. Handler performs filtering:
+   - Filter.exclude() removes unwanted files
+   - Some handlers (TypeScript) do workspace-aware filtering
+8. Handler performs processing:
+   - Some return command strings (Biome, Markdown, DesignDocs, ShellScripts)
+   - Some process files in-place and return [] (PackageJson, Yaml, PnpmWorkspace)
+   - TypeScript uses programmatic ESLint + returns typecheck command
+9. lint-staged executes returned commands (if any)
 ```
+
+### Handler Types
+
+The handlers fall into three categories:
+
+**Command-returning handlers:**
+
+- Biome - returns `biome check --write ...`
+- Markdown - returns `markdownlint-cli2 --fix ...`
+- DesignDocs - returns validation/timestamp script commands
+- ShellScripts - returns `chmod` commands
+
+**In-place processing handlers:**
+
+- PackageJson - sorts via bundled sort-package-json, then returns Biome command
+- Yaml - formats via bundled yaml package, returns `[]`
+- PnpmWorkspace - sorts/formats via bundled yaml package, returns `[]`
+
+**Async/programmatic handlers:**
+
+- TypeScript - runs bundled ESLint TSDoc linter programmatically, throws on
+  errors, returns typecheck command
 
 ### Class Initialization
 
-```text
+```typescript
 // At import time
-import { Biome } from '@savvy-web/lint-staged';
+import { Biome, TypeScript } from '@savvy-web/lint-staged';
 
-// Static properties are immediately available
-Biome.glob           // '*/.{js,ts,...}'
+// Static properties immediately available
+Biome.glob           // '*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}'
 Biome.defaultExcludes // ['package-lock.json', '__fixtures__']
-Biome.handler        // Pre-configured handler (calls create() internally)
+Biome.handler        // Pre-configured handler
+
+// Static discovery methods
+Biome.findBiome()    // Returns command string or undefined
+Biome.isAvailable()  // Returns boolean
+Biome.findConfig()   // Returns config path or undefined
 
 // Custom configuration
 Biome.create({ exclude: ['vendor/'] })
   → Returns: (filenames: string[]) => string | string[]
   → Captures options in closure
-  → Ready for lint-staged to call
+  → Auto-discovers biome command and config at handler invocation time
+
+// TypeScript with workspace-aware TSDoc
+TypeScript.create({ skipTypecheck: false })
+  → Returns: async (filenames: string[]) => Promise<string[]>
+  → Uses TsDocResolver to find public API files
+  → Uses TsDocLinter (bundled ESLint) for validation
+  → Returns typecheck command
 ```
 
 ---
@@ -553,32 +593,31 @@ interface BiomeOptions extends BaseHandlerOptions {
  * Handler for JavaScript/TypeScript/JSON files.
  * Formats and lints with Biome.
  *
- * @example
- * ```typescript
- * import { Biome } from '@savvy-web/lint-staged';
- *
- * export default {
- *   [Biome.glob]: Biome.create({
- *     exclude: ['vendor/', 'generated/'],
- *   }),
- * };
- * ```
+ * Auto-discovers biome command and config file:
+ * - Command: global biome > pnpm exec biome > npx biome
+ * - Config: lib/configs/biome.json[c] > biome.json[c] at root
  */
-class Biome extends Handler {
-  /** @defaultValue `'*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}'` */
+class Biome {
   static readonly glob = '*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}';
-
-  /** @defaultValue `['package-lock.json', '__fixtures__']` */
   static readonly defaultExcludes = ['package-lock.json', '__fixtures__'] as const;
-
   static readonly handler: LintStagedHandler;
+
+  static findBiome(): string | undefined;    // Find biome command
+  static isAvailable(): boolean;              // Check if biome available
+  static findConfig(): string | undefined;    // Find config file
   static create(options?: BiomeOptions): LintStagedHandler;
 }
 ```
 
 **Commands:**
 
-1. `biome check --write --no-errors-on-unmatched {files}`
+1. `{biome-cmd} check --write --no-errors-on-unmatched [--config={config}] {files}`
+
+**Auto-discovery:**
+
+- Uses `Command.findTool('biome')` for command discovery
+- Uses `ConfigSearch.find('biome')` for config file discovery
+- Throws at handler invocation if biome not available
 
 ### DesignDocs Handler
 
@@ -654,92 +693,84 @@ interface MarkdownOptions extends BaseHandlerOptions {
  * Handler for Markdown files.
  * Lints and auto-fixes with markdownlint-cli2.
  *
- * @example
- * ```typescript
- * import { Markdown } from '@savvy-web/lint-staged';
- *
- * export default {
- *   [Markdown.glob]: Markdown.create({
- *     config: './config/.markdownlint.jsonc',
- *   }),
- * };
- * ```
+ * Auto-discovers command and config file:
+ * - Command: global markdownlint-cli2 > pnpm exec > npx
+ * - Config: lib/configs/.markdownlint-cli2.jsonc > standard locations
  */
-class Markdown extends Handler {
-  /** @defaultValue `'**\/*.{md,mdx}'` */
+class Markdown {
   static readonly glob = '**/*.{md,mdx}';
-
-  /** @defaultValue `[]` */
   static readonly defaultExcludes = [] as const;
-
-  /** @defaultValue `'./lib/configs/.markdownlint-cli2.jsonc'` */
-  static readonly defaultConfig: string;
-
   static readonly handler: LintStagedHandler;
+
+  static findMarkdownlint(): string | undefined; // Find command
+  static isAvailable(): boolean;                  // Check availability
+  static findConfig(): string | undefined;        // Find config file
   static create(options?: MarkdownOptions): LintStagedHandler;
 }
 ```
 
 **Commands:**
 
-1. `markdownlint-cli2 --config {config} [--fix] {files}`
+1. `{markdownlint-cmd} --config '{config}' [--fix] {files}`
+
+**Auto-discovery:**
+
+- Uses `Command.findTool('markdownlint-cli2')` for command discovery
+- Uses `ConfigSearch.find('markdownlint')` for config file discovery
+- Throws at handler invocation if markdownlint-cli2 not available
 
 ### PnpmWorkspace Handler
 
-Sorts and formats pnpm-workspace.yaml.
+Sorts and formats pnpm-workspace.yaml using bundled yaml library.
 
 ```typescript
 /**
  * Options for the PnpmWorkspace handler.
  */
 interface PnpmWorkspaceOptions {
-  /** Skip yq sorting even if yq is available */
-  skipYqSort?: boolean;
-  /** Skip prettier formatting */
-  skipPrettier?: boolean;
-  /** Skip yaml-lint validation */
+  /** Skip sorting packages and keys */
+  skipSort?: boolean;
+  /** Skip YAML formatting */
+  skipFormat?: boolean;
+  /** Skip YAML validation */
   skipLint?: boolean;
+  /** @deprecated Use skipSort instead */
+  skipYqSort?: boolean;
+  /** @deprecated Use skipFormat instead */
+  skipPrettier?: boolean;
 }
 
 /**
  * Handler for pnpm-workspace.yaml.
- * Optionally sorts with yq, formats with prettier, validates with yaml-lint.
+ * Processes entirely in JavaScript using bundled yaml package.
  *
- * @remarks
- * The yq sorting is only applied if yq is installed globally.
- * Use `Command.isAvailable('yq')` to check availability.
- *
- * @example
- * ```typescript
- * import { PnpmWorkspace } from '@savvy-web/lint-staged';
- *
- * export default {
- *   [PnpmWorkspace.glob]: PnpmWorkspace.create({
- *     skipYqSort: true, // Skip even if yq is installed
- *   }),
- * };
- * ```
+ * Sorting behavior:
+ * - Sorts `packages` array alphabetically
+ * - Sorts `onlyBuiltDependencies` and `publicHoistPattern` arrays
+ * - Sorts top-level keys, keeping `packages` first
  */
-class PnpmWorkspace extends Handler {
-  /** @defaultValue `'pnpm-workspace.yaml'` */
+class PnpmWorkspace {
   static readonly glob = 'pnpm-workspace.yaml';
-
-  /** @defaultValue `[]` (no excludes, single file) */
   static readonly defaultExcludes = [] as const;
-
-  /** The yq command used to sort workspace packages */
-  static readonly yqSortCommand: string;
-
   static readonly handler: LintStagedHandler;
+
+  static sortContent(content: PnpmWorkspaceContent): PnpmWorkspaceContent;
   static create(options?: PnpmWorkspaceOptions): LintStagedHandler;
 }
 ```
 
-**Commands (conditional):**
+**Processing:**
 
-1. `yq -i '...' pnpm-workspace.yaml` (if yq available and not skipped)
-2. `prettier --write pnpm-workspace.yaml` (unless skipped)
-3. `yaml-lint pnpm-workspace.yaml` (unless skipped)
+1. Reads pnpm-workspace.yaml
+2. Parses with bundled yaml package
+3. Sorts content (unless `skipSort: true`)
+4. Formats and writes back (unless both skip flags set)
+5. **Returns `[]`** - no CLI commands needed
+
+**Implementation Note:**
+
+No longer uses yq or prettier. The yaml package handles both parsing,
+formatting, and validation. All processing is done in-place.
 
 ### ShellScripts Handler
 
@@ -791,60 +822,59 @@ class ShellScripts extends Handler {
 
 ### Yaml Handler
 
-Formats and validates YAML files.
+Formats and validates YAML files using bundled yaml library.
 
 ```typescript
 /**
  * Options for the Yaml handler.
  */
 interface YamlOptions extends BaseHandlerOptions {
-  /** Skip prettier formatting */
+  /** Skip YAML formatting */
+  skipFormat?: boolean;
+  /** Skip YAML validation */
+  skipValidate?: boolean;
+  /** @deprecated Use skipFormat instead */
   skipPrettier?: boolean;
-  /** Skip yaml-lint validation */
+  /** @deprecated Use skipValidate instead */
   skipLint?: boolean;
-  /** Path to prettier config file */
-  prettierConfig?: string;
 }
 
 /**
  * Handler for YAML files.
- * Formats with prettier and validates with yaml-lint.
+ * Formats and validates using bundled yaml package.
  *
- * @remarks
- * Excludes pnpm-lock.yaml and pnpm-workspace.yaml by default.
- * pnpm-workspace.yaml has its own dedicated handler.
- *
- * @example
- * ```typescript
- * import { Yaml } from '@savvy-web/lint-staged';
- *
- * export default {
- *   [Yaml.glob]: Yaml.create({
- *     exclude: ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'generated/'],
- *   }),
- * };
- * ```
+ * Default formatting options:
+ * - indent: 2
+ * - lineWidth: 0 (no line wrapping)
+ * - singleQuote: false
  */
-class Yaml extends Handler {
-  /** @defaultValue `'**\/*.{yml,yaml}'` */
+class Yaml {
   static readonly glob = '**/*.{yml,yaml}';
-
-  /** @defaultValue `['pnpm-lock.yaml', 'pnpm-workspace.yaml']` */
   static readonly defaultExcludes = ['pnpm-lock.yaml', 'pnpm-workspace.yaml'] as const;
-
   static readonly handler: LintStagedHandler;
+
+  static formatFile(filepath: string, options?: object): void;
+  static validateFile(filepath: string): void;
   static create(options?: YamlOptions): LintStagedHandler;
 }
 ```
 
-**Commands:**
+**Processing:**
 
-1. `prettier --write {files}` (unless skipped)
-2. `yaml-lint {files}` (unless skipped)
+1. Filters files using exclude patterns
+2. For each file:
+   - Formats with bundled yaml package (unless `skipFormat: true`)
+   - Validates by parsing (unless `skipValidate: true`)
+3. **Returns `[]`** - no CLI commands needed
+
+**Implementation Note:**
+
+No longer uses prettier or yaml-lint. The yaml package handles both
+formatting and validation. All processing is done in-place.
 
 ### TypeScript Handler
 
-Validates TSDoc syntax and runs type checking.
+Validates TSDoc syntax and runs type checking with intelligent workspace detection.
 
 ```typescript
 /**
@@ -853,66 +883,65 @@ Validates TSDoc syntax and runs type checking.
 interface TypeScriptOptions extends BaseHandlerOptions {
   /** Additional patterns to exclude from TSDoc linting */
   excludeTsdoc?: string[];
-  /** Patterns that identify source files for TSDoc (vs test files) */
-  sourcePatterns?: string[];
   /** Skip TSDoc validation */
   skipTsdoc?: boolean;
   /** Skip type checking */
   skipTypecheck?: boolean;
-  /** Path to ESLint config for TSDoc rules */
-  eslintConfig?: string;
   /** Command for type checking */
   typecheckCommand?: string;
+  /** Root directory for workspace detection */
+  rootDir?: string;
 }
 
 /**
  * Handler for TypeScript files.
- * Validates TSDoc syntax with ESLint and runs type checking.
+ * Validates TSDoc syntax programmatically and runs type checking.
  *
- * @remarks
- * TSDoc validation only runs on source files (matching `sourcePatterns`),
- * not on test files. Type checking runs on all staged TypeScript files.
+ * TSDoc validation is workspace-aware:
+ * 1. Detects workspaces using workspace-tools
+ * 2. Checks for tsdoc.json at workspace or repo level
+ * 3. Extracts entry points from package.json exports
+ * 4. Traces imports from entries using ImportGraph
+ * 5. Only lints files that are part of the public API
  *
- * @example
- * ```typescript
- * import { TypeScript } from '@savvy-web/lint-staged';
- *
- * export default {
- *   [TypeScript.glob]: TypeScript.create({
- *     skipTypecheck: true, // Only validate TSDoc
- *     sourcePatterns: ['src/', 'lib/'],
- *   }),
- * };
- * ```
+ * Type checking auto-detects compiler:
+ * - @typescript/native-preview in deps → tsgo
+ * - typescript in deps → tsc
  */
-class TypeScript extends Handler {
-  /** @defaultValue `'*.{ts,cts,mts,tsx}'` */
+class TypeScript {
   static readonly glob = '*.{ts,cts,mts,tsx}';
-
-  /** @defaultValue `[]` */
   static readonly defaultExcludes = [] as const;
-
-  /** @defaultValue `['src/']` */
-  static readonly defaultSourcePatterns = ['src/'] as const;
-
-  /** @defaultValue `['.test.', '__test__']` */
-  static readonly defaultTsdocExcludes = ['.test.', '__test__'] as const;
-
-  /** @defaultValue `'tsgo --noEmit'` */
-  static readonly defaultTypecheckCommand = 'tsgo --noEmit';
-
-  /** @defaultValue `'./lib/configs/eslint.config.ts'` */
-  static readonly defaultEslintConfig: string;
-
+  static readonly defaultTsdocExcludes = ['.test.', '.spec.', '__test__', '__tests__'] as const;
   static readonly handler: LintStagedHandler;
+
+  static detectCompiler(cwd?: string): 'tsgo' | 'tsc' | undefined;
+  static isAvailable(): boolean;
+  static getDefaultTypecheckCommand(): string;
+  static isTsdocAvailable(cwd?: string): boolean;
   static create(options?: TypeScriptOptions): LintStagedHandler;
 }
 ```
 
-**Commands:**
+**Processing (async):**
 
-1. `eslint --config {config} {sourceFiles}` (if source files present, unless skipped)
-2. `{typecheckCommand}` (unless skipped)
+1. Filter files using exclude patterns
+2. If TSDoc enabled:
+   - Create TsDocResolver with workspace detection
+   - Filter staged files to only public API files
+   - Run TsDocLinter (bundled ESLint) on each group
+   - **Throw Error** if any TSDoc errors found
+3. If typecheck enabled:
+   - Return typecheck command (auto-detected or custom)
+
+**Key Components:**
+
+- `TsDocResolver` - Finds workspaces, extracts exports, traces imports
+- `TsDocLinter` - Programmatic ESLint with tsdoc/syntax rule
+- `ImportGraph` - Traces import dependencies from entry points
+- `EntryExtractor` - Parses package.json exports field
+
+**Note:** No longer uses external ESLint CLI. All TSDoc validation is
+programmatic using the ESLint Node.js API.
 
 ---
 
@@ -920,75 +949,154 @@ class TypeScript extends Handler {
 
 ### Command Utility
 
-Utilities for working with shell commands.
+Package manager detection and tool availability checking.
 
 ```typescript
-/**
- * Utilities for shell command operations.
- *
- * @example
- * ```typescript
- * import { Command } from '@savvy-web/lint-staged';
- *
- * if (Command.isAvailable('yq')) {
- *   // yq is installed
- * }
- * ```
- */
-class Command {
-  /**
-   * Check if a command is available in the system PATH.
-   * @param command - The command name to check
-   * @returns true if the command exists, false otherwise
-   */
-  static isAvailable(command: string): boolean;
+type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
-  /**
-   * Execute a command and return its output.
-   * @param command - The command to execute
-   * @returns The command output as a string
-   * @throws If the command fails
-   */
+interface ToolSearchResult {
+  available: boolean;
+  command: string | undefined;       // e.g., 'biome' or 'pnpm exec biome'
+  source: 'global' | PackageManager | undefined;
+}
+
+class Command {
+  // Package manager detection (cached)
+  static detectPackageManager(cwd?: string): PackageManager;
+  static getExecPrefix(pm: PackageManager): string[];
+  static clearCache(): void;
+
+  // Tool availability
+  static isAvailable(command: string): boolean;  // Global only
+  static findTool(tool: string): ToolSearchResult;  // Global + PM
+  static requireTool(tool: string, errorMessage?: string): string;
+
+  // Command execution
   static exec(command: string): string;
+  static execSilent(command: string): boolean;
 }
 ```
+
+**Package Manager Detection:**
+
+- Reads `packageManager` field from package.json (e.g., `pnpm@9.0.0`)
+- Falls back to `npm` if not specified
+- Caches result for performance
+
+**Tool Search Order:**
+
+1. Global command (in PATH)
+2. Package manager exec (e.g., `pnpm exec biome`)
 
 ### Filter Utility
 
-Utilities for filtering file lists.
+Pattern-based file filtering.
 
 ```typescript
-/**
- * Utilities for filtering staged file lists.
- *
- * @example
- * ```typescript
- * import { Filter } from '@savvy-web/lint-staged';
- *
- * const handler = (filenames: string[]) => {
- *   const filtered = Filter.exclude(filenames, ['dist/', '__fixtures__']);
- *   return filtered.length > 0 ? `biome check ${filtered.join(' ')}` : [];
- * };
- * ```
- */
 class Filter {
-  /**
-   * Exclude files matching any of the given patterns.
-   * @param filenames - Array of file paths
-   * @param patterns - Patterns to exclude (uses string.includes())
-   * @returns Filtered array of file paths
-   */
   static exclude(filenames: string[], patterns: string[]): string[];
-
-  /**
-   * Include only files matching any of the given patterns.
-   * @param filenames - Array of file paths
-   * @param patterns - Patterns to include (uses string.includes())
-   * @returns Filtered array of file paths
-   */
   static include(filenames: string[], patterns: string[]): string[];
+  static apply(filenames: string[], options: {
+    include?: string[];
+    exclude?: string[];
+  }): string[];
 }
 ```
+
+All methods use `string.includes()` for pattern matching.
+
+### ConfigSearch Utility
+
+Configuration file discovery using cosmiconfig.
+
+```typescript
+interface ConfigSearchResult {
+  filepath: string | undefined;
+  found: boolean;
+}
+
+class ConfigSearch {
+  static readonly libConfigDir = 'lib/configs';
+
+  // Find config for known tools
+  static find(tool: 'markdownlint' | 'biome' | 'eslint' | 'prettier'): ConfigSearchResult;
+
+  // Custom config search
+  static findFile(moduleName: string, options?: {
+    libConfigFiles?: string[];
+    standardPlaces?: string[];
+  }): ConfigSearchResult;
+
+  // Simple existence check
+  static exists(filepath: string): boolean;
+  static resolve(filename: string, fallback: string): string;
+}
+```
+
+**Search Priority:**
+
+1. `lib/configs/` directory (agency convention)
+2. Standard locations (repo root, package.json, etc.)
+
+### TsDocLinter Utility
+
+Programmatic ESLint for TSDoc validation.
+
+```typescript
+interface TsDocLintResult {
+  filePath: string;
+  errorCount: number;
+  warningCount: number;
+  messages: TsDocLintMessage[];
+}
+
+class TsDocLinter {
+  constructor(options?: { ignorePatterns?: string[] });
+
+  async lintFiles(filePaths: string[]): Promise<TsDocLintResult[]>;
+  async lintFilesAndThrow(filePaths: string[]): Promise<void>;
+
+  static formatResults(results: TsDocLintResult[]): string;
+  static hasErrors(results: TsDocLintResult[]): boolean;
+}
+```
+
+**Bundled Configuration:**
+
+- Uses `@typescript-eslint/parser`
+- Uses `eslint-plugin-tsdoc` with `tsdoc/syntax: 'error'`
+- Ignores node_modules, dist, coverage by default
+
+### TsDocResolver Utility
+
+Workspace-aware TSDoc file resolution.
+
+```typescript
+interface TsDocWorkspace {
+  name: string;
+  path: string;
+  tsdocConfigPath: string;
+  files: string[];       // Public API files to lint
+  errors: string[];
+}
+
+class TsDocResolver {
+  constructor(options: { rootDir: string; excludePatterns?: string[] });
+
+  resolve(): { workspaces: TsDocWorkspace[]; isMonorepo: boolean };
+  filterStagedFiles(stagedFiles: string[]): { files: string[]; tsdocConfigPath: string }[];
+  needsLinting(filePath: string): boolean;
+  getTsDocConfig(filePath: string): string | undefined;
+  findWorkspace(filePath: string): TsDocWorkspace | undefined;
+}
+```
+
+**Resolution Process:**
+
+1. Uses `workspace-tools` to detect workspaces
+2. Checks for `tsdoc.json` at workspace/repo level
+3. Extracts entry points from package.json `exports`
+4. Uses `ImportGraph` to trace all public API files
 
 ---
 
@@ -1125,24 +1233,28 @@ typescript()
 typescript({ eslintConfig: './custom-eslint.config.ts' })
 ```
 
-### External Tool Dependencies
+### External Tool Dependencies (Actual)
 
-**Required:**
+**Required (must be installed by consumer):**
 
-- `biome` - JavaScript/TypeScript/JSON formatting
-- `markdownlint-cli2` - Markdown linting
+- `biome` - JavaScript/TypeScript/JSON formatting (Biome handler)
+- `markdownlint-cli2` - Markdown linting (Markdown handler)
+- `typescript` or `@typescript/native-preview` - Type checking (TypeScript handler)
 
-**Bundled:**
+**Bundled as dependencies (no installation needed):**
 
-- `prettier` - YAML formatting
-- `yaml-lint` - YAML validation
-- `sort-package-json` - Package.json sorting
-- `eslint` + `eslint-plugin-tsdoc` - TSDoc validation
+- `yaml` - YAML parsing/formatting (Yaml, PnpmWorkspace handlers)
+- `sort-package-json` - Package.json sorting (PackageJson handler)
+- `eslint` + `@typescript-eslint/parser` - Programmatic linting
+- `eslint-plugin-tsdoc` - TSDoc syntax validation
+- `cosmiconfig` - Configuration file discovery
+- `workspace-tools` - Monorepo workspace detection
 
-**Optional:**
+**No longer used:**
 
-- `yq` - YAML sorting (detected at runtime)
-- `tsgo` / `tsc` - TypeScript type checking (detected at runtime)
+- ~~`prettier`~~ - Replaced by bundled yaml package
+- ~~`yaml-lint`~~ - Replaced by bundled yaml package
+- ~~`yq`~~ - Replaced by bundled yaml package
 
 ---
 
@@ -1188,32 +1300,41 @@ __fixtures__/
 
 ---
 
-## Future Enhancements
+## Implementation Status
 
-### Phase 1: Initial Release (v0.1.0)
+### Completed (v0.1.0)
 
-- All nine handler types implemented
-- TypeScript types and JSDoc documentation
-- Basic test coverage
-- README with usage examples
+- [x] All eight handler classes implemented
+- [x] TypeScript types and TSDoc documentation
+- [x] `createConfig()` helper for full configurations
+- [x] Preset configurations (minimal, standard, full)
+- [x] Async handler support (TypeScript handler is async)
+- [x] Bundled dependencies (yaml, sort-package-json, eslint)
+- [x] Workspace-aware TSDoc resolution
+- [x] Auto-discovery for commands and config files
+- [x] Package manager detection and caching
+- [x] Dogfooding via lib/configs/lint-staged.config.js
 
-### Phase 2: Configuration Presets (v0.2.0)
+### Future Enhancements
 
-- `createConfig()` helper for full configurations
-- Preset configurations (minimal, standard, strict)
-- Config validation and error messages
+**Short-term:**
 
-### Phase 3: Plugin System (v0.3.0)
+- [ ] Integration tests with actual lint-staged execution
+- [ ] README with comprehensive usage examples
+- [ ] npm publishing with provenance
 
-- Plugin architecture for custom handlers
-- Community handler registry
-- Handler composition utilities
+**Medium-term:**
 
-### Potential Refactoring
+- [ ] Plugin architecture for custom handlers
+- [ ] Handler composition utilities
+- [ ] Community handler registry
+- [ ] Cache layer for expensive operations (workspace detection, import tracing)
 
-- Consider async handler support if lint-staged adds it
-- Evaluate bundling vs peer dependencies as ecosystem evolves
-- Add caching layer for command availability checks
+**Long-term:**
+
+- [ ] Config validation and error messages
+- [ ] Watch mode integration
+- [ ] Performance profiling and optimization
 
 ---
 
@@ -1236,11 +1357,17 @@ __fixtures__/
 
 ---
 
-**Document Status:** Draft - Core architecture documented, ready for implementation
+**Document Status:** Current - Synced with implementation
 
-**Next Steps:**
+**Implementation Notes:**
 
-1. Create implementation plan with phases
-2. Set up package structure and build configuration
-3. Implement handlers one by one with tests
-4. Document public API in README
+- Package is fully implemented and dogfooding itself
+- All handlers, utilities, and presets are functional
+- Bundled dependencies reduce external requirements
+- Workspace-aware TSDoc resolution is more sophisticated than originally planned
+
+**Maintenance:**
+
+- Update this document when adding new handlers or utilities
+- Keep utility class signatures in sync with source code
+- Update "Implementation Status" checklist as features complete
