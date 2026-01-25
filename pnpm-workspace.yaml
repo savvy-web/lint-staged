@@ -1,0 +1,8 @@
+packages:
+  - .
+loglevel: info
+onlyBuiltDependencies:
+  - "@parcel/watcher"
+  - core-js
+  - esbuild
+preferFrozenLockfile: true
