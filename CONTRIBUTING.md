@@ -1,24 +1,24 @@
 # Contributing
 
-Thank you for your interest in contributing! This document provides guidelines
-and instructions for development.
+Thank you for your interest in contributing to `@savvy-web/lint-staged`! This
+document provides guidelines and instructions for development.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - pnpm 10+
 
 ## Development Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/savvy-web/pnpm-module-template.git
-cd pnpm-module-template
+git clone https://github.com/savvy-web/lint-staged.git
+cd lint-staged
 
 # Install dependencies
 pnpm install
 
-# Build all packages
+# Build the package
 pnpm run build
 
 # Run tests
@@ -28,23 +28,30 @@ pnpm run test
 ## Project Structure
 
 ```text
-pnpm-module-template/
-├── pkgs/                           # Workspace packages
-│   └── ecma-module/                # Example ESM package
+lint-staged/
+├── src/                            # Source code
+│   ├── handlers/                   # Handler classes (Biome, Markdown, etc.)
+│   ├── config/                     # Configuration utilities (Preset, createConfig)
+│   └── utils/                      # Utility classes (Filter, Command, etc.)
+├── docs/                           # Documentation
 ├── lib/
 │   └── configs/                    # Shared configuration files
-└── ...
+└── dist/                           # Build output
+    ├── dev/                        # Development build
+    └── npm/                        # Production build for npm
 ```
 
 ## Available Scripts
 
-| Script              | Description                          |
-| ------------------- | ------------------------------------ |
-| `pnpm run build`    | Build all packages (dev + prod)      |
-| `pnpm run test`     | Run all tests                        |
-| `pnpm run lint`     | Check code with Biome                |
-| `pnpm run lint:fix` | Auto-fix lint issues                 |
-| `pnpm run typecheck`| Type-check all workspaces            |
+| Script               | Description                     |
+| -------------------- | ------------------------------- |
+| `pnpm run build`     | Build all outputs (dev + prod)  |
+| `pnpm run build:dev` | Build development output only   |
+| `pnpm run test`      | Run all tests                   |
+| `pnpm run lint`      | Check code with Biome           |
+| `pnpm run lint:fix`  | Auto-fix lint issues            |
+| `pnpm run lint:md`   | Check markdown with markdownlint|
+| `pnpm run typecheck` | Type-check with tsgo            |
 
 ## Code Quality
 
@@ -53,6 +60,7 @@ This project uses:
 - **Biome** for linting and formatting
 - **Commitlint** for enforcing conventional commits
 - **Husky** for Git hooks
+- **markdownlint-cli2** for markdown linting
 
 ### Commit Format
 
@@ -69,9 +77,9 @@ Signed-off-by: Your Name <your.email@example.com>
 
 The following checks run automatically:
 
-- **pre-commit**: Runs lint-staged
+- **pre-commit**: Runs lint-staged (using this package!)
 - **commit-msg**: Validates commit message format
-- **pre-push**: Runs tests for affected packages
+- **pre-push**: Runs tests
 
 ## Testing
 
@@ -86,14 +94,11 @@ pnpm run test:watch
 
 # Run tests with coverage
 pnpm run test:coverage
-
-# Run tests for a specific package
-pnpm run test -- --filter=@savvy-web/ecma-module
 ```
 
 ## TypeScript
 
-- Composite builds with project references
+- Uses `tsgo` (native TypeScript) for type checking
 - Strict mode enabled
 - ES2022/ES2023 targets
 - Import extensions required (`.js` for ESM)
@@ -105,10 +110,37 @@ pnpm run test -- --filter=@savvy-web/ecma-module
 import { myFunction } from "./utils/helpers.js";
 
 // Use node: protocol for Node.js built-ins
-import { EventEmitter } from "node:events";
+import { readFileSync } from "node:fs";
 
-// Separate type imports
-import type { MyType } from "./types.js";
+// Separate type imports from value imports
+import type { LintStagedHandler } from "./types.js";
+import { Filter } from "./utils/Filter.js";
+```
+
+### TSDoc Requirements
+
+All exported classes, functions, and interfaces must have TSDoc documentation:
+
+```typescript
+/**
+ * Brief description of the function.
+ *
+ * @remarks
+ * Additional details for users who need more context.
+ *
+ * @param name - Description of the parameter
+ * @returns Description of the return value
+ *
+ * @example
+ * ```typescript
+ * import { myFunction } from '@savvy-web/lint-staged';
+ *
+ * const result = myFunction('example');
+ * ```
+ */
+export function myFunction(name: string): string {
+  // ...
+}
 ```
 
 ## Submitting Changes
@@ -120,6 +152,17 @@ import type { MyType } from "./types.js";
 5. Run linting: `pnpm run lint:fix`
 6. Commit with conventional format and DCO signoff
 7. Push and open a pull request
+
+## Adding a New Handler
+
+To add a new handler:
+
+1. Create `src/handlers/MyHandler.ts` following the existing pattern
+2. Export from `src/index.ts`
+3. Add options interface to `src/types.ts`
+4. Update `src/config/createConfig.ts` to include the handler
+5. Add tests in `src/index.test.ts`
+6. Document in `docs/handlers.md`
 
 ## License
 
