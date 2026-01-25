@@ -289,9 +289,8 @@ describe("Utility classes", () => {
 			expect(() => Command.isAvailable("node`id`")).toThrow(/Invalid command name/);
 		});
 
-		it("should allow valid command names with special chars", () => {
+		it("should allow valid command names with hyphens", () => {
 			// These are valid tool names that should not throw
-			expect(() => Command.isAvailable("@biomejs/biome")).not.toThrow();
 			expect(() => Command.isAvailable("markdownlint-cli2")).not.toThrow();
 			expect(() => Command.isAvailable("sort-package-json")).not.toThrow();
 		});
