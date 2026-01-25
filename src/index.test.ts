@@ -270,28 +270,26 @@ describe("Handler classes", () => {
 			expect(TypeScript.glob).toBe("*.{ts,cts,mts,tsx}");
 		});
 
-		it("should run typecheck when tsdoc is skipped", () => {
+		it("should run typecheck when tsdoc is skipped", async () => {
 			const handler = TypeScript.create({ skipTsdoc: true });
-			const result = handler(["src/index.ts"]);
+			const result = await handler(["src/index.ts"]);
 			expect(result).toHaveLength(1);
 			expect((result as string[])[0]).toContain("tsgo");
 		});
 
-		it("should skip tsdoc when no tsdoc.json found", () => {
-			// The new implementation requires tsdoc.json for TSDoc linting
-			// Without it, only typecheck runs
-			const handler = TypeScript.create({
-				eslintConfig: "./eslint.config.ts",
-			});
-			const result = handler(["src/index.ts"]);
-			// Should only have typecheck command, no TSDoc linting
+		it("should run tsdoc linting programmatically and return only typecheck", async () => {
+			// TSDoc linting now runs programmatically (not as a command)
+			// The handler returns only the typecheck command
+			const handler = TypeScript.create();
+			const result = await handler(["src/index.ts"]);
+			// Should only have typecheck command (TSDoc runs programmatically)
 			expect(result).toHaveLength(1);
 			expect((result as string[])[0]).toContain("tsgo --noEmit");
 		});
 
-		it("should return empty when both tsdoc and typecheck are skipped", () => {
+		it("should return empty when both tsdoc and typecheck are skipped", async () => {
 			const handler = TypeScript.create({ skipTsdoc: true, skipTypecheck: true });
-			const result = handler(["src/index.ts"]);
+			const result = await handler(["src/index.ts"]);
 			expect(result).toEqual([]);
 		});
 

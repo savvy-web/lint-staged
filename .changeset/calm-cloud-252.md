@@ -18,3 +18,4 @@ Programmatic file handling:
 - PackageJson: Uses `sort-package-json` library for in-place sorting
 - Yaml/PnpmWorkspace: Uses `yaml` library for formatting and validation
 - TypeScript: Intelligent TSDoc linting with workspace detection and import graph analysis
+- TSDoc: Bundled ESLint with `eslint-plugin-tsdoc` for zero-config TSDoc validation

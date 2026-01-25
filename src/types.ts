@@ -201,12 +201,6 @@ export interface TypeScriptOptions extends BaseHandlerOptions {
 	skipTypecheck?: boolean;
 
 	/**
-	 * Path to ESLint config for TSDoc rules.
-	 * @defaultValue Auto-discovered from lib/configs/ or repo root
-	 */
-	eslintConfig?: string;
-
-	/**
 	 * Command for type checking.
 	 * @defaultValue Auto-detected based on package manager and compiler
 	 */

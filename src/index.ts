@@ -67,6 +67,12 @@ export type {
 } from "./utils/ImportGraph.js";
 export { ImportGraph } from "./utils/ImportGraph.js";
 export type {
+	TsDocLintMessage,
+	TsDocLintResult,
+	TsDocLinterOptions,
+} from "./utils/TsDocLinter.js";
+export { TsDocLinter } from "./utils/TsDocLinter.js";
+export type {
 	TsDocResolverOptions,
 	TsDocResolverResult,
 	TsDocWorkspace,

@@ -10,8 +10,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import type { LintStagedHandler, TypeScriptOptions } from "../types.js";
 import { Command } from "../utils/Command.js";
-import { ConfigSearch } from "../utils/ConfigSearch.js";
 import { Filter } from "../utils/Filter.js";
+import { TsDocLinter } from "../utils/TsDocLinter.js";
 import { TsDocResolver } from "../utils/TsDocResolver.js";
 
 /**
@@ -150,31 +150,16 @@ export class TypeScript {
 
 	/**
 	 * Pre-configured handler with default options.
-	 * Auto-discovers workspaces and ESLint config.
+	 * Auto-discovers workspaces for TSDoc linting.
 	 */
 	static readonly handler: LintStagedHandler = TypeScript.create();
-
-	/**
-	 * Find the ESLint config file.
-	 *
-	 * Searches in order:
-	 * 1. `lib/configs/` directory
-	 * 2. Standard locations (repo root)
-	 *
-	 * @returns The config file path, or undefined if not found
-	 */
-	static findEslintConfig(): string | undefined {
-		const result = ConfigSearch.find("eslint");
-		return result.filepath;
-	}
 
 	/**
 	 * Check if TSDoc linting is available for the repository.
 	 *
 	 * TSDoc linting requires:
 	 * 1. A `tsdoc.json` file at repo root or workspace level
-	 * 2. An ESLint config file
-	 * 3. Package(s) with `exports` field in package.json
+	 * 2. Package(s) with `exports` field in package.json
 	 *
 	 * @param cwd - Directory to search from (defaults to process.cwd())
 	 * @returns `true` if TSDoc linting can be performed
@@ -182,16 +167,7 @@ export class TypeScript {
 	static isTsdocAvailable(cwd: string = process.cwd()): boolean {
 		// Check for tsdoc.json
 		const tsdocPath = join(cwd, "tsdoc.json");
-		if (!existsSync(tsdocPath)) {
-			return false;
-		}
-
-		// Check for ESLint config
-		if (!TypeScript.findEslintConfig()) {
-			return false;
-		}
-
-		return true;
+		return existsSync(tsdocPath);
 	}
 
 	/**
@@ -216,10 +192,7 @@ export class TypeScript {
 			return typecheckCommand;
 		};
 
-		// Resolve ESLint config: explicit > auto-discovered
-		const eslintConfig = options.eslintConfig ?? TypeScript.findEslintConfig();
-
-		return (filenames: string[]): string | string[] => {
+		return async (filenames: string[]): Promise<string | string[]> => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {
@@ -229,7 +202,7 @@ export class TypeScript {
 			const commands: string[] = [];
 
 			// TSDoc validation using intelligent workspace-aware file discovery
-			if (!skipTsdoc && eslintConfig) {
+			if (!skipTsdoc) {
 				const resolver = new TsDocResolver({
 					rootDir,
 					excludePatterns: [...tsdocExcludes],
@@ -241,10 +214,20 @@ export class TypeScript {
 				// Filter to only files that need TSDoc linting
 				const tsdocGroups = resolver.filterStagedFiles(absoluteFiles);
 
-				// Run ESLint for each group of files (grouped by tsdoc.json config)
+				// Lint each group of files using bundled ESLint
 				for (const group of tsdocGroups) {
 					if (group.files.length > 0) {
-						commands.push(`eslint --config ${eslintConfig} ${group.files.join(" ")}`);
+						const linter = new TsDocLinter({
+							ignorePatterns: tsdocExcludes.map((p) => `**/*${p}*`),
+						});
+
+						const results = await linter.lintFiles(group.files);
+
+						if (TsDocLinter.hasErrors(results)) {
+							// Format and throw to fail the lint-staged task
+							const output = TsDocLinter.formatResults(results);
+							throw new Error(`TSDoc validation failed:\n${output}`);
+						}
 					}
 				}
 			}
