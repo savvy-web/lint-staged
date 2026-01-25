@@ -54,7 +54,7 @@
 		"cosmiconfig": "^9.0.0",
 		"eslint": "^9.39.2",
 		"eslint-plugin-tsdoc": "^0.5.0",
-		"sort-package-json": "^3.6.0",
+		"sort-package-json": "^3.6.1",
 		"workspace-tools": "^0.40.4",
 		"yaml": "^2.8.2"
 	},
