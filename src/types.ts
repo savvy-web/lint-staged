@@ -103,22 +103,36 @@ export interface MarkdownOptions extends BaseHandlerOptions {
  */
 export interface PnpmWorkspaceOptions {
 	/**
-	 * Skip yq sorting even if yq is available.
+	 * Skip sorting packages and keys.
+	 * @defaultValue false
+	 */
+	skipSort?: boolean;
+
+	/**
+	 * Skip YAML formatting.
+	 * @defaultValue false
+	 */
+	skipFormat?: boolean;
+
+	/**
+	 * Skip YAML validation.
+	 * @defaultValue false
+	 */
+	skipLint?: boolean;
+
+	/**
+	 * Skip sorting.
+	 * @deprecated Use `skipSort` instead. This is kept for backward compatibility.
 	 * @defaultValue false
 	 */
 	skipYqSort?: boolean;
 
 	/**
-	 * Skip prettier formatting.
+	 * Skip formatting.
+	 * @deprecated Use `skipFormat` instead. This is kept for backward compatibility.
 	 * @defaultValue false
 	 */
 	skipPrettier?: boolean;
-
-	/**
-	 * Skip yaml-lint validation.
-	 * @defaultValue false
-	 */
-	skipLint?: boolean;
 }
 
 /**
@@ -137,21 +151,30 @@ export interface ShellScriptsOptions extends BaseHandlerOptions {
  */
 export interface YamlOptions extends BaseHandlerOptions {
 	/**
-	 * Skip prettier formatting.
+	 * Skip YAML formatting.
+	 * @defaultValue false
+	 */
+	skipFormat?: boolean;
+
+	/**
+	 * Skip YAML validation.
+	 * @defaultValue false
+	 */
+	skipValidate?: boolean;
+
+	/**
+	 * Skip formatting.
+	 * @deprecated Use `skipFormat` instead. This is kept for backward compatibility.
 	 * @defaultValue false
 	 */
 	skipPrettier?: boolean;
 
 	/**
-	 * Skip yaml-lint validation.
+	 * Skip validation.
+	 * @deprecated Use `skipValidate` instead. This is kept for backward compatibility.
 	 * @defaultValue false
 	 */
 	skipLint?: boolean;
-
-	/**
-	 * Path to prettier config file.
-	 */
-	prettierConfig?: string;
 }
 
 /**

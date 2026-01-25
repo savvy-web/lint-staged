@@ -17,25 +17,25 @@ import {
 	createConfig,
 } from "./index.js";
 
-// Test fixtures directory for PackageJson tests
+// Test fixtures directory for handler tests
 const FIXTURES_DIR: string = join(import.meta.dirname, "__test_fixtures__");
 
 describe("Handler classes", () => {
+	beforeAll(() => {
+		// Create test fixtures directory
+		if (!existsSync(FIXTURES_DIR)) {
+			mkdirSync(FIXTURES_DIR, { recursive: true });
+		}
+	});
+
+	afterAll(() => {
+		// Clean up test fixtures
+		if (existsSync(FIXTURES_DIR)) {
+			rmSync(FIXTURES_DIR, { recursive: true });
+		}
+	});
+
 	describe("PackageJson", () => {
-		beforeAll(() => {
-			// Create test fixtures directory
-			if (!existsSync(FIXTURES_DIR)) {
-				mkdirSync(FIXTURES_DIR, { recursive: true });
-			}
-		});
-
-		afterAll(() => {
-			// Clean up test fixtures
-			if (existsSync(FIXTURES_DIR)) {
-				rmSync(FIXTURES_DIR, { recursive: true });
-			}
-		});
-
 		it("should have correct glob pattern", () => {
 			expect(PackageJson.glob).toBe("**/package.json");
 		});
@@ -162,16 +162,40 @@ describe("Handler classes", () => {
 			expect(Yaml.glob).toBe("**/*.{yml,yaml}");
 		});
 
-		it("should exclude pnpm files by default", () => {
+		it("should exclude pnpm files by default and format in-place", () => {
+			// Create a test YAML file with valid but unformatted content
+			const testFile = join(FIXTURES_DIR, "config.yaml");
+			const unformatted = "key:   value\nother:    value2";
+			writeFileSync(testFile, unformatted, "utf-8");
+
 			const handler = Yaml.create();
-			const result = handler(["config.yaml", "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
-			expect(result).toEqual(["prettier --write config.yaml", "yaml-lint config.yaml"]);
+			const result = handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
+
+			// Should return empty array (all work done in-place)
+			expect(result).toEqual([]);
+
+			// File should be formatted (extra spaces removed)
+			const formatted = readFileSync(testFile, "utf-8");
+			expect(formatted).toContain("key: value");
+			expect(formatted).toContain("other: value2");
 		});
 
-		it("should skip prettier when option is set", () => {
-			const handler = Yaml.create({ skipPrettier: true });
-			const result = handler(["config.yaml"]);
-			expect(result).toEqual(["yaml-lint config.yaml"]);
+		it("should skip formatting when option is set", () => {
+			const testFile = join(FIXTURES_DIR, "skip-format.yaml");
+			const content = "key:   value\n";
+			writeFileSync(testFile, content, "utf-8");
+
+			const handler = Yaml.create({ skipFormat: true, skipValidate: true });
+			const result = handler([testFile]);
+
+			expect(result).toEqual([]);
+			// File should not be modified
+			expect(readFileSync(testFile, "utf-8")).toBe(content);
+		});
+
+		it("should have formatFile and validateFile static methods", () => {
+			expect(typeof Yaml.formatFile).toBe("function");
+			expect(typeof Yaml.validateFile).toBe("function");
 		});
 	});
 
@@ -180,11 +204,46 @@ describe("Handler classes", () => {
 			expect(PnpmWorkspace.glob).toBe("pnpm-workspace.yaml");
 		});
 
-		it("should include prettier and yaml-lint by default", () => {
-			const handler = PnpmWorkspace.create({ skipYqSort: true });
-			const result = handler([]);
-			expect(result).toContain("prettier --write pnpm-workspace.yaml");
-			expect(result).toContain("yaml-lint pnpm-workspace.yaml");
+		it("should sort and format in-place", () => {
+			// Create a backup of the actual file
+			const filepath = "pnpm-workspace.yaml";
+			const original = readFileSync(filepath, "utf-8");
+
+			try {
+				// Write unsorted content
+				const unsorted = "onlyBuiltDependencies:\n  - zlib\n  - abc\npackages:\n  - z-pkg\n  - a-pkg\n";
+				writeFileSync(filepath, unsorted, "utf-8");
+
+				const handler = PnpmWorkspace.create();
+				const result = handler([]);
+
+				// Should return empty array (all work done in-place)
+				expect(result).toEqual([]);
+
+				// File should be sorted and formatted
+				const content = readFileSync(filepath, "utf-8");
+				// packages should be first (sorted), and both arrays should be sorted
+				expect(content.indexOf("packages")).toBeLessThan(content.indexOf("onlyBuiltDependencies"));
+				expect(content.indexOf("a-pkg")).toBeLessThan(content.indexOf("z-pkg"));
+				expect(content.indexOf("abc")).toBeLessThan(content.indexOf("zlib"));
+			} finally {
+				// Restore original file
+				writeFileSync(filepath, original, "utf-8");
+			}
+		});
+
+		it("should have sortContent static method", () => {
+			expect(typeof PnpmWorkspace.sortContent).toBe("function");
+
+			const sorted = PnpmWorkspace.sortContent({
+				onlyBuiltDependencies: ["z", "a"],
+				packages: ["z-pkg", "a-pkg"],
+			});
+
+			expect(sorted.packages).toEqual(["a-pkg", "z-pkg"]);
+			expect(sorted.onlyBuiltDependencies).toEqual(["a", "z"]);
+			// packages should be first key
+			expect(Object.keys(sorted)[0]).toBe("packages");
 		});
 	});
 

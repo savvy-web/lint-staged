@@ -144,7 +144,8 @@ export default {
 
 ### Yaml
 
-Formats YAML files with Prettier and validates with yaml-lint.
+Formats and validates YAML files using the bundled `yaml` library. All
+processing is done in-place (no CLI spawning).
 
 ```typescript
 import { Yaml } from '@savvy-web/lint-staged';
@@ -152,9 +153,8 @@ import { Yaml } from '@savvy-web/lint-staged';
 export default {
   [Yaml.glob]: Yaml.create({
     exclude: ['generated/'],
-    skipPrettier: false,
-    skipLint: false,
-    prettierConfig: './.prettierrc',
+    skipFormat: false,
+    skipValidate: false,
   }),
 };
 ```
@@ -162,34 +162,33 @@ export default {
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
 | `exclude` | `string[]` | `['pnpm-lock.yaml', 'pnpm-workspace.yaml']` | Patterns to exclude |
-| `skipPrettier` | `boolean` | `false` | Skip Prettier formatting |
-| `skipLint` | `boolean` | `false` | Skip yaml-lint validation |
-| `prettierConfig` | `string` | - | Path to Prettier config |
+| `skipFormat` | `boolean` | `false` | Skip YAML formatting |
+| `skipValidate` | `boolean` | `false` | Skip YAML validation |
 
 **Glob:** `**/*.{yml,yaml}`
 
 ### PnpmWorkspace
 
-Sorts and formats pnpm-workspace.yaml. Optionally uses `yq` for sorting if
-installed.
+Sorts, formats, and validates pnpm-workspace.yaml using bundled libraries. All
+processing is done in-place (no CLI spawning).
 
 ```typescript
 import { PnpmWorkspace } from '@savvy-web/lint-staged';
 
 export default {
   [PnpmWorkspace.glob]: PnpmWorkspace.create({
-    skipYqSort: true, // Skip yq even if installed
-    skipPrettier: false,
-    skipLint: false,
+    skipSort: true,    // Skip sorting packages and keys
+    skipFormat: false, // Skip formatting
+    skipLint: false,   // Skip validation
   }),
 };
 ```
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
-| `skipYqSort` | `boolean` | `false` | Skip yq sorting |
-| `skipPrettier` | `boolean` | `false` | Skip Prettier formatting |
-| `skipLint` | `boolean` | `false` | Skip yaml-lint validation |
+| `skipSort` | `boolean` | `false` | Skip sorting packages and keys |
+| `skipFormat` | `boolean` | `false` | Skip YAML formatting |
+| `skipLint` | `boolean` | `false` | Skip YAML validation |
 
 **Glob:** `pnpm-workspace.yaml`
 
