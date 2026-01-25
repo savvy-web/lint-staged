@@ -270,30 +270,28 @@ describe("Handler classes", () => {
 			expect(TypeScript.glob).toBe("*.{ts,cts,mts,tsx}");
 		});
 
-		it("should run tsdoc on source files only when config provided", () => {
-			const handler = TypeScript.create({
-				skipTypecheck: true,
-				eslintConfig: "./eslint.config.ts",
-			});
-			const result = handler(["src/index.ts", "src/index.test.ts", "test/foo.ts"]);
-			// Should only include src/index.ts (source file, not test)
-			expect(result).toHaveLength(1);
-			expect((result as string[])[0]).toContain("src/index.ts");
-			expect((result as string[])[0]).not.toContain("test.ts");
-		});
-
-		it("should skip tsdoc when option is set", () => {
+		it("should run typecheck when tsdoc is skipped", () => {
 			const handler = TypeScript.create({ skipTsdoc: true });
 			const result = handler(["src/index.ts"]);
 			expect(result).toHaveLength(1);
 			expect((result as string[])[0]).toContain("tsgo");
 		});
 
-		it("should skip tsdoc when no eslint config found", () => {
-			// When no config is explicitly provided and none is found, tsdoc is skipped
-			const handler = TypeScript.create({ skipTypecheck: true });
+		it("should skip tsdoc when no tsdoc.json found", () => {
+			// The new implementation requires tsdoc.json for TSDoc linting
+			// Without it, only typecheck runs
+			const handler = TypeScript.create({
+				eslintConfig: "./eslint.config.ts",
+			});
 			const result = handler(["src/index.ts"]);
-			// No eslint config found = no tsdoc commands, and typecheck is skipped
+			// Should only have typecheck command, no TSDoc linting
+			expect(result).toHaveLength(1);
+			expect((result as string[])[0]).toContain("tsgo --noEmit");
+		});
+
+		it("should return empty when both tsdoc and typecheck are skipped", () => {
+			const handler = TypeScript.create({ skipTsdoc: true, skipTypecheck: true });
+			const result = handler(["src/index.ts"]);
 			expect(result).toEqual([]);
 		});
 
@@ -313,6 +311,10 @@ describe("Handler classes", () => {
 			expect(typeof TypeScript.isAvailable).toBe("function");
 			// This repo has TypeScript installed
 			expect(TypeScript.isAvailable()).toBe(true);
+		});
+
+		it("should have isTsdocAvailable method", () => {
+			expect(typeof TypeScript.isTsdocAvailable).toBe("function");
 		});
 	});
 

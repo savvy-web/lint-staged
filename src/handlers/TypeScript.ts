@@ -7,11 +7,12 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import type { LintStagedHandler, TypeScriptOptions } from "../types.js";
 import { Command } from "../utils/Command.js";
 import { ConfigSearch } from "../utils/ConfigSearch.js";
 import { Filter } from "../utils/Filter.js";
+import { TsDocResolver } from "../utils/TsDocResolver.js";
 
 /**
  * TypeScript compiler to use.
@@ -24,26 +25,35 @@ export type TypeScriptCompiler = "tsgo" | "tsc";
  * Validates TSDoc syntax with ESLint and runs type checking.
  *
  * @remarks
- * TSDoc validation only runs on source files (matching `sourcePatterns`),
- * not on test files. Type checking runs on all staged TypeScript files.
+ * TSDoc validation uses intelligent file discovery based on workspace
+ * configuration:
  *
- * ESLint config discovery order:
- * 1. Explicit `eslintConfig` option if provided
- * 2. `lib/configs/eslint.config.ts` (and variants)
- * 3. Standard locations (`eslint.config.ts` at repo root, etc.)
+ * 1. Detects workspaces using the npm/pnpm/yarn workspace protocol
+ * 2. A workspace is enabled for TSDoc if it has `tsdoc.json` or the repo root has one
+ * 3. For enabled workspaces, extracts entry points from `package.json` exports
+ * 4. Traces imports from entries to find all public API files
+ * 5. Only lints files that are part of the public API
+ *
+ * This ensures that:
+ * - Only documented public API files are linted
+ * - Internal implementation files are skipped
+ * - Test files and fixtures are automatically excluded
+ *
+ * Type checking runs on all staged TypeScript files using the configured
+ * compiler (tsgo or tsc).
  *
  * @example
  * ```typescript
- * import { TypeScript } from '@savvy-web/lint-staged';
+ * import { TypeScript } from '\@savvy-web/lint-staged';
  *
  * export default {
- *   // Auto-discovers ESLint config
+ *   // Auto-discovers workspaces and lints public API files
  *   [TypeScript.glob]: TypeScript.handler,
  *
  *   // Or explicit config
  *   [TypeScript.glob]: TypeScript.create({
  *     skipTypecheck: true,
- *     sourcePatterns: ['src/', 'lib/'],
+ *     skipTsdoc: false,
  *   }),
  * };
  * ```
@@ -63,16 +73,10 @@ export class TypeScript {
 	static readonly defaultExcludes = [] as const;
 
 	/**
-	 * Default patterns that identify source files for TSDoc validation.
-	 * @defaultValue `['src/']`
-	 */
-	static readonly defaultSourcePatterns = ["src/"] as const;
-
-	/**
 	 * Default patterns to exclude from TSDoc linting.
-	 * @defaultValue `['.test.', '__test__']`
+	 * @defaultValue `['.test.', '.spec.', '__test__', '__tests__']`
 	 */
-	static readonly defaultTsdocExcludes = [".test.", "__test__"] as const;
+	static readonly defaultTsdocExcludes = [".test.", ".spec.", "__test__", "__tests__"] as const;
 
 	/**
 	 * Detect which TypeScript compiler to use based on package.json dependencies.
@@ -146,7 +150,7 @@ export class TypeScript {
 
 	/**
 	 * Pre-configured handler with default options.
-	 * Auto-discovers ESLint config file location.
+	 * Auto-discovers workspaces and ESLint config.
 	 */
 	static readonly handler: LintStagedHandler = TypeScript.create();
 
@@ -165,6 +169,32 @@ export class TypeScript {
 	}
 
 	/**
+	 * Check if TSDoc linting is available for the repository.
+	 *
+	 * TSDoc linting requires:
+	 * 1. A `tsdoc.json` file at repo root or workspace level
+	 * 2. An ESLint config file
+	 * 3. Package(s) with `exports` field in package.json
+	 *
+	 * @param cwd - Directory to search from (defaults to process.cwd())
+	 * @returns `true` if TSDoc linting can be performed
+	 */
+	static isTsdocAvailable(cwd: string = process.cwd()): boolean {
+		// Check for tsdoc.json
+		const tsdocPath = join(cwd, "tsdoc.json");
+		if (!existsSync(tsdocPath)) {
+			return false;
+		}
+
+		// Check for ESLint config
+		if (!TypeScript.findEslintConfig()) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Create a handler with custom options.
 	 *
 	 * @param options - Configuration options
@@ -172,11 +202,19 @@ export class TypeScript {
 	 */
 	static create(options: TypeScriptOptions = {}): LintStagedHandler {
 		const excludes = options.exclude ?? [...TypeScript.defaultExcludes];
-		const sourcePatterns = options.sourcePatterns ?? [...TypeScript.defaultSourcePatterns];
 		const tsdocExcludes = options.excludeTsdoc ?? [...TypeScript.defaultTsdocExcludes];
 		const skipTsdoc = options.skipTsdoc ?? false;
 		const skipTypecheck = options.skipTypecheck ?? false;
-		const typecheckCommand = options.typecheckCommand ?? TypeScript.getDefaultTypecheckCommand();
+		const rootDir = options.rootDir ?? process.cwd();
+
+		// Lazy-load typecheck command to avoid throwing during import
+		let typecheckCommand: string | undefined;
+		const getTypecheckCommand = (): string => {
+			if (typecheckCommand === undefined) {
+				typecheckCommand = options.typecheckCommand ?? TypeScript.getDefaultTypecheckCommand();
+			}
+			return typecheckCommand;
+		};
 
 		// Resolve ESLint config: explicit > auto-discovered
 		const eslintConfig = options.eslintConfig ?? TypeScript.findEslintConfig();
@@ -190,21 +228,30 @@ export class TypeScript {
 
 			const commands: string[] = [];
 
-			// TSDoc validation - only on source files (not test files)
+			// TSDoc validation using intelligent workspace-aware file discovery
 			if (!skipTsdoc && eslintConfig) {
-				const sourceFiles = Filter.apply(filtered, {
-					include: sourcePatterns,
-					exclude: tsdocExcludes,
+				const resolver = new TsDocResolver({
+					rootDir,
+					excludePatterns: [...tsdocExcludes],
 				});
 
-				if (sourceFiles.length > 0) {
-					commands.push(`eslint --config ${eslintConfig} ${sourceFiles.join(" ")}`);
+				// Convert relative paths to absolute for comparison
+				const absoluteFiles = filtered.map((f) => (isAbsolute(f) ? f : join(rootDir, f)));
+
+				// Filter to only files that need TSDoc linting
+				const tsdocGroups = resolver.filterStagedFiles(absoluteFiles);
+
+				// Run ESLint for each group of files (grouped by tsdoc.json config)
+				for (const group of tsdocGroups) {
+					if (group.files.length > 0) {
+						commands.push(`eslint --config ${eslintConfig} ${group.files.join(" ")}`);
+					}
 				}
 			}
 
 			// Type checking - runs on the project, not individual files
 			if (!skipTypecheck && filtered.length > 0) {
-				commands.push(typecheckCommand);
+				commands.push(getTypecheckCommand());
 			}
 
 			return commands;

@@ -56,4 +56,19 @@ export type { PackageManager, ToolSearchResult } from "./utils/Command.js";
 export { Command } from "./utils/Command.js";
 export type { ConfigSearchOptions, ConfigSearchResult } from "./utils/ConfigSearch.js";
 export { ConfigSearch } from "./utils/ConfigSearch.js";
+export type { EntryExtractionResult } from "./utils/EntryExtractor.js";
+export { EntryExtractor } from "./utils/EntryExtractor.js";
 export { Filter } from "./utils/Filter.js";
+export type {
+	ImportGraphError,
+	ImportGraphErrorType,
+	ImportGraphOptions,
+	ImportGraphResult,
+} from "./utils/ImportGraph.js";
+export { ImportGraph } from "./utils/ImportGraph.js";
+export type {
+	TsDocResolverOptions,
+	TsDocResolverResult,
+	TsDocWorkspace,
+} from "./utils/TsDocResolver.js";
+export { TsDocResolver } from "./utils/TsDocResolver.js";

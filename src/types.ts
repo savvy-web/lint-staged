@@ -183,15 +183,10 @@ export interface YamlOptions extends BaseHandlerOptions {
 export interface TypeScriptOptions extends BaseHandlerOptions {
 	/**
 	 * Additional patterns to exclude from TSDoc linting.
-	 * @defaultValue ['.test.', '__test__']
+	 * These are in addition to the default test file exclusions.
+	 * @defaultValue ['.test.', '.spec.', '__test__', '__tests__']
 	 */
 	excludeTsdoc?: string[];
-
-	/**
-	 * Patterns that identify source files for TSDoc validation (vs test files).
-	 * @defaultValue ['src/']
-	 */
-	sourcePatterns?: string[];
 
 	/**
 	 * Skip TSDoc validation.
@@ -207,15 +202,22 @@ export interface TypeScriptOptions extends BaseHandlerOptions {
 
 	/**
 	 * Path to ESLint config for TSDoc rules.
-	 * @defaultValue './lib/configs/eslint.config.ts'
+	 * @defaultValue Auto-discovered from lib/configs/ or repo root
 	 */
 	eslintConfig?: string;
 
 	/**
 	 * Command for type checking.
-	 * @defaultValue 'pnpm exec tsgo --noEmit'
+	 * @defaultValue Auto-detected based on package manager and compiler
 	 */
 	typecheckCommand?: string;
+
+	/**
+	 * Root directory for workspace detection.
+	 * Used to find workspaces and tsdoc.json configuration.
+	 * @defaultValue process.cwd()
+	 */
+	rootDir?: string;
 }
 
 /**

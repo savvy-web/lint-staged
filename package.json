@@ -52,6 +52,7 @@
 	"dependencies": {
 		"cosmiconfig": "^9.0.0",
 		"sort-package-json": "^3.6.0",
+		"workspace-tools": "^0.40.4",
 		"yaml": "^2.8.2"
 	},
 	"devDependencies": {
