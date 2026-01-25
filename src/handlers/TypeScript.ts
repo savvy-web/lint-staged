@@ -7,6 +7,7 @@
  */
 
 import type { LintStagedHandler, TypeScriptOptions } from "../types.js";
+import { Command } from "../utils/Command.js";
 import { ConfigSearch } from "../utils/ConfigSearch.js";
 import { Filter } from "../utils/Filter.js";
 
@@ -67,10 +68,15 @@ export class TypeScript {
 	static readonly defaultTsdocExcludes = [".test.", "__test__"] as const;
 
 	/**
-	 * Default type checking command.
-	 * @defaultValue `'pnpm exec tsgo --noEmit'`
+	 * Get the default type checking command for the detected package manager.
+	 *
+	 * @returns Command string like `pnpm exec tsgo --noEmit` or `npx --no tsgo --noEmit`
 	 */
-	static readonly defaultTypecheckCommand = "pnpm exec tsgo --noEmit";
+	static getDefaultTypecheckCommand(): string {
+		const pm = Command.detectPackageManager();
+		const prefix = Command.getExecPrefix(pm);
+		return [...prefix, "tsgo", "--noEmit"].join(" ");
+	}
 
 	/**
 	 * Pre-configured handler with default options.
@@ -104,7 +110,7 @@ export class TypeScript {
 		const tsdocExcludes = options.excludeTsdoc ?? [...TypeScript.defaultTsdocExcludes];
 		const skipTsdoc = options.skipTsdoc ?? false;
 		const skipTypecheck = options.skipTypecheck ?? false;
-		const typecheckCommand = options.typecheckCommand ?? TypeScript.defaultTypecheckCommand;
+		const typecheckCommand = options.typecheckCommand ?? TypeScript.getDefaultTypecheckCommand();
 
 		// Resolve ESLint config: explicit > auto-discovered
 		const eslintConfig = options.eslintConfig ?? TypeScript.findEslintConfig();

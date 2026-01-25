@@ -199,6 +199,12 @@ describe("Handler classes", () => {
 			// No eslint config found = no tsdoc commands, and typecheck is skipped
 			expect(result).toEqual([]);
 		});
+
+		it("should use detected package manager for typecheck command", () => {
+			// This repo uses pnpm, so command should use pnpm exec
+			const cmd = TypeScript.getDefaultTypecheckCommand();
+			expect(cmd).toBe("pnpm exec tsgo --noEmit");
+		});
 	});
 
 	describe("DesignDocs", () => {

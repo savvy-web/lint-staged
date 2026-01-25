@@ -243,7 +243,7 @@ export default {
 | `skipTsdoc` | `boolean` | `false` | Skip TSDoc validation |
 | `skipTypecheck` | `boolean` | `false` | Skip type checking |
 | `eslintConfig` | `string` | `'./lib/configs/eslint.config.ts'` | ESLint config path |
-| `typecheckCommand` | `string` | `'pnpm exec tsgo --noEmit'` | Typecheck command |
+| `typecheckCommand` | `string` | `'{pm} exec tsgo --noEmit'` | Typecheck command (auto-detects package manager) |
 
 **Glob:** `*.{ts,cts,mts,tsx}`
 
