@@ -42,6 +42,24 @@ export interface ToolSearchResult {
 	source: "global" | PackageManager | undefined;
 }
 
+/** Pattern for valid command/tool names (alphanumeric, hyphens, underscores, \@, /) */
+const VALID_COMMAND_PATTERN = /^[\w@/-]+$/;
+
+/**
+ * Validate that a command name is safe for shell execution.
+ * Prevents command injection by ensuring only valid characters are used.
+ *
+ * @param name - The command or tool name to validate
+ * @throws Error if the name contains invalid characters
+ */
+function validateCommandName(name: string): void {
+	if (!VALID_COMMAND_PATTERN.test(name)) {
+		throw new Error(
+			`Invalid command name: "${name}". Only alphanumeric characters, hyphens, underscores, @ and / are allowed.`,
+		);
+	}
+}
+
 /**
  * Static utility class for shell command operations.
  */
@@ -148,6 +166,7 @@ export class Command {
 	 * ```
 	 */
 	static isAvailable(command: string): boolean {
+		validateCommandName(command);
 		try {
 			execSync(`command -v ${command}`, { stdio: "ignore" });
 			return true;
@@ -176,6 +195,8 @@ export class Command {
 	 * ```
 	 */
 	static findTool(tool: string): ToolSearchResult {
+		validateCommandName(tool);
+
 		// Check global first (preferred)
 		if (Command.isAvailable(tool)) {
 			return { available: true, command: tool, source: "global" };

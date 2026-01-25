@@ -281,6 +281,20 @@ describe("Utility classes", () => {
 		it("should have clearCache method", () => {
 			expect(typeof Command.clearCache).toBe("function");
 		});
+
+		it("should reject invalid command names", () => {
+			// Command injection attempt should throw
+			expect(() => Command.isAvailable("node; rm -rf /")).toThrow(/Invalid command name/);
+			expect(() => Command.isAvailable("$(whoami)")).toThrow(/Invalid command name/);
+			expect(() => Command.isAvailable("node`id`")).toThrow(/Invalid command name/);
+		});
+
+		it("should allow valid command names with special chars", () => {
+			// These are valid tool names that should not throw
+			expect(() => Command.isAvailable("@biomejs/biome")).not.toThrow();
+			expect(() => Command.isAvailable("markdownlint-cli2")).not.toThrow();
+			expect(() => Command.isAvailable("sort-package-json")).not.toThrow();
+		});
 	});
 
 	describe("ConfigSearch", () => {
