@@ -40,7 +40,8 @@ const TS_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts"] as const;
  *
  * @example
  * ```typescript
- * import { EntryExtractor } from './EntryExtractor.js';
+ * import type { EntryExtractionResult } from '@savvy-web/lint-staged';
+ * import { EntryExtractor } from '@savvy-web/lint-staged';
  *
  * const extractor = new EntryExtractor();
  * const packageJson = {
@@ -49,7 +50,7 @@ const TS_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts"] as const;
  *     "./utils": "./src/utils/index.ts"
  *   }
  * };
- * const result = extractor.extract(packageJson);
+ * const result: EntryExtractionResult = extractor.extract(packageJson);
  * // result.entries = { ".": "./src/index.ts", "./utils": "./src/utils/index.ts" }
  * ```
  */

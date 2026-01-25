@@ -94,8 +94,8 @@ export class Yaml {
 	 */
 	static create(options: YamlOptions = {}): LintStagedHandler {
 		const excludes = options.exclude ?? [...Yaml.defaultExcludes];
-		const skipFormat = options.skipFormat ?? options.skipPrettier ?? false;
-		const skipValidate = options.skipValidate ?? options.skipLint ?? false;
+		const skipFormat = options.skipFormat ?? false;
+		const skipValidate = options.skipValidate ?? false;
 
 		return (filenames: readonly string[]): string | string[] => {
 			const filtered = Filter.exclude(filenames, excludes);

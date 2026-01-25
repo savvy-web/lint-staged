@@ -59,10 +59,11 @@ export interface TsDocLinterOptions {
  *
  * @example
  * ```typescript
- * import { TsDocLinter } from './TsDocLinter.js';
+ * import type { TsDocLintResult } from '@savvy-web/lint-staged';
+ * import { TsDocLinter } from '@savvy-web/lint-staged';
  *
  * const linter = new TsDocLinter();
- * const results = await linter.lintFiles(['src/index.ts', 'src/utils.ts']);
+ * const results: TsDocLintResult[] = await linter.lintFiles(['src/index.ts', 'src/utils.ts']);
  *
  * for (const result of results) {
  *   if (result.errorCount > 0) {

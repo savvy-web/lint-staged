@@ -79,9 +79,11 @@ export interface ImportGraphResult {
  *
  * @example
  * ```typescript
- * import { ImportGraph } from './ImportGraph.js';
+ * import type { ImportGraphOptions } from '@savvy-web/lint-staged';
+ * import { ImportGraph } from '@savvy-web/lint-staged';
  *
- * const graph = new ImportGraph({ rootDir: process.cwd() });
+ * const options: ImportGraphOptions = { rootDir: process.cwd() };
+ * const graph = new ImportGraph(options);
  * const result = graph.traceFromPackageExports('./package.json');
  * console.log('Public API files:', result.files);
  * ```

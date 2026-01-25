@@ -182,12 +182,11 @@ export default {
 - Other keys sorted alphabetically
 - `packages` array sorted alphabetically
 - `onlyBuiltDependencies` array sorted alphabetically
-- `catalog` and `catalogs` entries sorted by key
+- `publicHoistPattern` array sorted alphabetically
 
 **Static Methods:**
 
-- `PnpmWorkspace.sortContent(content)` - Sort workspace content
-- `PnpmWorkspace.formatFile(filepath)` - Format and sort a workspace file
+- `PnpmWorkspace.sortContent(content)` - Sort workspace content object
 
 ## ShellScripts
 

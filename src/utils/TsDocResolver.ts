@@ -66,9 +66,11 @@ export interface TsDocResolverOptions {
  *
  * @example
  * ```typescript
- * import { TsDocResolver } from './TsDocResolver.js';
+ * import type { TsDocResolverOptions } from '@savvy-web/lint-staged';
+ * import { TsDocResolver } from '@savvy-web/lint-staged';
  *
- * const resolver = new TsDocResolver({ rootDir: process.cwd() });
+ * const options: TsDocResolverOptions = { rootDir: process.cwd() };
+ * const resolver = new TsDocResolver(options);
  * const result = resolver.resolve();
  *
  * for (const workspace of result.workspaces) {

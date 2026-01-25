@@ -119,8 +119,8 @@ export class PnpmWorkspace {
 	 * @returns A lint-staged compatible handler function
 	 */
 	static create(options: PnpmWorkspaceOptions = {}): LintStagedHandler {
-		const skipSort = options.skipSort ?? options.skipYqSort ?? false;
-		const skipFormat = options.skipFormat ?? options.skipPrettier ?? false;
+		const skipSort = options.skipSort ?? false;
+		const skipFormat = options.skipFormat ?? false;
 		const skipLint = options.skipLint ?? false;
 
 		return (): string | string[] => {

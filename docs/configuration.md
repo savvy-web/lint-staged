@@ -47,7 +47,6 @@ export default Preset.standard({
   markdown: { noFix: true },
 
   // Enable handlers not in the preset
-  typescript: {},  // Enable with defaults
   typescript: { skipTypecheck: true },  // Enable with options
 
   // Disable handlers from the preset
@@ -107,8 +106,7 @@ export default createConfig({
 
   // Enable optional handlers
   typescript: { skipTypecheck: true },
-  designDocs: true,  // Enable with defaults
-  designDocs: { skipTimestamp: true },  // Enable with options
+  designDocs: { skipTimestamp: true },  // Enable with options (use `true` for defaults)
 
   // Disable handlers
   shellScripts: false,

@@ -127,20 +127,6 @@ export interface PnpmWorkspaceOptions {
 	 * @defaultValue false
 	 */
 	skipLint?: boolean;
-
-	/**
-	 * Skip sorting.
-	 * @deprecated Use `skipSort` instead. This is kept for backward compatibility.
-	 * @defaultValue false
-	 */
-	skipYqSort?: boolean;
-
-	/**
-	 * Skip formatting.
-	 * @deprecated Use `skipFormat` instead. This is kept for backward compatibility.
-	 * @defaultValue false
-	 */
-	skipPrettier?: boolean;
 }
 
 /**
@@ -169,20 +155,6 @@ export interface YamlOptions extends BaseHandlerOptions {
 	 * @defaultValue false
 	 */
 	skipValidate?: boolean;
-
-	/**
-	 * Skip formatting.
-	 * @deprecated Use `skipFormat` instead. This is kept for backward compatibility.
-	 * @defaultValue false
-	 */
-	skipPrettier?: boolean;
-
-	/**
-	 * Skip validation.
-	 * @deprecated Use `skipValidate` instead. This is kept for backward compatibility.
-	 * @defaultValue false
-	 */
-	skipLint?: boolean;
 }
 
 /**
