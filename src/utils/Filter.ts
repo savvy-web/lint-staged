@@ -1,0 +1,98 @@
+/**
+ * Utilities for filtering staged file lists.
+ *
+ * @example
+ * ```typescript
+ * import { Filter } from '@savvy-web/lint-staged';
+ *
+ * const handler = (filenames: string[]) => {
+ *   const filtered = Filter.exclude(filenames, ['dist/', '__fixtures__']);
+ *   return filtered.length > 0 ? `biome check ${filtered.join(' ')}` : [];
+ * };
+ * ```
+ */
+
+/**
+ * Static utility class for filtering file lists.
+ */
+// biome-ignore lint/complexity/noStaticOnlyClass: Intentional pattern for TSDoc discoverability
+export class Filter {
+	/**
+	 * Exclude files matching any of the given patterns.
+	 *
+	 * @param filenames - Array of file paths
+	 * @param patterns - Patterns to exclude (uses `string.includes()`)
+	 * @returns Filtered array of file paths
+	 *
+	 * @example
+	 * ```typescript
+	 * const files = ['src/index.ts', 'dist/index.js', '__fixtures__/test.ts'];
+	 * const filtered = Filter.exclude(files, ['dist/', '__fixtures__']);
+	 * // Result: ['src/index.ts']
+	 * ```
+	 */
+	static exclude(filenames: string[], patterns: string[]): string[] {
+		if (patterns.length === 0) {
+			return filenames;
+		}
+		return filenames.filter((file) => !patterns.some((pattern) => file.includes(pattern)));
+	}
+
+	/**
+	 * Include only files matching any of the given patterns.
+	 *
+	 * @param filenames - Array of file paths
+	 * @param patterns - Patterns to include (uses `string.includes()`)
+	 * @returns Filtered array of file paths
+	 *
+	 * @example
+	 * ```typescript
+	 * const files = ['src/index.ts', 'lib/utils.ts', 'test/foo.test.ts'];
+	 * const filtered = Filter.include(files, ['src/', 'lib/']);
+	 * // Result: ['src/index.ts', 'lib/utils.ts']
+	 * ```
+	 */
+	static include(filenames: string[], patterns: string[]): string[] {
+		if (patterns.length === 0) {
+			return [];
+		}
+		return filenames.filter((file) => patterns.some((pattern) => file.includes(pattern)));
+	}
+
+	/**
+	 * Combine exclude and include filters.
+	 *
+	 * @param filenames - Array of file paths
+	 * @param options - Filter options
+	 * @returns Filtered array of file paths
+	 *
+	 * @example
+	 * ```typescript
+	 * const files = ['src/index.ts', 'src/index.test.ts', 'dist/index.js'];
+	 * const filtered = Filter.apply(files, {
+	 *   include: ['src/'],
+	 *   exclude: ['.test.'],
+	 * });
+	 * // Result: ['src/index.ts']
+	 * ```
+	 */
+	static apply(
+		filenames: string[],
+		options: {
+			include?: string[];
+			exclude?: string[];
+		},
+	): string[] {
+		let result = filenames;
+
+		if (options.include && options.include.length > 0) {
+			result = Filter.include(result, options.include);
+		}
+
+		if (options.exclude && options.exclude.length > 0) {
+			result = Filter.exclude(result, options.exclude);
+		}
+
+		return result;
+	}
+}

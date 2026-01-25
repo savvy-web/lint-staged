@@ -1,0 +1,93 @@
+{
+	"$schema": "../skills/design-config/json-schemas/current.json",
+	"version": "1.0.0",
+	"project": {
+		"name": "savvy-web/lint-staged",
+		"type": "package",
+		"repository": "https://github.com/savvy-web/lint-staged",
+		"maintainer": "C. Spencer Beggs"
+	},
+	"paths": {
+		"designDocs": ".claude/design",
+		"plans": ".claude/plans",
+		"skills": ".claude/skills",
+		"context": "CLAUDE.md",
+		"localContext": "CLAUDE.local.md"
+	},
+	"modules": {
+		"lint-staged": {
+			"path": ".",
+			"designDocsPath": ".claude/design/lint-staged",
+			"categories": ["architecture", "integration", "testing"],
+			"maintainer": "C. Spencer Beggs",
+			"userDocs": {
+				"readme": "README.md",
+				"repoDocs": null,
+				"siteDocs": null
+			}
+		}
+	},
+	"skills": {
+		"baseNamespace": "/",
+		"enabled": [
+			"design-init",
+			"design-validate",
+			"design-update",
+			"design-sync",
+			"design-review",
+			"design-audit",
+			"design-search",
+			"plan-create",
+			"plan-validate",
+			"plan-list"
+		]
+	},
+	"quality": {
+		"designDocs": {
+			"maxLineLength": 120,
+			"requireFrontmatter": true,
+			"requireTOC": true,
+			"minSections": ["Overview", "Current State", "Rationale"]
+		},
+		"userDocs": {
+			"level1": {
+				"targetWordCount": [200, 500],
+				"maxLineLength": 80,
+				"requireSections": ["Features", "Installation", "Usage"]
+			}
+		},
+		"context": {
+			"rootMaxLines": 500,
+			"childMaxLines": 300,
+			"requireDesignDocPointers": true
+		},
+		"plans": {
+			"maxLineLength": 120,
+			"requireFrontmatter": true,
+			"requiredFields": ["name", "title", "created", "status", "progress"],
+			"validStatuses": ["ready", "in-progress", "blocked", "completed", "abandoned"],
+			"progressRange": [0, 100],
+			"stalenessThresholdDays": 30,
+			"archiveAfterDays": 30
+		}
+	},
+	"integration": {
+		"ci": {
+			"enabled": false,
+			"validateOnPR": false,
+			"syncOnMerge": false
+		},
+		"git": {
+			"trackDesignDocs": true,
+			"requireReviewForChanges": false
+		},
+		"plans": {
+			"enabled": true,
+			"bidirectionalLinking": true,
+			"autoSyncProgress": false,
+			"validateOnCommit": true,
+			"cacheMetadata": true,
+			"cacheTTL": 300
+		}
+	}
+}

@@ -1,12 +1,23 @@
 {
-	"name": "@savvy-web/pnpm-module-template",
-	"version": "0.0.0",
-	"private": true,
-	"description": "A template repository for developing and deploying Node.js modules from a pnpm monorepo structure.",
-	"homepage": "https://github.com/spencerbeggs/pnpm-module-template#readme",
+	"name": "@savvy-web/lint-staged",
+	"version": "0.1.0",
+	"private": false,
+	"description": "Composable, configurable lint-staged handlers for pre-commit hooks. Provides reusable handlers for Biome, Markdown, YAML, TypeScript, and more.",
+	"keywords": [
+		"lint-staged",
+		"pre-commit",
+		"hooks",
+		"biome",
+		"markdown",
+		"yaml",
+		"typescript",
+		"formatting",
+		"linting"
+	],
+	"homepage": "https://github.com/savvy-web/lint-staged#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/spencerbeggs/pnpm-module-template.git"
+		"url": "https://github.com/savvy-web/lint-staged.git"
 	},
 	"license": "UNLICENSED",
 	"author": {
@@ -38,26 +49,46 @@
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"
 	},
+	"dependencies": {
+		"cosmiconfig": "^9.0.0",
+		"sort-package-json": "^3.6.0",
+		"yaml-lint": "^1.7.0"
+	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.3.12",
 		"@changesets/cli": "^2.29.8",
 		"@commitlint/cli": "^20.3.1",
 		"@commitlint/config-conventional": "^20.3.1",
 		"@microsoft/api-extractor": "^7.55.2",
 		"@rslib/core": "^0.19.3",
-		"@savvy-web/rslib-builder": "^0.2.2",
+		"@savvy-web/rslib-builder": "^0.4.0",
 		"@types/node": "^25.0.10",
-		"@typescript/native-preview": "7.0.0-dev.20260122.3",
+		"@typescript-eslint/parser": "^8.53.1",
+		"@typescript/native-preview": "7.0.0-dev.20260124.1",
 		"@vitest/coverage-v8": "^4.0.18",
+		"eslint": "^9.39.2",
+		"eslint-plugin-tsdoc": "^0.5.0",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.2.7",
 		"markdownlint-cli2": "^0.20.0",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"sort-package-json": "^3.6.0",
-		"turbo": "^2.7.5",
+		"turbo": "^2.7.6",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.18",
-		"yaml": "^2.8.2",
-		"yaml-lint": "^1.7.0"
+		"yaml": "^2.8.2"
+	},
+	"peerDependencies": {
+		"@biomejs/biome": ">=2.3.12",
+		"lint-staged": ">=16.2.7",
+		"markdownlint-cli2": ">=0.20.0"
+	},
+	"peerDependenciesMeta": {
+		"@biomejs/biome": {
+			"optional": true
+		},
+		"markdownlint-cli2": {
+			"optional": true
+		}
 	},
 	"packageManager": "pnpm@10.28.1",
 	"devEngines": {
