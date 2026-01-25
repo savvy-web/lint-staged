@@ -105,11 +105,17 @@ For building custom handlers:
 - **`TsDocResolver`** - Resolve files needing TSDoc linting
 - **`TsDocLinter`** - Programmatic TSDoc linting with ESLint
 
-## Peer Dependencies
+## Installation
 
 ```bash
-pnpm add -D lint-staged @biomejs/biome  # Required
-pnpm add -D markdownlint-cli2           # Optional, for Markdown handler
+# Install the package and required peer dependency
+npm install -D @savvy-web/lint-staged lint-staged
+
+# For Biome handler (recommended)
+npm install -D @biomejs/biome
+
+# For Markdown handler (optional)
+npm install -D markdownlint-cli2
 ```
 
 ## Documentation

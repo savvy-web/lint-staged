@@ -5,7 +5,14 @@ Composable, configurable lint-staged handlers for pre-commit hooks.
 ## Installation
 
 ```bash
-pnpm add @savvy-web/lint-staged
+# Install the package and required peer dependency
+npm install -D @savvy-web/lint-staged lint-staged
+
+# For Biome handler (recommended)
+npm install -D @biomejs/biome
+
+# For Markdown handler (optional)
+npm install -D markdownlint-cli2
 ```
 
 ## Quick Start
@@ -65,19 +72,6 @@ export default Preset.standard({
 | `TypeScript` | `*.{ts,tsx}` | TSDoc validation + typecheck |
 | `DesignDocs` | `.claude/design/**/*.md` | Validate structure |
 
-## Peer Dependencies
-
-```bash
-# Required
-pnpm add -D lint-staged
-
-# For Biome handler
-pnpm add -D @biomejs/biome
-
-# For Markdown handler (optional)
-pnpm add -D markdownlint-cli2
-```
-
 ## Documentation
 
 - [Handler Configuration](./docs/handlers.md) - Detailed options for each handler
@@ -85,6 +79,11 @@ pnpm add -D markdownlint-cli2
 - [Configuration API](./docs/configuration.md) - createConfig and Preset APIs
 - [Migration Guide](./docs/migration.md) - Migrating from raw lint-staged configs
 
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup
+and guidelines.
+
 ## License
 
-See [LICENSE](./LICENSE) for details.
+[MIT](./LICENSE)
