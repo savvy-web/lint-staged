@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { parse, stringify } from "yaml";
 import type { LintStagedHandler, PnpmWorkspaceOptions } from "../types.js";
 
@@ -125,6 +125,11 @@ export class PnpmWorkspace {
 
 		return (): string | string[] => {
 			const filepath = "pnpm-workspace.yaml";
+
+			// If the file doesn't exist, nothing to do
+			if (!existsSync(filepath)) {
+				return [];
+			}
 
 			// Read and parse the file
 			const content = readFileSync(filepath, "utf-8");
