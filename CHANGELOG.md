@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.1.1
+
+### Patch Changes
+
+- 693d648: Fix PnpmWorkspace handler to gracefully handle missing pnpm-workspace.yaml file instead of throwing an error.
+
 ## 0.1.0
 
 ### Minor Changes
