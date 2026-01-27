@@ -1,5 +1,21 @@
 # @savvy-web/lint-staged
 
+## 0.1.2
+
+### Patch Changes
+
+- 4c03d03: Fix ConfigSearch failing to find config files and Biome config flag
+
+  ConfigSearch fixes:
+
+  - Add custom loaders for `.jsonc`, `.yaml`, and `.yml` extensions that cosmiconfig doesn't handle by default
+  - Search `lib/configs/` directory first using direct file existence checks before falling back to cosmiconfig
+  - Simplify `exists()` method to use `existsSync()` directly
+
+  Biome fixes:
+
+  - Change `--config=` to `--config-path=` to match Biome CLI expectations
+
 ## 0.1.1
 
 ### Patch Changes
