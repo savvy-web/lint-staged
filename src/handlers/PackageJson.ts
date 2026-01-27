@@ -80,7 +80,7 @@ export class PackageJson {
 			// Return only the Biome formatting command
 			const files = filtered.join(" ");
 			const biomeCmd = options.biomeConfig
-				? `biome check --write --max-diagnostics=none --config=${options.biomeConfig} ${files}`
+				? `biome check --write --max-diagnostics=none --config-path=${options.biomeConfig} ${files}`
 				: `biome check --write --max-diagnostics=none ${files}`;
 
 			return biomeCmd;

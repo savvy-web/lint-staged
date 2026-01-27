@@ -102,7 +102,7 @@ describe("Handler classes", () => {
 		it("should accept custom config", () => {
 			const handler = Biome.create({ config: "./custom-biome.json" });
 			const result = handler(["src/index.ts"]);
-			expect(result).toContain("--config=./custom-biome.json");
+			expect(result).toContain("--config-path=./custom-biome.json");
 		});
 
 		it("should have findConfig method", () => {
@@ -495,7 +495,10 @@ describe("Configuration utilities", () => {
 
 			// Test that the custom exclude is applied
 			const result = (handler as (f: readonly string[]) => string)(["src/index.ts", "custom/file.ts"]);
-			expect(result).toBe("biome check --write --no-errors-on-unmatched src/index.ts");
+			// ConfigSearch finds biome.jsonc in this repo, so --config flag is included
+			expect(result).toContain("biome check --write --no-errors-on-unmatched");
+			expect(result).toContain("src/index.ts");
+			expect(result).not.toContain("custom/file.ts");
 		});
 
 		it("should include custom handlers", () => {
