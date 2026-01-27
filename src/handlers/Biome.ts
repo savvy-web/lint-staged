@@ -129,7 +129,7 @@ export class Biome {
 
 			const files = filtered.join(" ");
 			const flags = options.flags ?? [];
-			const configFlag = config ? `--config=${config}` : "";
+			const configFlag = config ? `--config-path=${config}` : "";
 
 			const cmd = [`${biomeCmd} check --write --no-errors-on-unmatched`, configFlag, ...flags, files]
 				.filter(Boolean)

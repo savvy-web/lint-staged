@@ -8,7 +8,9 @@
  * @packageDocumentation
  */
 
-import { cosmiconfigSync } from "cosmiconfig";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { cosmiconfigSync, defaultLoaders } from "cosmiconfig";
 
 /**
  * Result of a config search.
@@ -179,21 +181,31 @@ export class ConfigSearch {
 	): ConfigSearchResult {
 		const { searchFrom = process.cwd(), stopDir, libConfigFiles = [], standardPlaces = [] } = options;
 
-		// Build search places: lib/configs/ first, then standard locations
-		const searchPlaces: string[] = [
-			// Agency convention: lib/configs/ directory
-			...libConfigFiles.map((file) => `${ConfigSearch.libConfigDir}/${file}`),
-			// Standard locations
-			...standardPlaces,
-		];
+		// Custom loaders for extensions cosmiconfig doesn't handle by default
+		const loaders = {
+			".jsonc": defaultLoaders[".json"],
+			".yaml": defaultLoaders[".yaml"],
+			".yml": defaultLoaders[".yaml"],
+		};
 
-		if (searchPlaces.length === 0) {
+		// First, check lib/configs/ directory (agency convention)
+		const libConfigDir = join(searchFrom, ConfigSearch.libConfigDir);
+		for (const file of libConfigFiles) {
+			const filepath = join(libConfigDir, file);
+			if (existsSync(filepath)) {
+				return { filepath, found: true };
+			}
+		}
+
+		// Fall back to standard cosmiconfig search from cwd
+		if (standardPlaces.length === 0) {
 			return { filepath: undefined, found: false };
 		}
 
 		try {
 			const explorer = cosmiconfigSync(moduleName, {
-				searchPlaces,
+				searchPlaces: standardPlaces,
+				loaders,
 				stopDir,
 			});
 
@@ -213,16 +225,10 @@ export class ConfigSearch {
 	 * Check if a config file exists at a specific path.
 	 *
 	 * @param filepath - Path to check
-	 * @returns true if the file exists and is readable
+	 * @returns true if the file exists
 	 */
 	static exists(filepath: string): boolean {
-		try {
-			const explorer = cosmiconfigSync("check");
-			const result = explorer.load(filepath);
-			return result !== null;
-		} catch {
-			return false;
-		}
+		return existsSync(filepath);
 	}
 
 	/**
