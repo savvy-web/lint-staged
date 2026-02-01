@@ -7,7 +7,7 @@
 /**
  * Shape of package.json exports field.
  */
-type ExportsField = string | Record<string, unknown> | null;
+export type ExportsField = string | Record<string, unknown> | null;
 
 /**
  * Result of entry extraction.

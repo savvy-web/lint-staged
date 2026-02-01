@@ -13,7 +13,7 @@ import type { LintStagedHandler, PnpmWorkspaceOptions } from "../types.js";
 /**
  * Shape of pnpm-workspace.yaml content.
  */
-interface PnpmWorkspaceContent {
+export interface PnpmWorkspaceContent {
 	packages?: string[];
 	onlyBuiltDependencies?: string[];
 	publicHoistPattern?: string[];

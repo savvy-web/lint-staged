@@ -30,6 +30,7 @@ export { Biome } from "./handlers/Biome.js";
 export { DesignDocs } from "./handlers/DesignDocs.js";
 export { Markdown } from "./handlers/Markdown.js";
 export { PackageJson } from "./handlers/PackageJson.js";
+export type { PnpmWorkspaceContent } from "./handlers/PnpmWorkspace.js";
 export { PnpmWorkspace } from "./handlers/PnpmWorkspace.js";
 export { ShellScripts } from "./handlers/ShellScripts.js";
 export type { TypeScriptCompiler } from "./handlers/TypeScript.js";
@@ -56,7 +57,7 @@ export type { PackageManager, ToolSearchResult } from "./utils/Command.js";
 export { Command } from "./utils/Command.js";
 export type { ConfigSearchOptions, ConfigSearchResult } from "./utils/ConfigSearch.js";
 export { ConfigSearch } from "./utils/ConfigSearch.js";
-export type { EntryExtractionResult } from "./utils/EntryExtractor.js";
+export type { EntryExtractionResult, ExportsField } from "./utils/EntryExtractor.js";
 export { EntryExtractor } from "./utils/EntryExtractor.js";
 export { Filter } from "./utils/Filter.js";
 export type {
