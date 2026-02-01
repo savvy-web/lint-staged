@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.1.3
+
+### Patch Changes
+
+- 467c3c8: Sets peer dependencies to non-optional
+
 ## 0.1.2
 
 ### Patch Changes
