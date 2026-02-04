@@ -1,11 +1,8 @@
 /**
  * Configuration factory for generating complete lint-staged configurations.
- *
- * @packageDocumentation
  */
 
 import { Biome } from "../handlers/Biome.js";
-import { DesignDocs } from "../handlers/DesignDocs.js";
 import { Markdown } from "../handlers/Markdown.js";
 import { PackageJson } from "../handlers/PackageJson.js";
 import { PnpmWorkspace } from "../handlers/PnpmWorkspace.js";
@@ -31,7 +28,6 @@ import type { CreateConfigOptions, LintStagedConfig } from "../types.js";
  * export default createConfig({
  *   packageJson: { skipSort: true },
  *   biome: { exclude: ['vendor/'] },
- *   designDocs: false, // Disable this handler
  *   custom: {
  *     '*.css': (files) => `stylelint ${files.join(' ')}`,
  *   },
@@ -81,12 +77,6 @@ export function createConfig(options: CreateConfigOptions = {}): LintStagedConfi
 	if (options.typescript !== false) {
 		const handlerOptions = typeof options.typescript === "object" ? options.typescript : {};
 		config[TypeScript.glob] = TypeScript.create(handlerOptions);
-	}
-
-	// DesignDocs handler (disabled by default in createConfig, enabled in Preset.full)
-	if (options.designDocs === true || typeof options.designDocs === "object") {
-		const handlerOptions = typeof options.designDocs === "object" ? options.designDocs : {};
-		config[DesignDocs.glob] = DesignDocs.create(handlerOptions);
 	}
 
 	// Custom handlers

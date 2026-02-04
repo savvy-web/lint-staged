@@ -2,8 +2,6 @@
  * Handler for TypeScript files.
  *
  * Validates TSDoc syntax with ESLint and runs type checking.
- *
- * @packageDocumentation
  */
 
 import { existsSync, readFileSync } from "node:fs";

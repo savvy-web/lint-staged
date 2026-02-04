@@ -2,8 +2,6 @@
  * Handler for package.json files.
  *
  * Sorts fields with sort-package-json and formats with Biome.
- *
- * @packageDocumentation
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -77,13 +75,14 @@ export class PackageJson {
 				}
 			}
 
-			// Return only the Biome formatting command
+			// Build Biome formatting command
 			const files = filtered.join(" ");
 			const biomeCmd = options.biomeConfig
 				? `biome check --write --max-diagnostics=none --config-path=${options.biomeConfig} ${files}`
 				: `biome check --write --max-diagnostics=none ${files}`;
 
-			return biomeCmd;
+			// Chain git add to ensure all changes (sorting + Biome formatting) are staged
+			return `${biomeCmd} && git add ${files}`;
 		};
 	}
 }

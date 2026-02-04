@@ -15,6 +15,9 @@
 		"linting"
 	],
 	"homepage": "https://github.com/savvy-web/lint-staged#readme",
+	"bugs": {
+		"url": "https://github.com/savvy-web/lint-staged/issues"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/savvy-web/lint-staged.git"
@@ -29,7 +32,11 @@
 	"exports": {
 		".": "./src/index.ts"
 	},
+	"bin": {
+		"savvy-lint": "./src/bin/cli.ts"
+	},
 	"scripts": {
+		"postinstall": "savvy-lint check --quiet || true",
 		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"build:dev": "rslib build --config-loader native --env-mode dev",
 		"build:inspect": "rslib inspect --verbose",
@@ -50,8 +57,12 @@
 		"types:check": "tsgo --noEmit"
 	},
 	"dependencies": {
+		"@effect/cli": "^0.73.2",
+		"@effect/platform": "^0.94.3",
+		"@effect/platform-node": "^0.104.1",
 		"@typescript-eslint/parser": "^8.54.0",
 		"cosmiconfig": "^9.0.0",
+		"effect": "^3.19.16",
 		"eslint": "^9.39.2",
 		"eslint-plugin-tsdoc": "^0.5.0",
 		"sort-package-json": "^3.6.1",

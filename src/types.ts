@@ -1,7 +1,5 @@
 /**
- * Type definitions for \@savvy-web/lint-staged
- *
- * @packageDocumentation
+ * Type definitions for \@savvy-web/lint-staged.
  */
 
 import type { Configuration } from "lint-staged";
@@ -64,29 +62,6 @@ export interface BiomeOptions extends BaseHandlerOptions {
 	 * Additional Biome CLI flags.
 	 */
 	flags?: string[];
-}
-
-/**
- * Options for the DesignDocs handler.
- */
-export interface DesignDocsOptions extends BaseHandlerOptions {
-	/**
-	 * Path to validation script.
-	 * @defaultValue '.claude/skills/design-validate/scripts/validate-design-doc.sh'
-	 */
-	validateScript?: string;
-
-	/**
-	 * Path to timestamp update script.
-	 * @defaultValue '.claude/skills/design-update/scripts/update-timestamp.sh'
-	 */
-	timestampScript?: string;
-
-	/**
-	 * Skip timestamp updates.
-	 * @defaultValue false
-	 */
-	skipTimestamp?: boolean;
 }
 
 /**
@@ -207,14 +182,6 @@ export interface CreateConfigOptions {
 	 * Options for Biome handler, or false to disable.
 	 */
 	biome?: BiomeOptions | false;
-
-	/**
-	 * Options for DesignDocs handler.
-	 * - `true` to enable with defaults
-	 * - `false` to disable (default in createConfig)
-	 * - Object to enable with custom options
-	 */
-	designDocs?: DesignDocsOptions | boolean;
 
 	/**
 	 * Options for Markdown handler, or false to disable.

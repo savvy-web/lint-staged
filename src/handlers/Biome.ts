@@ -2,8 +2,6 @@
  * Handler for JavaScript/TypeScript/JSON files.
  *
  * Formats and lints with Biome.
- *
- * @packageDocumentation
  */
 
 import type { BiomeOptions, LintStagedHandler } from "../types.js";

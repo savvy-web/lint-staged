@@ -1,7 +1,5 @@
 /**
  * TSDoc linter using ESLint with bundled configuration.
- *
- * @packageDocumentation
  */
 
 import tsParser from "@typescript-eslint/parser";

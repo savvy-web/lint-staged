@@ -2,8 +2,6 @@
  * Handler for Markdown files.
  *
  * Lints and auto-fixes with markdownlint-cli2.
- *
- * @packageDocumentation
  */
 
 import type { LintStagedHandler, MarkdownOptions } from "../types.js";

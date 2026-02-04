@@ -4,8 +4,6 @@
  * Searches for config files in a prioritized order:
  * 1. `lib/configs/` directory (agency convention)
  * 2. Standard locations (repo root, etc.)
- *
- * @packageDocumentation
  */
 
 import { existsSync } from "node:fs";

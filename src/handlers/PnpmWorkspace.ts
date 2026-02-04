@@ -2,8 +2,6 @@
  * Handler for pnpm-workspace.yaml.
  *
  * Sorts, formats, and validates pnpm-workspace.yaml using bundled libraries.
- *
- * @packageDocumentation
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -73,6 +71,11 @@ export class PnpmWorkspace {
 	static readonly handler: LintStagedHandler = PnpmWorkspace.create();
 
 	/**
+	 * Keys whose array values should be sorted alphabetically.
+	 */
+	private static readonly SORTABLE_ARRAY_KEYS = new Set(["packages", "onlyBuiltDependencies", "publicHoistPattern"]);
+
+	/**
 	 * Sort the pnpm-workspace.yaml content.
 	 *
 	 * Sorts:
@@ -97,12 +100,8 @@ export class PnpmWorkspace {
 		for (const key of keys) {
 			const value = content[key];
 
-			// Sort array values that are known string arrays
-			if (key === "packages" && Array.isArray(value)) {
-				result[key] = [...value].sort();
-			} else if (key === "onlyBuiltDependencies" && Array.isArray(value)) {
-				result[key] = [...value].sort();
-			} else if (key === "publicHoistPattern" && Array.isArray(value)) {
+			// Sort array values for known sortable keys
+			if (PnpmWorkspace.SORTABLE_ARRAY_KEYS.has(key) && Array.isArray(value)) {
 				result[key] = [...value].sort();
 			} else {
 				result[key] = value;
@@ -154,9 +153,11 @@ export class PnpmWorkspace {
 			if (!skipSort || !skipFormat) {
 				const formatted = stringify(parsed, DEFAULT_STRINGIFY_OPTIONS);
 				writeFileSync(filepath, formatted, "utf-8");
+
+				// Re-stage the modified file so changes are included in the commit
+				return `git add ${filepath}`;
 			}
 
-			// No CLI commands needed - all work done in-place
 			return [];
 		};
 	}

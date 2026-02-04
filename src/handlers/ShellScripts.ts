@@ -2,8 +2,6 @@
  * Handler for shell script files.
  *
  * Manages executable permissions on shell scripts.
- *
- * @packageDocumentation
  */
 
 import type { LintStagedHandler, ShellScriptsOptions } from "../types.js";

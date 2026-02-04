@@ -19,6 +19,8 @@
  * @packageDocumentation
  */
 
+// CLI
+export { checkCommand, initCommand, rootCommand, runCli } from "./cli/index.js";
 // Configuration utilities
 export { createConfig } from "./config/createConfig.js";
 export type { PresetExtendOptions } from "./config/Preset.js";
@@ -27,7 +29,6 @@ export { Preset } from "./config/Preset.js";
 export { Handler } from "./Handler.js";
 // Handler classes
 export { Biome } from "./handlers/Biome.js";
-export { DesignDocs } from "./handlers/DesignDocs.js";
 export { Markdown } from "./handlers/Markdown.js";
 export { PackageJson } from "./handlers/PackageJson.js";
 export type { PnpmWorkspaceContent } from "./handlers/PnpmWorkspace.js";
@@ -41,7 +42,6 @@ export type {
 	BaseHandlerOptions,
 	BiomeOptions,
 	CreateConfigOptions,
-	DesignDocsOptions,
 	LintStagedConfig,
 	LintStagedHandler,
 	MarkdownOptions,

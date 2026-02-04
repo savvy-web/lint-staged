@@ -1,7 +1,5 @@
 /**
  * Resolves files for TSDoc linting based on workspace configuration.
- *
- * @packageDocumentation
  */
 
 import { existsSync, readFileSync } from "node:fs";

@@ -1,7 +1,5 @@
 /**
  * Extracts TypeScript entry points from package.json exports.
- *
- * @packageDocumentation
  */
 
 /**

@@ -6,7 +6,7 @@ document provides guidelines and instructions for development.
 ## Prerequisites
 
 - Node.js 24+
-- pnpm 10+
+- pnpm 10.28+
 
 ## Development Setup
 
@@ -32,6 +32,7 @@ lint-staged/
 ├── src/                            # Source code
 │   ├── handlers/                   # Handler classes (Biome, Markdown, etc.)
 │   ├── config/                     # Configuration utilities (Preset, createConfig)
+│   ├── cli/                        # CLI commands
 │   └── utils/                      # Utility classes (Filter, Command, etc.)
 ├── docs/                           # Documentation
 ├── lib/
@@ -43,15 +44,17 @@ lint-staged/
 
 ## Available Scripts
 
-| Script               | Description                     |
-| -------------------- | ------------------------------- |
-| `pnpm run build`     | Build all outputs (dev + prod)  |
-| `pnpm run build:dev` | Build development output only   |
-| `pnpm run test`      | Run all tests                   |
-| `pnpm run lint`      | Check code with Biome           |
-| `pnpm run lint:fix`  | Auto-fix lint issues            |
-| `pnpm run lint:md`   | Check markdown with markdownlint|
-| `pnpm run typecheck` | Type-check with tsgo            |
+| Script                   | Description                      |
+| ------------------------ | -------------------------------- |
+| `pnpm run build`         | Build all outputs (dev + prod)   |
+| `pnpm run build:dev`     | Build development output only    |
+| `pnpm run test`          | Run all tests                    |
+| `pnpm run test:watch`    | Run tests in watch mode          |
+| `pnpm run test:coverage` | Run tests with coverage          |
+| `pnpm run lint`          | Check code with Biome            |
+| `pnpm run lint:fix`      | Auto-fix lint issues             |
+| `pnpm run lint:md`       | Check markdown with markdownlint |
+| `pnpm run typecheck`     | Type-check with tsgo             |
 
 ## Code Quality
 
@@ -61,6 +64,7 @@ This project uses:
 - **Commitlint** for enforcing conventional commits
 - **Husky** for Git hooks
 - **markdownlint-cli2** for markdown linting
+- **tsgo** (native TypeScript) for type checking
 
 ### Commit Format
 
@@ -94,6 +98,9 @@ pnpm run test:watch
 
 # Run tests with coverage
 pnpm run test:coverage
+
+# Run a specific test file
+pnpm vitest run src/index.test.ts
 ```
 
 ## TypeScript
@@ -158,11 +165,12 @@ export function myFunction(name: string): string {
 To add a new handler:
 
 1. Create `src/handlers/MyHandler.ts` following the existing pattern
-2. Export from `src/index.ts`
-3. Add options interface to `src/types.ts`
-4. Update `src/config/createConfig.ts` to include the handler
-5. Add tests in `src/index.test.ts`
-6. Document in `docs/handlers.md`
+2. Export from `src/handlers/index.ts`
+3. Add to public exports in `src/index.ts`
+4. Add options interface to `src/types.ts`
+5. Update `src/config/createConfig.ts` to include the handler
+6. Add tests in `src/handlers/MyHandler.test.ts`
+7. Document in `docs/handlers.md`
 
 ## License
 

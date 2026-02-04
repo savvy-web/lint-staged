@@ -6,7 +6,9 @@ export default NodeLibraryBuilder.create({
 	externals: ["typescript", "source-map-support"],
 	transform({ pkg }) {
 		delete pkg.devDependencies;
-		delete pkg.scripts;
+		pkg.scripts = {
+			postinstall: "savvy-lint check --quiet || true",
+		};
 		delete pkg.publishConfig;
 		return pkg;
 	},
