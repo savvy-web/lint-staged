@@ -1,7 +1,5 @@
 /**
  * Preset configurations for common lint-staged setups.
- *
- * @packageDocumentation
  */
 
 import type { CreateConfigOptions, LintStagedConfig } from "../types.js";
@@ -9,10 +7,9 @@ import { createConfig } from "./createConfig.js";
 
 /**
  * Options for extending a preset.
+ * Alias for {@link CreateConfigOptions}.
  */
-export interface PresetExtendOptions extends CreateConfigOptions {
-	// Inherits all CreateConfigOptions
-}
+export type PresetExtendOptions = CreateConfigOptions;
 
 /**
  * Preset configurations for common lint-staged setups.
@@ -53,7 +50,7 @@ export class Preset {
 	 * ```
 	 */
 	static minimal(extend: PresetExtendOptions = {}): LintStagedConfig {
-		return createConfig({
+		const options: CreateConfigOptions = {
 			// Enable only formatting handlers
 			packageJson: extend.packageJson ?? {},
 			biome: extend.biome ?? {},
@@ -64,11 +61,14 @@ export class Preset {
 			pnpmWorkspace: extend.pnpmWorkspace ?? false,
 			shellScripts: extend.shellScripts ?? false,
 			typescript: extend.typescript ?? false,
-			designDocs: extend.designDocs ?? false,
+		};
 
-			// Custom handlers
-			custom: extend.custom,
-		});
+		// Only add custom if defined
+		if (extend.custom !== undefined) {
+			options.custom = extend.custom;
+		}
+
+		return createConfig(options);
 	}
 
 	/**
@@ -95,7 +95,7 @@ export class Preset {
 	 * ```
 	 */
 	static standard(extend: PresetExtendOptions = {}): LintStagedConfig {
-		return createConfig({
+		const options: CreateConfigOptions = {
 			// Enable formatting and linting handlers
 			packageJson: extend.packageJson ?? {},
 			biome: extend.biome ?? {},
@@ -106,11 +106,14 @@ export class Preset {
 
 			// Disable advanced handlers
 			typescript: extend.typescript ?? false,
-			designDocs: extend.designDocs ?? false,
+		};
 
-			// Custom handlers
-			custom: extend.custom,
-		});
+		// Only add custom if defined
+		if (extend.custom !== undefined) {
+			options.custom = extend.custom;
+		}
+
+		return createConfig(options);
 	}
 
 	/**
@@ -124,7 +127,6 @@ export class Preset {
 	 * - PnpmWorkspace (sort + format)
 	 * - ShellScripts (chmod management)
 	 * - TypeScript (TSDoc + typecheck)
-	 * - DesignDocs (validation + timestamps)
 	 *
 	 * @param extend - Options to customize or extend the preset
 	 * @returns A lint-staged configuration object
@@ -139,7 +141,7 @@ export class Preset {
 	 * ```
 	 */
 	static full(extend: PresetExtendOptions = {}): LintStagedConfig {
-		return createConfig({
+		const options: CreateConfigOptions = {
 			// Enable all handlers
 			packageJson: extend.packageJson ?? {},
 			biome: extend.biome ?? {},
@@ -148,11 +150,14 @@ export class Preset {
 			pnpmWorkspace: extend.pnpmWorkspace ?? {},
 			shellScripts: extend.shellScripts ?? {},
 			typescript: extend.typescript ?? {},
-			designDocs: extend.designDocs ?? true, // Enable by default in full preset
+		};
 
-			// Custom handlers
-			custom: extend.custom,
-		});
+		// Only add custom if defined
+		if (extend.custom !== undefined) {
+			options.custom = extend.custom;
+		}
+
+		return createConfig(options);
 	}
 
 	/**

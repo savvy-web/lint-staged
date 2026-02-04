@@ -5,7 +5,6 @@ import {
 	Biome,
 	Command,
 	ConfigSearch,
-	DesignDocs,
 	Filter,
 	Markdown,
 	PackageJson,
@@ -45,38 +44,30 @@ describe("Handler classes", () => {
 			expect(PackageJson.defaultExcludes).toContain("__fixtures__");
 		});
 
-		it("should filter excluded files and sort in-place", () => {
-			// Create a test package.json with unsorted keys
+		it("should filter excluded files and return sort + biome command chain", () => {
 			const testFile = join(FIXTURES_DIR, "package.json");
-			const unsorted = '{"version": "1.0.0", "name": "test"}';
-			writeFileSync(testFile, unsorted, "utf-8");
+			writeFileSync(testFile, '{"version": "1.0.0", "name": "test"}', "utf-8");
 
 			const handler = PackageJson.create();
 			const result = handler([testFile, "dist/package.json", "__fixtures__/package.json"]);
 
-			// Should return only the biome command (sorting is done in-place)
-			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile}`);
-
-			// File should have been sorted (name before version)
-			const sorted = readFileSync(testFile, "utf-8");
-			expect(sorted).toContain('"name"');
-			expect(sorted.indexOf('"name"')).toBeLessThan(sorted.indexOf('"version"'));
+			// Should return sort-package-json command chained with biome
+			expect(result).toContain("sort-package-json");
+			expect(result).toContain("biome check --write --max-diagnostics=none");
+			expect(result).toContain(testFile);
+			expect(result).toContain("&&");
 		});
 
 		it("should skip sort when option is set", () => {
-			// Create a test package.json with unsorted keys
 			const testFile = join(FIXTURES_DIR, "skip-sort-package.json");
-			const unsorted = '{"version": "1.0.0", "name": "test"}';
-			writeFileSync(testFile, unsorted, "utf-8");
+			writeFileSync(testFile, '{"version": "1.0.0", "name": "test"}', "utf-8");
 
 			const handler = PackageJson.create({ skipSort: true });
 			const result = handler([testFile]);
 
+			// Should only return biome command (no sort-package-json)
+			expect(result).not.toContain("sort-package-json");
 			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile}`);
-
-			// File should NOT have been sorted
-			const content = readFileSync(testFile, "utf-8");
-			expect(content).toBe(unsorted);
 		});
 
 		it("should return empty array when all files excluded", () => {
@@ -171,8 +162,8 @@ describe("Handler classes", () => {
 			const handler = Yaml.create();
 			const result = handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
-			// Should return empty array (all work done in-place)
-			expect(result).toEqual([]);
+			// Should return git add command to re-stage modified files
+			expect(result).toBe(`git add ${testFile}`);
 
 			// File should be formatted (extra spaces removed)
 			const formatted = readFileSync(testFile, "utf-8");
@@ -217,8 +208,8 @@ describe("Handler classes", () => {
 				const handler = PnpmWorkspace.create();
 				const result = handler([]);
 
-				// Should return empty array (all work done in-place)
-				expect(result).toEqual([]);
+				// Should return git add command to re-stage the modified file
+				expect(result).toBe("git add pnpm-workspace.yaml");
 
 				// File should be sorted and formatted
 				const content = readFileSync(filepath, "utf-8");
@@ -313,26 +304,6 @@ describe("Handler classes", () => {
 
 		it("should have isTsdocAvailable method", () => {
 			expect(typeof TypeScript.isTsdocAvailable).toBe("function");
-		});
-	});
-
-	describe("DesignDocs", () => {
-		it("should have correct glob pattern", () => {
-			expect(DesignDocs.glob).toBe(".claude/design/**/*.md");
-		});
-
-		it("should run validate and timestamp scripts", () => {
-			const handler = DesignDocs.create();
-			const result = handler([".claude/design/module/doc.md"]);
-			expect(result).toHaveLength(2);
-			expect((result as string[])[0]).toContain("validate-design-doc.sh");
-			expect((result as string[])[1]).toContain("update-timestamp.sh");
-		});
-
-		it("should skip timestamp when option is set", () => {
-			const handler = DesignDocs.create({ skipTimestamp: true });
-			const result = handler([".claude/design/module/doc.md"]);
-			expect(result).toHaveLength(1);
 		});
 	});
 });
@@ -441,7 +412,7 @@ describe("Utility classes", () => {
 
 describe("Configuration utilities", () => {
 	describe("createConfig", () => {
-		it("should create config with all default handlers except designDocs", () => {
+		it("should create config with all default handlers", () => {
 			const config = createConfig();
 
 			expect(config[PackageJson.glob]).toBeDefined();
@@ -451,8 +422,6 @@ describe("Configuration utilities", () => {
 			expect(config[PnpmWorkspace.glob]).toBeDefined();
 			expect(config[ShellScripts.glob]).toBeDefined();
 			expect(config[TypeScript.glob]).toBeDefined();
-			// DesignDocs is disabled by default
-			expect(config[DesignDocs.glob]).toBeUndefined();
 		});
 
 		it("should allow disabling handlers", () => {
@@ -467,22 +436,6 @@ describe("Configuration utilities", () => {
 			expect(config[Markdown.glob]).toBeUndefined();
 			// Others should still be present
 			expect(config[Yaml.glob]).toBeDefined();
-		});
-
-		it("should allow enabling designDocs with true", () => {
-			const config = createConfig({
-				designDocs: true,
-			});
-
-			expect(config[DesignDocs.glob]).toBeDefined();
-		});
-
-		it("should allow enabling designDocs with options", () => {
-			const config = createConfig({
-				designDocs: { skipTimestamp: true },
-			});
-
-			expect(config[DesignDocs.glob]).toBeDefined();
 		});
 
 		it("should pass options to handlers", () => {
@@ -552,9 +505,8 @@ describe("Configuration utilities", () => {
 				expect(config[Yaml.glob]).toBeDefined();
 				expect(config[PnpmWorkspace.glob]).toBeDefined();
 				expect(config[ShellScripts.glob]).toBeDefined();
-				// TypeScript and DesignDocs are disabled
+				// TypeScript is disabled in standard preset
 				expect(config[TypeScript.glob]).toBeUndefined();
-				expect(config[DesignDocs.glob]).toBeUndefined();
 			});
 
 			it("should allow extending with options", () => {
@@ -569,7 +521,7 @@ describe("Configuration utilities", () => {
 		});
 
 		describe("full", () => {
-			it("should include all handlers including designDocs", () => {
+			it("should include all handlers", () => {
 				const config = Preset.full();
 
 				expect(config[PackageJson.glob]).toBeDefined();
@@ -579,25 +531,14 @@ describe("Configuration utilities", () => {
 				expect(config[PnpmWorkspace.glob]).toBeDefined();
 				expect(config[ShellScripts.glob]).toBeDefined();
 				expect(config[TypeScript.glob]).toBeDefined();
-				expect(config[DesignDocs.glob]).toBeDefined();
 			});
 
 			it("should allow customizing handlers", () => {
 				const config = Preset.full({
 					typescript: { skipTypecheck: true },
-					designDocs: { skipTimestamp: true },
 				});
 
 				expect(config[TypeScript.glob]).toBeDefined();
-				expect(config[DesignDocs.glob]).toBeDefined();
-			});
-
-			it("should allow disabling handlers", () => {
-				const config = Preset.full({
-					designDocs: false,
-				});
-
-				expect(config[DesignDocs.glob]).toBeUndefined();
 			});
 		});
 
@@ -616,7 +557,6 @@ describe("Configuration utilities", () => {
 			it("should return full preset by name", () => {
 				const config = Preset.get("full");
 				expect(config[TypeScript.glob]).toBeDefined();
-				expect(config[DesignDocs.glob]).toBeDefined();
 			});
 
 			it("should allow extending presets via get", () => {

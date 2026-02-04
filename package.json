@@ -15,6 +15,9 @@
 		"linting"
 	],
 	"homepage": "https://github.com/savvy-web/lint-staged#readme",
+	"bugs": {
+		"url": "https://github.com/savvy-web/lint-staged/issues"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/savvy-web/lint-staged.git"
@@ -29,6 +32,9 @@
 	"exports": {
 		".": "./src/index.ts"
 	},
+	"bin": {
+		"savvy-lint": "./src/bin/cli.ts"
+	},
 	"scripts": {
 		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"build:dev": "rslib build --config-loader native --env-mode dev",
@@ -37,6 +43,7 @@
 		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full",
 		"ci:test": "CI=\"true\" turbo run test:coverage --log-prefix=none --log-order=grouped",
 		"ci:version": "changeset version && biome format --write .",
+		"postinstall": "savvy-lint check --quiet || true",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
@@ -50,38 +57,41 @@
 		"types:check": "tsgo --noEmit"
 	},
 	"dependencies": {
+		"@effect/cli": "^0.73.2",
+		"@effect/platform": "^0.94.3",
+		"@effect/platform-node": "^0.104.1",
 		"@typescript-eslint/parser": "^8.54.0",
 		"cosmiconfig": "^9.0.0",
+		"effect": "^3.19.16",
 		"eslint": "^9.39.2",
 		"eslint-plugin-tsdoc": "^0.5.0",
 		"sort-package-json": "^3.6.1",
-		"workspace-tools": "^0.40.4",
+		"workspace-tools": "^0.41.0",
 		"yaml": "^2.8.2"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.29.8",
-		"@commitlint/cli": "^20.3.1",
-		"@commitlint/config-conventional": "^20.3.1",
-		"@microsoft/api-extractor": "^7.56.0",
-		"@rslib/core": "^0.19.4",
-		"@savvy-web/rslib-builder": "^0.7.0",
-		"@types/node": "^25.2.0",
-		"@typescript/native-preview": "7.0.0-dev.20260201.1",
-		"@vitest/coverage-v8": "^4.0.18",
-		"husky": "^9.1.7",
-		"lint-staged": "^16.2.7",
-		"markdownlint-cli2": "^0.20.0",
-		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.8.1",
-		"typescript": "^5.9.3",
-		"vitest": "^4.0.18"
+		"@microsoft/api-extractor": "catalog:silk",
+		"@rslib/core": "catalog:silk",
+		"@savvy-web/commitlint": "^0.2.1",
+		"@savvy-web/rslib-builder": "^0.11.0",
+		"@types/node": "catalog:silk",
+		"@typescript/native-preview": "catalog:silk",
+		"@vitest/coverage-v8": "catalog:silk",
+		"husky": "catalog:silk",
+		"lint-staged": "catalog:silk",
+		"markdownlint-cli2": "catalog:silk",
+		"markdownlint-cli2-formatter-codequality": "catalog:silk",
+		"turbo": "catalog:silk",
+		"typescript": "catalog:silk",
+		"vitest": "catalog:silk"
 	},
 	"peerDependencies": {
 		"@biomejs/biome": "^2.3.12",
-		"husky": "^9.1.7",
-		"lint-staged": "^16.2.7",
-		"markdownlint-cli2": "^0.20.0",
-		"markdownlint-cli2-formatter-codequality": "^0.0.7"
+		"husky": "catalog:silk",
+		"lint-staged": "catalog:silk",
+		"markdownlint-cli2": "catalog:silk",
+		"markdownlint-cli2-formatter-codequality": "catalog:silk"
 	},
 	"peerDependenciesMeta": {
 		"@biomejs/biome": {

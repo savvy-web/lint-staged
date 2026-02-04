@@ -17,7 +17,7 @@ export default Preset.minimal();
 // Standard - formatting + linting (recommended)
 export default Preset.standard();
 
-// Full - everything including TypeScript and DesignDocs
+// Full - everything including TypeScript
 export default Preset.full();
 ```
 
@@ -32,7 +32,6 @@ export default Preset.full();
 | PnpmWorkspace | - | Yes | Yes |
 | ShellScripts | - | Yes | Yes |
 | TypeScript | - | - | Yes |
-| DesignDocs | - | - | Yes |
 
 ### Extending Presets
 
@@ -86,7 +85,7 @@ Generate a complete configuration with fine-grained control.
 import { createConfig } from '@savvy-web/lint-staged';
 
 export default createConfig({
-  // All handlers enabled by default (except TypeScript and DesignDocs)
+  // All handlers enabled by default (except TypeScript)
 });
 ```
 
@@ -106,7 +105,6 @@ export default createConfig({
 
   // Enable optional handlers
   typescript: { skipTypecheck: true },
-  designDocs: { skipTimestamp: true },  // Enable with options (use `true` for defaults)
 
   // Disable handlers
   shellScripts: false,
@@ -188,12 +186,6 @@ const options: CreateConfigOptions = {
     typecheckCommand: 'tsc --noEmit',
     rootDir: process.cwd(),
   },
-  designDocs: {
-    exclude: [],
-    validateScript: './scripts/validate.sh',
-    timestampScript: './scripts/timestamp.sh',
-    skipTimestamp: false,
-  },
   custom: {
     '*.css': (files) => `stylelint ${files.join(' ')}`,
   },
@@ -215,7 +207,6 @@ import {
   PnpmWorkspace,
   ShellScripts,
   TypeScript,
-  DesignDocs,
 } from '@savvy-web/lint-staged';
 
 export default {

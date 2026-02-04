@@ -4,8 +4,6 @@
  * Searches for config files in a prioritized order:
  * 1. `lib/configs/` directory (agency convention)
  * 2. Standard locations (repo root, etc.)
- *
- * @packageDocumentation
  */
 
 import { existsSync } from "node:fs";
@@ -206,7 +204,8 @@ export class ConfigSearch {
 			const explorer = cosmiconfigSync(moduleName, {
 				searchPlaces: standardPlaces,
 				loaders,
-				stopDir,
+				// Only include stopDir if defined (cosmiconfig requires string, not string | undefined)
+				...(stopDir !== undefined && { stopDir }),
 			});
 
 			const result = explorer.search(searchFrom);

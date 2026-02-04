@@ -17,8 +17,6 @@
  *   [Biome.glob]: Biome.create({ exclude: ['vendor/'] }),
  * };
  * ```
- *
- * @packageDocumentation
  */
 
 import type { BaseHandlerOptions, LintStagedHandler } from "./types.js";

@@ -1,8 +1,6 @@
 /**
  * Analyzes TypeScript import relationships to discover all files
  * reachable from specified entry points.
- *
- * @packageDocumentation
  */
 
 import { existsSync, readFileSync } from "node:fs";

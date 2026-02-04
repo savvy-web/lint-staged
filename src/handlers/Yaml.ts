@@ -2,8 +2,6 @@
  * Handler for YAML files.
  *
  * Formats and validates YAML files using the bundled yaml library.
- *
- * @packageDocumentation
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -122,7 +120,11 @@ export class Yaml {
 				}
 			}
 
-			// No CLI commands needed - all work done in-place
+			// Re-stage modified files so changes are included in the commit
+			if (!skipFormat && filtered.length > 0) {
+				return `git add ${filtered.join(" ")}`;
+			}
+
 			return [];
 		};
 	}
