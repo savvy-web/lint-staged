@@ -54,7 +54,7 @@ describe("Handler classes", () => {
 			const result = handler([testFile, "dist/package.json", "__fixtures__/package.json"]);
 
 			// Should return biome command chained with git add to stage all changes
-			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile} && git add ${testFile}`);
+			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}' && git add '${testFile}'`);
 
 			// File should have been sorted (name before version)
 			const sorted = readFileSync(testFile, "utf-8");
@@ -71,7 +71,7 @@ describe("Handler classes", () => {
 			const handler = PackageJson.create({ skipSort: true });
 			const result = handler([testFile]);
 
-			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile} && git add ${testFile}`);
+			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}' && git add '${testFile}'`);
 
 			// File should NOT have been sorted
 			const content = readFileSync(testFile, "utf-8");
@@ -171,7 +171,7 @@ describe("Handler classes", () => {
 			const result = handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
 			// Should return git add command to re-stage modified files
-			expect(result).toBe(`git add ${testFile}`);
+			expect(result).toBe(`git add '${testFile}'`);
 
 			// File should be formatted (extra spaces removed)
 			const formatted = readFileSync(testFile, "utf-8");
@@ -337,6 +337,23 @@ describe("Utility classes", () => {
 				exclude: [".test."],
 			});
 			expect(result).toEqual(["src/index.ts"]);
+		});
+
+		it("should escape file paths for shell commands", () => {
+			const files = ["src/index.ts", "path/with spaces/file.ts"];
+			const result = Filter.shellEscape(files);
+			expect(result).toBe("'src/index.ts' 'path/with spaces/file.ts'");
+		});
+
+		it("should escape single quotes in file paths", () => {
+			const files = ["path/with'quote/file.ts"];
+			const result = Filter.shellEscape(files);
+			expect(result).toBe("'path/with'\\''quote/file.ts'");
+		});
+
+		it("should handle empty array", () => {
+			const result = Filter.shellEscape([]);
+			expect(result).toBe("");
 		});
 	});
 

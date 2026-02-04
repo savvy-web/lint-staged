@@ -126,7 +126,7 @@ export class Biome {
 				"Biome is not available. Install it globally (recommended) or add @biomejs/biome as a dev dependency.",
 			);
 
-			const files = filtered.join(" ");
+			const files = Filter.shellEscape(filtered);
 			const flags = options.flags ?? [];
 			const configFlag = config ? `--config-path=${config}` : "";
 

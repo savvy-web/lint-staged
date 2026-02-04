@@ -77,8 +77,8 @@ export class PackageJson {
 				}
 			}
 
-			// Build Biome formatting command
-			const files = filtered.join(" ");
+			// Build Biome formatting command with properly escaped file paths
+			const files = Filter.shellEscape(filtered);
 			const biomeCmd = options.biomeConfig
 				? `biome check --write --max-diagnostics=none --config-path=${options.biomeConfig} ${files}`
 				: `biome check --write --max-diagnostics=none ${files}`;

@@ -7,7 +7,7 @@
  *
  * const handler = (filenames: readonly string[]) => {
  *   const filtered = Filter.exclude(filenames, ['dist/', '__fixtures__']);
- *   return filtered.length > 0 ? `biome check ${filtered.join(' ')}` : [];
+ *   return filtered.length > 0 ? `biome check ${Filter.shellEscape(filtered)}` : [];
  * };
  * ```
  */
@@ -94,5 +94,25 @@ export class Filter {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Escape file paths for safe shell command construction.
+	 *
+	 * Wraps each path in single quotes and escapes any embedded single quotes.
+	 * This prevents issues with paths containing spaces or special characters.
+	 *
+	 * @param filenames - Array of file paths
+	 * @returns Space-separated string of shell-escaped paths
+	 *
+	 * @example
+	 * ```typescript
+	 * const files = ['/path/to/file.ts', '/path/with spaces/file.ts'];
+	 * const escaped = Filter.shellEscape(files);
+	 * // Result: "'/path/to/file.ts' '/path/with spaces/file.ts'"
+	 * ```
+	 */
+	static shellEscape(filenames: readonly string[]): string {
+		return filenames.map((f) => `'${f.replace(/'/g, "'\\''")}'`).join(" ");
 	}
 }

@@ -126,7 +126,7 @@ export class Markdown {
 				"markdownlint-cli2 is not available. Install it globally or add it as a dev dependency.",
 			);
 
-			const files = filtered.join(" ");
+			const files = Filter.shellEscape(filtered);
 			const fixFlag = noFix ? "" : "--fix";
 			const configFlag = config ? `--config '${config}'` : "";
 
