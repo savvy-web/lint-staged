@@ -528,9 +528,9 @@ describe("Configuration utilities", () => {
 			});
 		});
 
-		describe("full", () => {
+		describe("silk", () => {
 			it("should include all handlers", () => {
-				const config = Preset.full();
+				const config = Preset.silk();
 
 				expect(config[PackageJson.glob]).toBeDefined();
 				expect(config[Biome.glob]).toBeDefined();
@@ -542,7 +542,7 @@ describe("Configuration utilities", () => {
 			});
 
 			it("should allow customizing handlers", () => {
-				const config = Preset.full({
+				const config = Preset.silk({
 					typescript: { skipTypecheck: true },
 				});
 
@@ -562,8 +562,8 @@ describe("Configuration utilities", () => {
 				expect(config[TypeScript.glob]).toBeUndefined();
 			});
 
-			it("should return full preset by name", () => {
-				const config = Preset.get("full");
+			it("should return silk preset by name", () => {
+				const config = Preset.get("silk");
 				expect(config[TypeScript.glob]).toBeDefined();
 			});
 

@@ -117,7 +117,7 @@ export class Preset {
 	}
 
 	/**
-	 * Full preset: all handlers enabled.
+	 * Silk preset: all handlers enabled.
 	 *
 	 * Includes:
 	 * - PackageJson (sort + format)
@@ -135,12 +135,12 @@ export class Preset {
 	 * ```typescript
 	 * import { Preset } from '@savvy-web/lint-staged';
 	 *
-	 * export default Preset.full({
+	 * export default Preset.silk({
 	 *   typescript: { skipTypecheck: true },
 	 * });
 	 * ```
 	 */
-	static full(extend: PresetExtendOptions = {}): LintStagedConfig {
+	static silk(extend: PresetExtendOptions = {}): LintStagedConfig {
 		const options: CreateConfigOptions = {
 			// Enable all handlers
 			packageJson: extend.packageJson ?? {},
@@ -163,7 +163,7 @@ export class Preset {
 	/**
 	 * Get a preset by name.
 	 *
-	 * @param name - The preset name: 'minimal', 'standard', or 'full'
+	 * @param name - The preset name: 'minimal', 'standard', or 'silk'
 	 * @param extend - Options to customize or extend the preset
 	 * @returns A lint-staged configuration object
 	 *
@@ -175,12 +175,12 @@ export class Preset {
 	 * export default Preset.get(presetName);
 	 * ```
 	 */
-	static get(name: "minimal" | "standard" | "full", extend: PresetExtendOptions = {}): LintStagedConfig {
+	static get(name: "minimal" | "standard" | "silk", extend: PresetExtendOptions = {}): LintStagedConfig {
 		switch (name) {
 			case "minimal":
 				return Preset.minimal(extend);
-			case "full":
-				return Preset.full(extend);
+			case "silk":
+				return Preset.silk(extend);
 			default:
 				return Preset.standard(extend);
 		}

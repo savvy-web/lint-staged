@@ -150,7 +150,7 @@ function updateManagedSection(existingContent: string, configPath: string): stri
 }
 
 /** Available presets. */
-type PresetType = "minimal" | "standard" | "full";
+type PresetType = "minimal" | "standard" | "silk";
 
 /**
  * Generate the lint-staged config file content.
@@ -182,10 +182,10 @@ const configOption = Options.text("config").pipe(
 	Options.withDefault(DEFAULT_CONFIG_PATH),
 );
 
-const presetOption = Options.choice("preset", ["minimal", "standard", "full"]).pipe(
+const presetOption = Options.choice("preset", ["minimal", "standard", "silk"]).pipe(
 	Options.withAlias("p"),
-	Options.withDescription("Preset to use: minimal, standard, or full"),
-	Options.withDefault("full" as const),
+	Options.withDescription("Preset to use: minimal, standard, or silk"),
+	Options.withDefault("silk" as const),
 );
 
 /**
