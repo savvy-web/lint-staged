@@ -44,30 +44,38 @@ describe("Handler classes", () => {
 			expect(PackageJson.defaultExcludes).toContain("__fixtures__");
 		});
 
-		it("should filter excluded files and return sort + biome command chain", () => {
+		it("should filter excluded files and sort in-place", () => {
+			// Create a test package.json with unsorted keys
 			const testFile = join(FIXTURES_DIR, "package.json");
-			writeFileSync(testFile, '{"version": "1.0.0", "name": "test"}', "utf-8");
+			const unsorted = '{"version": "1.0.0", "name": "test"}';
+			writeFileSync(testFile, unsorted, "utf-8");
 
 			const handler = PackageJson.create();
 			const result = handler([testFile, "dist/package.json", "__fixtures__/package.json"]);
 
-			// Should return sort-package-json command chained with biome
-			expect(result).toContain("sort-package-json");
-			expect(result).toContain("biome check --write --max-diagnostics=none");
-			expect(result).toContain(testFile);
-			expect(result).toContain("&&");
+			// Should return biome command chained with git add to stage all changes
+			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}' && git add '${testFile}'`);
+
+			// File should have been sorted (name before version)
+			const sorted = readFileSync(testFile, "utf-8");
+			expect(sorted).toContain('"name"');
+			expect(sorted.indexOf('"name"')).toBeLessThan(sorted.indexOf('"version"'));
 		});
 
 		it("should skip sort when option is set", () => {
+			// Create a test package.json with unsorted keys
 			const testFile = join(FIXTURES_DIR, "skip-sort-package.json");
-			writeFileSync(testFile, '{"version": "1.0.0", "name": "test"}', "utf-8");
+			const unsorted = '{"version": "1.0.0", "name": "test"}';
+			writeFileSync(testFile, unsorted, "utf-8");
 
 			const handler = PackageJson.create({ skipSort: true });
 			const result = handler([testFile]);
 
-			// Should only return biome command (no sort-package-json)
-			expect(result).not.toContain("sort-package-json");
-			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile}`);
+			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}' && git add '${testFile}'`);
+
+			// File should NOT have been sorted
+			const content = readFileSync(testFile, "utf-8");
+			expect(content).toBe(unsorted);
 		});
 
 		it("should return empty array when all files excluded", () => {
@@ -163,7 +171,7 @@ describe("Handler classes", () => {
 			const result = handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
 			// Should return git add command to re-stage modified files
-			expect(result).toBe(`git add ${testFile}`);
+			expect(result).toBe(`git add '${testFile}'`);
 
 			// File should be formatted (extra spaces removed)
 			const formatted = readFileSync(testFile, "utf-8");
@@ -329,6 +337,23 @@ describe("Utility classes", () => {
 				exclude: [".test."],
 			});
 			expect(result).toEqual(["src/index.ts"]);
+		});
+
+		it("should escape file paths for shell commands", () => {
+			const files = ["src/index.ts", "path/with spaces/file.ts"];
+			const result = Filter.shellEscape(files);
+			expect(result).toBe("'src/index.ts' 'path/with spaces/file.ts'");
+		});
+
+		it("should escape single quotes in file paths", () => {
+			const files = ["path/with'quote/file.ts"];
+			const result = Filter.shellEscape(files);
+			expect(result).toBe("'path/with'\\''quote/file.ts'");
+		});
+
+		it("should handle empty array", () => {
+			const result = Filter.shellEscape([]);
+			expect(result).toBe("");
 		});
 	});
 
@@ -520,9 +545,9 @@ describe("Configuration utilities", () => {
 			});
 		});
 
-		describe("full", () => {
+		describe("silk", () => {
 			it("should include all handlers", () => {
-				const config = Preset.full();
+				const config = Preset.silk();
 
 				expect(config[PackageJson.glob]).toBeDefined();
 				expect(config[Biome.glob]).toBeDefined();
@@ -534,7 +559,7 @@ describe("Configuration utilities", () => {
 			});
 
 			it("should allow customizing handlers", () => {
-				const config = Preset.full({
+				const config = Preset.silk({
 					typescript: { skipTypecheck: true },
 				});
 
@@ -554,8 +579,8 @@ describe("Configuration utilities", () => {
 				expect(config[TypeScript.glob]).toBeUndefined();
 			});
 
-			it("should return full preset by name", () => {
-				const config = Preset.get("full");
+			it("should return silk preset by name", () => {
+				const config = Preset.get("silk");
 				expect(config[TypeScript.glob]).toBeDefined();
 			});
 

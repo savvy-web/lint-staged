@@ -17,7 +17,7 @@
 				"README.md",
 				"LICENSE"
 			],
-			"outputLogs": "full",
+			"outputLogs": "errors-only",
 			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
 		},
 		"build:prod": {
@@ -38,9 +38,16 @@
 			"outputLogs": "full",
 			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
 		},
-		"test:coverage": {
+		"types:check": {
+			"cache": true,
+			"dependsOn": [],
+			"inputs": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"],
+			"outputLogs": "errors-only",
+			"outputs": []
+		},
+		"vitest:unit": {
 			"cache": false,
-			"dependsOn": ["types:check"],
+			"dependsOn": ["build:dev"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"$TURBO_ROOT$/package.json",
@@ -54,13 +61,6 @@
 			],
 			"outputLogs": "full",
 			"outputs": ["coverage/**"]
-		},
-		"types:check": {
-			"cache": true,
-			"dependsOn": [],
-			"inputs": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"],
-			"outputLogs": "errors-only",
-			"outputs": []
 		}
 	}
 }

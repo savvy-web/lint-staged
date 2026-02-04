@@ -28,10 +28,10 @@ const HUSKY_HOOK_PATH = ".husky/pre-commit";
 
 /** Possible lint-staged configuration file names, in priority order. */
 const CONFIG_FILES = [
+	"lint-staged.config.ts",
 	"lint-staged.config.js",
 	"lint-staged.config.mjs",
 	"lint-staged.config.cjs",
-	"lint-staged.config.ts",
 	".lintstagedrc",
 	".lintstagedrc.json",
 	".lintstagedrc.yaml",
@@ -42,7 +42,7 @@ const CONFIG_FILES = [
 ] as const;
 
 /** Paths to search for config files. */
-const CONFIG_SEARCH_PATHS = ["lib/configs/lint-staged.config.js", "lib/configs/lint-staged.config.ts", ...CONFIG_FILES];
+const CONFIG_SEARCH_PATHS = ["lib/configs/lint-staged.config.ts", "lib/configs/lint-staged.config.js", ...CONFIG_FILES];
 
 /**
  * Find the first existing config file.

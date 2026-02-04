@@ -17,13 +17,13 @@ export default Preset.minimal();
 // Standard - formatting + linting (recommended)
 export default Preset.standard();
 
-// Full - everything including TypeScript
-export default Preset.full();
+// Silk - everything including TypeScript
+export default Preset.silk();
 ```
 
 **Preset Comparison:**
 
-| Handler | minimal | standard | full |
+| Handler | minimal | standard | silk |
 | ------- | :-----: | :------: | :--: |
 | PackageJson | Yes | Yes | Yes |
 | Biome | Yes | Yes | Yes |
@@ -247,7 +247,7 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // Option 1: Different presets
 export default isCI
-  ? Preset.full()
+  ? Preset.silk()
   : Preset.standard();
 
 // Option 2: Conditional options

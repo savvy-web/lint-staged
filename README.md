@@ -59,7 +59,7 @@ export default {
 | ------ | -------- |
 | `minimal()` | PackageJson, Biome |
 | `standard()` | + Markdown, Yaml, PnpmWorkspace, ShellScripts |
-| `full()` | + TypeScript |
+| `silk()` | + TypeScript |
 
 Extend any preset with options:
 
@@ -77,7 +77,7 @@ export default Preset.standard({
 | Handler | Files | Description |
 | ------- | ----- | ----------- |
 | `PackageJson` | `**/package.json` | Sort and format with Biome |
-| `Biome` | `*.{js,ts,jsx,tsx,json}` | Format and lint |
+| `Biome` | `*.{js,ts,jsx,tsx,json,jsonc}` | Format and lint |
 | `Markdown` | `**/*.{md,mdx}` | Lint with markdownlint-cli2 |
 | `Yaml` | `**/*.{yml,yaml}` | Format and validate |
 | `PnpmWorkspace` | `pnpm-workspace.yaml` | Sort and format |

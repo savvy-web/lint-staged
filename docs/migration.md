@@ -9,7 +9,7 @@ How to migrate from raw lint-staged configurations to @savvy-web/lint-staged.
 **Before:**
 
 ```javascript
-// lint-staged.config.js
+// lint-staged.config.ts
 export default {
   '**/package.json': (filenames) => {
     const filtered = filenames.filter(f => !f.includes('dist/'));

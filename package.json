@@ -41,7 +41,7 @@
 		"build:inspect": "rslib inspect --verbose",
 		"build:prod": "rslib build --config-loader native --env-mode npm",
 		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full",
-		"ci:test": "CI=\"true\" turbo run test:coverage --log-prefix=none --log-order=grouped",
+		"ci:test": "CI=\"true\" turbo run vitest:unit --log-prefix=none --log-order=grouped",
 		"ci:version": "changeset version && biome format --write .",
 		"postinstall": "savvy-lint check --quiet || true",
 		"lint": "biome check --max-diagnostics=none",
@@ -50,11 +50,11 @@
 		"lint:md": "markdownlint-cli2 '**/*.{md,mdx}' --config './lib/configs/.markdownlint-cli2.jsonc'",
 		"lint:md:fix": "markdownlint-cli2  --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
 		"prepare": "husky",
-		"test": "vitest run",
-		"test:coverage": "vitest run --coverage",
+		"test": "turbo run vitest:unit --log-prefix=none --log-order=grouped",
 		"test:watch": "vitest --watch",
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
-		"types:check": "tsgo --noEmit"
+		"types:check": "tsgo --noEmit",
+		"vitest:unit": "vitest run --coverage"
 	},
 	"dependencies": {
 		"@effect/cli": "^0.73.2",

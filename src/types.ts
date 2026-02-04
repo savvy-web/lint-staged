@@ -217,4 +217,4 @@ export interface CreateConfigOptions {
 /**
  * Preset type for standard configurations.
  */
-export type PresetType = "minimal" | "standard" | "full";
+export type PresetType = "minimal" | "standard" | "silk";

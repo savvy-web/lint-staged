@@ -1,3 +1,4 @@
 {
+	"exclude": ["lib/configs/lint-staged.config.ts"],
 	"extends": ["@savvy-web/rslib-builder/tsconfig/ecma/lib.json"]
 }
