@@ -3,8 +3,8 @@ status: current
 module: lint-staged
 category: architecture
 created: 2026-01-25
-updated: 2026-01-25
-last-synced: 2026-01-25
+updated: 2026-02-04
+last-synced: 2026-02-04
 completeness: 100
 related: []
 dependencies: []
@@ -60,7 +60,7 @@ customization.
 
 The `@savvy-web/lint-staged` package is **fully implemented** with all eight handler
 classes, utility classes, and configuration presets. The package dogfoods itself via
-`lib/configs/lint-staged.config.js`.
+`lib/configs/lint-staged.config.ts`.
 
 ### Source Files
 
@@ -89,7 +89,7 @@ src/
 │   └── Yaml.ts           # YAML formatting/validation
 └── config/
     ├── createConfig.ts   # Full config factory
-    └── Preset.ts         # Preset configurations (minimal/standard/full)
+    └── Preset.ts         # Preset configurations (minimal/standard/silk)
 ```
 
 ### Handler Classes (Implemented)
@@ -313,10 +313,10 @@ All eight handler classes follow the static class pattern with:
 │   │   └── index.ts          # Re-exports
 │   └── config/
 │       ├── createConfig.ts   # Full config factory
-│       ├── Preset.ts         # Preset configurations (minimal/standard/full)
+│       ├── Preset.ts         # Preset configurations (minimal/standard/silk)
 │       └── index.ts          # Re-exports
 ├── lib/configs/
-│   ├── lint-staged.config.js # Dogfooding config
+│   ├── lint-staged.config.ts # Dogfooding config
 │   ├── eslint.config.ts      # TSDoc ESLint config
 │   └── .markdownlint-cli2.jsonc
 ├── dist/
@@ -358,7 +358,7 @@ All eight handler classes follow the static class pattern with:
 │  │                     │  │                                       │ │
 │  │  createConfig()     │  │  Preset.minimal()  - formatting only  │ │
 │  │  - All handlers     │  │  Preset.standard() - + linting        │ │
-│  │  - Custom additions │  │  Preset.full()     - + TSDoc/design   │ │
+│  │  - Custom additions │  │  Preset.silk()     - + TSDoc/design   │ │
 │  │  - Per-handler opts │  │  Preset.get(name)  - by name          │ │
 │  └────────────────────┘  └───────────────────────────────────────┘ │
 │                                                                      │
@@ -1184,8 +1184,8 @@ export default Preset.minimal();
 // Standard preset: formatting + linting (default)
 export default Preset.standard();
 
-// Full preset: everything including TSDoc and design docs
-export default Preset.full();
+// Silk preset: everything including TSDoc and design docs
+export default Preset.silk();
 
 // Extend a preset
 export default Preset.standard({
@@ -1206,7 +1206,7 @@ The package exports handlers compatible with lint-staged's function-based
 configuration:
 
 ```javascript
-// lint-staged.config.js
+// lint-staged.config.ts
 import { biome, markdown } from '@savvy-web/lint-staged';
 
 export default {
@@ -1313,7 +1313,7 @@ __fixtures__/
 - [x] Workspace-aware TSDoc resolution
 - [x] Auto-discovery for commands and config files
 - [x] Package manager detection and caching
-- [x] Dogfooding via lib/configs/lint-staged.config.js
+- [x] Dogfooding via lib/configs/lint-staged.config.ts
 
 ### Future Enhancements
 
