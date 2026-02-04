@@ -38,7 +38,7 @@ const END_MARKER = "# --- END SAVVY-LINT MANAGED SECTION ---";
 function generateManagedContent(configPath: string): string {
 	return `# DO NOT EDIT between these markers - managed by savvy-lint
 # Skip in CI environment
-[ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] && exit 0
+{ [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; } && exit 0
 
 # Get repo root directory
 ROOT=$(git rev-parse --show-toplevel)
