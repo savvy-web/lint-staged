@@ -206,7 +206,8 @@ export class ConfigSearch {
 			const explorer = cosmiconfigSync(moduleName, {
 				searchPlaces: standardPlaces,
 				loaders,
-				stopDir,
+				// Only include stopDir if defined (cosmiconfig requires string, not string | undefined)
+				...(stopDir !== undefined && { stopDir }),
 			});
 
 			const result = explorer.search(searchFrom);

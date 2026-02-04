@@ -53,7 +53,7 @@ export class Preset {
 	 * ```
 	 */
 	static minimal(extend: PresetExtendOptions = {}): LintStagedConfig {
-		return createConfig({
+		const options: CreateConfigOptions = {
 			// Enable only formatting handlers
 			packageJson: extend.packageJson ?? {},
 			biome: extend.biome ?? {},
@@ -65,10 +65,14 @@ export class Preset {
 			shellScripts: extend.shellScripts ?? false,
 			typescript: extend.typescript ?? false,
 			designDocs: extend.designDocs ?? false,
+		};
 
-			// Custom handlers
-			custom: extend.custom,
-		});
+		// Only add custom if defined
+		if (extend.custom !== undefined) {
+			options.custom = extend.custom;
+		}
+
+		return createConfig(options);
 	}
 
 	/**
@@ -95,7 +99,7 @@ export class Preset {
 	 * ```
 	 */
 	static standard(extend: PresetExtendOptions = {}): LintStagedConfig {
-		return createConfig({
+		const options: CreateConfigOptions = {
 			// Enable formatting and linting handlers
 			packageJson: extend.packageJson ?? {},
 			biome: extend.biome ?? {},
@@ -107,10 +111,14 @@ export class Preset {
 			// Disable advanced handlers
 			typescript: extend.typescript ?? false,
 			designDocs: extend.designDocs ?? false,
+		};
 
-			// Custom handlers
-			custom: extend.custom,
-		});
+		// Only add custom if defined
+		if (extend.custom !== undefined) {
+			options.custom = extend.custom;
+		}
+
+		return createConfig(options);
 	}
 
 	/**
@@ -139,7 +147,7 @@ export class Preset {
 	 * ```
 	 */
 	static full(extend: PresetExtendOptions = {}): LintStagedConfig {
-		return createConfig({
+		const options: CreateConfigOptions = {
 			// Enable all handlers
 			packageJson: extend.packageJson ?? {},
 			biome: extend.biome ?? {},
@@ -149,10 +157,14 @@ export class Preset {
 			shellScripts: extend.shellScripts ?? {},
 			typescript: extend.typescript ?? {},
 			designDocs: extend.designDocs ?? true, // Enable by default in full preset
+		};
 
-			// Custom handlers
-			custom: extend.custom,
-		});
+		// Only add custom if defined
+		if (extend.custom !== undefined) {
+			options.custom = extend.custom;
+		}
+
+		return createConfig(options);
 	}
 
 	/**

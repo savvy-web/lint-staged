@@ -6,7 +6,8 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
-import { getWorkspaces } from "workspace-tools";
+import { getWorkspaceInfos } from "workspace-tools";
+import type { ImportGraphOptions } from "./ImportGraph.js";
 import { ImportGraph } from "./ImportGraph.js";
 
 /**
@@ -98,20 +99,11 @@ export class TsDocResolver {
 		const repoTsdocPath = join(rootDir, "tsdoc.json");
 		const repoTsdocConfig = existsSync(repoTsdocPath) ? repoTsdocPath : undefined;
 
-		// Try to get workspaces
-		let workspaceInfos: ReturnType<typeof getWorkspaces>;
-		let isMonorepo = false;
+		// Try to get workspaces (returns undefined if not a monorepo or on error)
+		const workspaceInfos = getWorkspaceInfos(rootDir);
+		const isMonorepo = workspaceInfos !== undefined && workspaceInfos.length > 1;
 
-		try {
-			workspaceInfos = getWorkspaces(rootDir);
-			isMonorepo = workspaceInfos.length > 1;
-		} catch {
-			// Not a monorepo or workspace-tools failed
-			// Treat as single-package repo
-			workspaceInfos = [];
-		}
-
-		if (workspaceInfos.length === 0) {
+		if (workspaceInfos === undefined || workspaceInfos.length === 0) {
 			// Single-package repo
 			const result = this.resolveWorkspace(rootDir, repoTsdocConfig);
 			if (result) {
@@ -128,11 +120,17 @@ export class TsDocResolver {
 			}
 		}
 
-		return {
+		const result: TsDocResolverResult = {
 			workspaces,
 			isMonorepo,
-			repoTsdocConfig,
 		};
+
+		// Only add repoTsdocConfig if defined (exactOptionalPropertyTypes)
+		if (repoTsdocConfig !== undefined) {
+			result.repoTsdocConfig = repoTsdocConfig;
+		}
+
+		return result;
 	}
 
 	/**
@@ -180,10 +178,16 @@ export class TsDocResolver {
 		const errors: string[] = [];
 
 		// Use ImportGraph to trace files from package exports
-		const graph = new ImportGraph({
+		const graphOptions: ImportGraphOptions = {
 			rootDir: workspacePath,
-			excludePatterns: this.options.excludePatterns,
-		});
+		};
+
+		// Only add excludePatterns if defined (ImportGraphOptions requires string[], not string[] | undefined)
+		if (this.options.excludePatterns !== undefined) {
+			graphOptions.excludePatterns = this.options.excludePatterns;
+		}
+
+		const graph = new ImportGraph(graphOptions);
 
 		const result = graph.traceFromPackageExports(packageJsonPath);
 
