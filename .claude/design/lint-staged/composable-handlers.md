@@ -80,7 +80,6 @@ src/
 │   └── TsDocResolver.ts  # Workspace-aware TSDoc file resolution
 ├── handlers/
 │   ├── Biome.ts          # JS/TS/JSON formatting
-│   ├── DesignDocs.ts     # Design doc validation
 │   ├── Markdown.ts       # Markdown linting
 │   ├── PackageJson.ts    # package.json sorting/formatting
 │   ├── PnpmWorkspace.ts  # pnpm-workspace.yaml handling
@@ -94,7 +93,7 @@ src/
 
 ### Handler Classes (Implemented)
 
-All eight handler classes follow the static class pattern with:
+All seven handler classes follow the static class pattern with:
 
 - `glob` - Recommended file pattern
 - `defaultExcludes` - Default exclusion patterns
@@ -105,7 +104,6 @@ All eight handler classes follow the static class pattern with:
 | :--- | :--- | :--- |
 | PackageJson | `**/package.json` | Bundled sort-package-json + Biome |
 | Biome | `*.{js,ts,cjs,mjs,...}` | Auto-discovers command and config |
-| DesignDocs | `.claude/design/**/*.md` | Shell script validation |
 | Markdown | `**/*.{md,mdx}` | Auto-discovers markdownlint-cli2 |
 | PnpmWorkspace | `pnpm-workspace.yaml` | Bundled yaml package |
 | ShellScripts | `**/*.sh` | chmod permission management |
@@ -303,7 +301,6 @@ All eight handler classes follow the static class pattern with:
 │   │   └── TsDocResolver.ts  # Workspace-aware TSDoc resolution
 │   ├── handlers/
 │   │   ├── Biome.ts          # JS/TS/JSON formatting (auto-discovers)
-│   │   ├── DesignDocs.ts     # Design doc validation
 │   │   ├── Markdown.ts       # Markdown linting (auto-discovers)
 │   │   ├── PackageJson.ts    # Bundled sort-package-json
 │   │   ├── PnpmWorkspace.ts  # Bundled yaml sorting
@@ -335,7 +332,7 @@ All eight handler classes follow the static class pattern with:
 │  │                      Handler Classes                            │ │
 │  │                                                                 │ │
 │  │  PackageJson │ Biome │ Markdown │ Yaml │ TypeScript            │ │
-│  │  DesignDocs  │ PnpmWorkspace │ ShellScripts                    │ │
+│  │  PnpmWorkspace │ ShellScripts                                  │ │
 │  │                                                                 │ │
 │  │  Static API: .glob  .defaultExcludes  .handler  .create()      │ │
 │  │  Static methods: findConfig() isAvailable() (some handlers)    │ │
@@ -358,7 +355,7 @@ All eight handler classes follow the static class pattern with:
 │  │                     │  │                                       │ │
 │  │  createConfig()     │  │  Preset.minimal()  - formatting only  │ │
 │  │  - All handlers     │  │  Preset.standard() - + linting        │ │
-│  │  - Custom additions │  │  Preset.silk()     - + TSDoc/design   │ │
+│  │  - Custom additions │  │  Preset.silk()     - + TSDoc          │ │
 │  │  - Per-handler opts │  │  Preset.get(name)  - by name          │ │
 │  └────────────────────┘  └───────────────────────────────────────┘ │
 │                                                                      │
@@ -388,7 +385,7 @@ All eight handler classes follow the static class pattern with:
    - Filter.exclude() removes unwanted files
    - Some handlers (TypeScript) do workspace-aware filtering
 8. Handler performs processing:
-   - Some return command strings (Biome, Markdown, DesignDocs, ShellScripts)
+   - Some return command strings (Biome, Markdown, ShellScripts)
    - Some process files in-place and return [] (PackageJson, Yaml, PnpmWorkspace)
    - TypeScript uses programmatic ESLint + returns typecheck command
 9. lint-staged executes returned commands (if any)
@@ -402,7 +399,6 @@ The handlers fall into three categories:
 
 - Biome - returns `biome check --write ...`
 - Markdown - returns `markdownlint-cli2 --fix ...`
-- DesignDocs - returns validation/timestamp script commands
 - ShellScripts - returns `chmod` commands
 
 **In-place processing handlers:**
@@ -618,61 +614,6 @@ class Biome {
 - Uses `Command.findTool('biome')` for command discovery
 - Uses `ConfigSearch.find('biome')` for config file discovery
 - Throws at handler invocation if biome not available
-
-### DesignDocs Handler
-
-Validates design documents and updates timestamps.
-
-```typescript
-/**
- * Options for the DesignDocs handler.
- */
-interface DesignDocsOptions extends BaseHandlerOptions {
-  /** Path to validation script */
-  validateScript?: string;
-  /** Path to timestamp update script */
-  timestampScript?: string;
-  /** Skip timestamp updates */
-  skipTimestamp?: boolean;
-}
-
-/**
- * Handler for design documentation files.
- * Validates structure and updates last-synced timestamps.
- *
- * @example
- * ```typescript
- * import { DesignDocs } from '@savvy-web/lint-staged';
- *
- * export default {
- *   [DesignDocs.glob]: DesignDocs.create({
- *     validateScript: './scripts/validate-doc.sh',
- *   }),
- * };
- * ```
- */
-class DesignDocs extends Handler {
-  /** @defaultValue `'.claude/design/**\/*.md'` */
-  static readonly glob = '.claude/design/**/*.md';
-
-  /** @defaultValue `['design.config.json']` */
-  static readonly defaultExcludes = ['design.config.json'] as const;
-
-  /** @defaultValue `'.claude/skills/design-validate/scripts/validate-design-doc.sh'` */
-  static readonly defaultValidateScript: string;
-
-  /** @defaultValue `'.claude/skills/design-update/scripts/update-timestamp.sh'` */
-  static readonly defaultTimestampScript: string;
-
-  static readonly handler: LintStagedHandler;
-  static create(options?: DesignDocsOptions): LintStagedHandler;
-}
-```
-
-**Commands (per file):**
-
-1. `{validateScript} "{file}"`
-2. `{timestampScript} "{file}"` (unless `skipTimestamp: true`)
 
 ### Markdown Handler
 
