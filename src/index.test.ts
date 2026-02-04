@@ -44,38 +44,30 @@ describe("Handler classes", () => {
 			expect(PackageJson.defaultExcludes).toContain("__fixtures__");
 		});
 
-		it("should filter excluded files and sort in-place", () => {
-			// Create a test package.json with unsorted keys
+		it("should filter excluded files and return sort + biome command chain", () => {
 			const testFile = join(FIXTURES_DIR, "package.json");
-			const unsorted = '{"version": "1.0.0", "name": "test"}';
-			writeFileSync(testFile, unsorted, "utf-8");
+			writeFileSync(testFile, '{"version": "1.0.0", "name": "test"}', "utf-8");
 
 			const handler = PackageJson.create();
 			const result = handler([testFile, "dist/package.json", "__fixtures__/package.json"]);
 
-			// Should return biome command chained with git add to stage all changes
-			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile} && git add ${testFile}`);
-
-			// File should have been sorted (name before version)
-			const sorted = readFileSync(testFile, "utf-8");
-			expect(sorted).toContain('"name"');
-			expect(sorted.indexOf('"name"')).toBeLessThan(sorted.indexOf('"version"'));
+			// Should return sort-package-json command chained with biome
+			expect(result).toContain("sort-package-json");
+			expect(result).toContain("biome check --write --max-diagnostics=none");
+			expect(result).toContain(testFile);
+			expect(result).toContain("&&");
 		});
 
 		it("should skip sort when option is set", () => {
-			// Create a test package.json with unsorted keys
 			const testFile = join(FIXTURES_DIR, "skip-sort-package.json");
-			const unsorted = '{"version": "1.0.0", "name": "test"}';
-			writeFileSync(testFile, unsorted, "utf-8");
+			writeFileSync(testFile, '{"version": "1.0.0", "name": "test"}', "utf-8");
 
 			const handler = PackageJson.create({ skipSort: true });
 			const result = handler([testFile]);
 
-			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile} && git add ${testFile}`);
-
-			// File should NOT have been sorted
-			const content = readFileSync(testFile, "utf-8");
-			expect(content).toBe(unsorted);
+			// Should only return biome command (no sort-package-json)
+			expect(result).not.toContain("sort-package-json");
+			expect(result).toBe(`biome check --write --max-diagnostics=none ${testFile}`);
 		});
 
 		it("should return empty array when all files excluded", () => {

@@ -4,9 +4,8 @@
  * Sorts fields with sort-package-json and formats with Biome.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
-import sortPackageJson from "sort-package-json";
 import type { LintStagedHandler, PackageJsonOptions } from "../types.js";
+import { Command } from "../utils/Command.js";
 import { Filter } from "../utils/Filter.js";
 
 /**
@@ -66,23 +65,25 @@ export class PackageJson {
 				return [];
 			}
 
-			// Sort package.json files in-place using the bundled library
+			const files = filtered.join(" ");
+			const commands: string[] = [];
+
+			// Sort package.json files using sort-package-json CLI
 			if (!skipSort) {
-				for (const filepath of filtered) {
-					const content = readFileSync(filepath, "utf-8");
-					const sorted = sortPackageJson(content);
-					writeFileSync(filepath, sorted, "utf-8");
-				}
+				const pm = Command.detectPackageManager();
+				const prefix = Command.getExecPrefix(pm);
+				const sortCmd = [...prefix, "sort-package-json", files].join(" ");
+				commands.push(sortCmd);
 			}
 
 			// Build Biome formatting command
-			const files = filtered.join(" ");
 			const biomeCmd = options.biomeConfig
 				? `biome check --write --max-diagnostics=none --config-path=${options.biomeConfig} ${files}`
 				: `biome check --write --max-diagnostics=none ${files}`;
+			commands.push(biomeCmd);
 
-			// Chain git add to ensure all changes (sorting + Biome formatting) are staged
-			return `${biomeCmd} && git add ${files}`;
+			// Chain all commands with && to ensure proper sequencing and staging
+			return commands.join(" && ");
 		};
 	}
 }
