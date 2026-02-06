@@ -10,6 +10,16 @@ export default NodeLibraryBuilder.create({
 			postinstall: "savvy-lint check --quiet || true",
 		};
 		delete pkg.publishConfig;
+
+		// Ensure bin paths have ./ prefix (npm requires this)
+		if (pkg.bin && typeof pkg.bin === "object") {
+			for (const [name, path] of Object.entries(pkg.bin)) {
+				if (typeof path === "string" && !path.startsWith("./")) {
+					pkg.bin[name] = `./${path}`;
+				}
+			}
+		}
+
 		return pkg;
 	},
 });
