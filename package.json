@@ -31,7 +31,7 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
-		"./biome/silk.jsonc": "./src/public/silk.jsonc"
+		"./biome/silk.jsonc": "./src/public/biome/silk.jsonc"
 	},
 	"bin": {
 		"savvy-lint": "./src/bin/cli.ts"
