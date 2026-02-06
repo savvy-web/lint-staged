@@ -44,7 +44,7 @@
 		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full",
 		"ci:test": "CI=\"true\" turbo run vitest:unit --log-prefix=none --log-order=grouped",
 		"ci:version": "changeset version && biome format --write .",
-		"generate:templates": "bun scripts/generate-markdownlint-template.ts && biome check --write src/cli/templates/markdownlint.gen.ts",
+		"generate:templates": "node scripts/generate-markdownlint-template.ts && biome check --write src/cli/templates/markdownlint.gen.ts",
 		"postinstall": "savvy-lint check --quiet || true",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
@@ -90,7 +90,7 @@
 		"vitest": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@biomejs/biome": "^2.3.14",
+		"@biomejs/biome": "2.3.14",
 		"husky": "catalog:silk",
 		"lint-staged": "catalog:silk",
 		"markdownlint-cli2": "catalog:silk",

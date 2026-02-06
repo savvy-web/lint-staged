@@ -55,7 +55,7 @@ importers:
   .:
     dependencies:
       '@biomejs/biome':
-        specifier: ^2.3.14
+        specifier: 2.3.14
         version: 2.3.14
       '@effect/cli':
         specifier: ^0.73.2

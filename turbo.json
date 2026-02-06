@@ -41,14 +41,33 @@
 		"generate:templates": {
 			"cache": true,
 			"dependsOn": [],
-			"inputs": ["lib/configs/.markdownlint-cli2.jsonc", "scripts/generate-markdownlint-template.ts"],
-			"outputLogs": "errors-only",
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yml",
+				"$TURBO_ROOT$/pnpm-workspace.yml",
+				"package.json",
+				"tsconfig.json",
+				"lib/configs/.markdownlint-cli2.jsonc",
+				"scripts/generate-markdownlint-template.ts"
+			],
+			"outputLogs": "full",
 			"outputs": ["src/cli/templates/*.gen.ts"]
 		},
 		"types:check": {
 			"cache": true,
 			"dependsOn": ["generate:templates"],
-			"inputs": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yml",
+				"$TURBO_ROOT$/pnpm-workspace.yml",
+				"package.json",
+				"tsconfig.json",
+				"*.ts",
+				"lib/**/*.ts",
+				"lib/**/*.mts"
+			],
 			"outputLogs": "errors-only",
 			"outputs": []
 		},
