@@ -33,7 +33,7 @@
 		".": "./src/index.ts"
 	},
 	"bin": {
-		"./savvy-lint": "./src/bin/cli.ts"
+		"savvy-lint": "./src/bin/cli.ts"
 	},
 	"scripts": {
 		"build": "turbo run build:dev build:prod --log-order=grouped",

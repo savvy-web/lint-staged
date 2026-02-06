@@ -8,5 +8,5 @@ Fix runtime issues with PackageJson handler, shell escaping, and CLI configurati
 - Add `Filter.shellEscape()` to properly quote file paths with spaces or special characters in all handlers
 - Rename `Preset.full()` to `Preset.silk()` for branding consistency
 - CLI init now generates `.ts` config files and uses `--preset silk` as default
-- Correct bin path (`./savvy-lint`) and repository URL for npm publish
+- Fix bin key in package.json (use command name `savvy-lint`, not path `./savvy-lint`) and correct repository URL for npm publish
 - Remove unnecessary `satisfies Configuration` type assertion from init config template
