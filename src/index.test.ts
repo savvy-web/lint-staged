@@ -53,8 +53,8 @@ describe("Handler classes", () => {
 			const handler = PackageJson.create();
 			const result = handler([testFile, "dist/package.json", "__fixtures__/package.json"]);
 
-			// Should return biome command chained with git add to stage all changes
-			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}' && git add '${testFile}'`);
+			// Should return biome command (lint-staged auto-stages modified files)
+			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}'`);
 
 			// File should have been sorted (name before version)
 			const sorted = readFileSync(testFile, "utf-8");
@@ -71,7 +71,7 @@ describe("Handler classes", () => {
 			const handler = PackageJson.create({ skipSort: true });
 			const result = handler([testFile]);
 
-			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}' && git add '${testFile}'`);
+			expect(result).toBe(`biome check --write --max-diagnostics=none '${testFile}'`);
 
 			// File should NOT have been sorted
 			const content = readFileSync(testFile, "utf-8");
@@ -170,8 +170,8 @@ describe("Handler classes", () => {
 			const handler = Yaml.create();
 			const result = handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
-			// Should return git add command to re-stage modified files
-			expect(result).toBe(`git add '${testFile}'`);
+			// Formatting is done in-place; lint-staged auto-stages modified files
+			expect(result).toEqual([]);
 
 			// File should be formatted (extra spaces removed)
 			const formatted = readFileSync(testFile, "utf-8");
@@ -216,8 +216,8 @@ describe("Handler classes", () => {
 				const handler = PnpmWorkspace.create();
 				const result = handler([]);
 
-				// Should return git add command to re-stage the modified file
-				expect(result).toBe("git add pnpm-workspace.yaml");
+				// Sorting/formatting is done in-place; lint-staged auto-stages modified files
+				expect(result).toEqual([]);
 
 				// File should be sorted and formatted
 				const content = readFileSync(filepath, "utf-8");

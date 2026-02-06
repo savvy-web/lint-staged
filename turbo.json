@@ -38,9 +38,16 @@
 			"outputLogs": "full",
 			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
 		},
-		"types:check": {
+		"generate:templates": {
 			"cache": true,
 			"dependsOn": [],
+			"inputs": ["lib/configs/.markdownlint-cli2.jsonc", "scripts/generate-markdownlint-template.ts"],
+			"outputLogs": "errors-only",
+			"outputs": ["src/cli/templates/*.gen.ts"]
+		},
+		"types:check": {
+			"cache": true,
+			"dependsOn": ["generate:templates"],
 			"inputs": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"],
 			"outputLogs": "errors-only",
 			"outputs": []

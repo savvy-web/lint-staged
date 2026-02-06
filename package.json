@@ -30,7 +30,8 @@
 	},
 	"type": "module",
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.ts",
+		"./biome/silk.jsonc": "./src/public/silk.jsonc"
 	},
 	"bin": {
 		"savvy-lint": "./src/bin/cli.ts"
@@ -43,6 +44,7 @@
 		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full",
 		"ci:test": "CI=\"true\" turbo run vitest:unit --log-prefix=none --log-order=grouped",
 		"ci:version": "changeset version && biome format --write .",
+		"generate:templates": "bun scripts/generate-markdownlint-template.ts && biome check --write src/cli/templates/markdownlint.gen.ts",
 		"postinstall": "savvy-lint check --quiet || true",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
@@ -65,6 +67,7 @@
 		"effect": "^3.19.16",
 		"eslint": "^9.39.2",
 		"eslint-plugin-tsdoc": "^0.5.0",
+		"jsonc-parser": "^3.3.1",
 		"sort-package-json": "^3.6.1",
 		"workspace-tools": "^0.41.0",
 		"yaml": "^2.8.2"
@@ -74,7 +77,7 @@
 		"@microsoft/api-extractor": "catalog:silk",
 		"@rslib/core": "catalog:silk",
 		"@savvy-web/commitlint": "^0.2.1",
-		"@savvy-web/rslib-builder": "^0.11.0",
+		"@savvy-web/rslib-builder": "^0.12.0",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"@vitest/coverage-v8": "catalog:silk",
@@ -87,7 +90,7 @@
 		"vitest": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@biomejs/biome": "^2.3.12",
+		"@biomejs/biome": "^2.3.14",
 		"husky": "catalog:silk",
 		"lint-staged": "catalog:silk",
 		"markdownlint-cli2": "catalog:silk",

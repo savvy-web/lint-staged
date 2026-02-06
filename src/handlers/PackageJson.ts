@@ -83,8 +83,7 @@ export class PackageJson {
 				? `biome check --write --max-diagnostics=none --config-path=${options.biomeConfig} ${files}`
 				: `biome check --write --max-diagnostics=none ${files}`;
 
-			// Chain with git add to ensure all changes (sorting + Biome formatting) are staged
-			return `${biomeCmd} && git add ${files}`;
+			return biomeCmd;
 		};
 	}
 }

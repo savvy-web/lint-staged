@@ -4,22 +4,19 @@ export default NodeLibraryBuilder.create({
 	// Externalize typescript - it uses __filename which doesn't work when bundled in ESM
 	// Also externalize source-map-support which is an optional typescript dependency
 	externals: ["typescript", "source-map-support"],
+	copyPatterns: [
+		{
+			from: "./**/*.jsonc",
+			context: "./src/public",
+		},
+	],
 	transform({ pkg }) {
-		delete pkg.devDependencies;
 		pkg.scripts = {
 			postinstall: "savvy-lint check --quiet || true",
 		};
+		delete pkg.devDependencies;
 		delete pkg.publishConfig;
-
-		// Ensure bin paths have ./ prefix (npm requires this)
-		if (pkg.bin && typeof pkg.bin === "object") {
-			for (const [name, path] of Object.entries(pkg.bin)) {
-				if (typeof path === "string" && !path.startsWith("./")) {
-					pkg.bin[name] = `./${path}`;
-				}
-			}
-		}
-
+		delete pkg.devEngines;
 		return pkg;
 	},
 });

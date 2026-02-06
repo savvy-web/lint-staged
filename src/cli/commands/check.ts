@@ -3,13 +3,25 @@
  *
  * @internal
  */
+import { isDeepStrictEqual } from "node:util";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
 import { Effect } from "effect";
+import { parse } from "jsonc-parser";
 import { Biome } from "../../handlers/Biome.js";
 import { Markdown } from "../../handlers/Markdown.js";
 import { TypeScript } from "../../handlers/TypeScript.js";
-import { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent } from "./init.js";
+import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA } from "../templates/markdownlint.gen.js";
+import {
+	BEGIN_MARKER,
+	END_MARKER,
+	MARKDOWNLINT_CONFIG_PATH,
+	POST_CHECKOUT_HOOK_PATH,
+	POST_MERGE_HOOK_PATH,
+	extractManagedSection,
+	generateManagedContent,
+	generateShellScriptsManagedContent,
+} from "./init.js";
 
 /** Unicode checkmark symbol. */
 const CHECK_MARK = "\u2713";
@@ -74,7 +86,39 @@ function extractConfigPathFromManaged(managedContent: string): string | null {
 }
 
 /**
- * Check if the managed section is up-to-date.
+ * Check if a hook's managed section is up-to-date against expected content.
+ *
+ * @param hookPath - Path to the hook file
+ * @param hookContent - The hook file content
+ * @param expectedManagedContent - The expected managed content (without markers)
+ * @returns Object with status information
+ */
+function checkHookManagedSection(
+	hookContent: string,
+	expectedManagedContent: string,
+): {
+	found: boolean;
+	isUpToDate: boolean;
+	needsUpdate: boolean;
+} {
+	const { managedSection, found } = extractManagedSection(hookContent);
+
+	if (!found) {
+		return { found: false, isUpToDate: false, needsUpdate: false };
+	}
+
+	const expectedSection = `${BEGIN_MARKER}\n${expectedManagedContent}\n${END_MARKER}`;
+
+	const normalizedExisting = managedSection.trim().replace(/\s+/g, " ");
+	const normalizedExpected = expectedSection.trim().replace(/\s+/g, " ");
+
+	const isUpToDate = normalizedExisting === normalizedExpected;
+
+	return { found: true, isUpToDate, needsUpdate: !isUpToDate };
+}
+
+/**
+ * Check if the pre-commit managed section is up-to-date.
  *
  * @param existingManaged - The existing managed section content
  * @returns Object with isUpToDate flag and any differences
@@ -101,6 +145,25 @@ function checkManagedSectionStatus(existingManaged: string): {
 	const isUpToDate = normalizedExisting === normalizedExpected;
 
 	return { isUpToDate, configPath, needsUpdate: !isUpToDate };
+}
+
+/**
+ * Check the markdownlint-cli2 config against the template.
+ *
+ * @param content - The existing file content
+ * @returns Status object with match details
+ */
+function checkMarkdownlintConfig(content: string): {
+	exists: true;
+	schemaMatches: boolean;
+	configMatches: boolean;
+	isUpToDate: boolean;
+} {
+	const parsed = parse(content) as Record<string, unknown>;
+	const schemaMatches = parsed.$schema === MARKDOWNLINT_SCHEMA;
+	const existingConfig = parsed.config as Record<string, unknown> | undefined;
+	const configMatches = existingConfig !== undefined && isDeepStrictEqual(existingConfig, MARKDOWNLINT_CONFIG);
+	return { exists: true, schemaMatches, configMatches, isUpToDate: schemaMatches && configMatches };
 }
 
 const quietOption = Options.boolean("quiet").pipe(
@@ -163,6 +226,51 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 			warnings.push(`${WARNING}  No lint-staged config file found.\n   Run 'savvy-lint init' to create one.`);
 		}
 
+		// Check shell script hooks (post-checkout, post-merge)
+		// Only validate if hook exists AND has a managed section — these are optional
+		const shellHookPaths = [POST_CHECKOUT_HOOK_PATH, POST_MERGE_HOOK_PATH] as const;
+		const shellHookStatuses: { path: string; found: boolean; isUpToDate: boolean; needsUpdate: boolean }[] = [];
+
+		for (const hookPath of shellHookPaths) {
+			const hookExists = yield* fs.exists(hookPath);
+			if (hookExists) {
+				const hookContent = yield* fs.readFileString(hookPath);
+				const status = checkHookManagedSection(hookContent, generateShellScriptsManagedContent());
+				shellHookStatuses.push({ path: hookPath, ...status });
+
+				if (status.found && status.needsUpdate) {
+					warnings.push(
+						`${WARNING}  Your ${hookPath} managed section is outdated.\n   Run 'savvy-lint init' to update it (preserves your custom hooks).`,
+					);
+				}
+			}
+		}
+
+		// Check markdownlint config
+		const hasMarkdownlintConfig = yield* fs.exists(MARKDOWNLINT_CONFIG_PATH);
+		let markdownlintStatus: { exists: boolean; schemaMatches: boolean; configMatches: boolean; isUpToDate: boolean } = {
+			exists: false,
+			schemaMatches: false,
+			configMatches: false,
+			isUpToDate: false,
+		};
+
+		if (hasMarkdownlintConfig) {
+			const mdContent = yield* fs.readFileString(MARKDOWNLINT_CONFIG_PATH);
+			markdownlintStatus = checkMarkdownlintConfig(mdContent);
+
+			if (!markdownlintStatus.schemaMatches) {
+				warnings.push(
+					`${WARNING}  ${MARKDOWNLINT_CONFIG_PATH}: $schema differs from template.\n   Run 'savvy-lint init' to update it.`,
+				);
+			}
+			if (!markdownlintStatus.configMatches) {
+				warnings.push(
+					`${WARNING}  ${MARKDOWNLINT_CONFIG_PATH}: config rules differ from template.\n   Run 'savvy-lint init --force' to overwrite.`,
+				);
+			}
+		}
+
 		// Quiet mode: only output warnings
 		if (quiet) {
 			if (warnings.length > 0) {
@@ -203,6 +311,17 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 			}
 		}
 
+		// Shell script hook statuses
+		for (const status of shellHookStatuses) {
+			if (status.found) {
+				if (status.isUpToDate) {
+					yield* Effect.log(`${CHECK_MARK} ${status.path}: up-to-date`);
+				} else {
+					yield* Effect.log(`${WARNING} ${status.path}: outdated (run 'savvy-lint init' to update)`);
+				}
+			}
+		}
+
 		// Tool availability
 		yield* Effect.log("\nTool availability:");
 
@@ -239,9 +358,31 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 			yield* Effect.log(`  ${BULLET} TSDoc: no tsdoc.json found`);
 		}
 
+		// Markdownlint config status
+		if (hasMarkdownlintConfig) {
+			if (markdownlintStatus.isUpToDate) {
+				yield* Effect.log(`  ${CHECK_MARK} ${MARKDOWNLINT_CONFIG_PATH}: up-to-date`);
+			} else {
+				const issues: string[] = [];
+				if (!markdownlintStatus.schemaMatches) issues.push("$schema");
+				if (!markdownlintStatus.configMatches) issues.push("config");
+				yield* Effect.log(`  ${WARNING} ${MARKDOWNLINT_CONFIG_PATH}: ${issues.join(", ")} differ from template`);
+			}
+		} else {
+			yield* Effect.log(`  ${BULLET} ${MARKDOWNLINT_CONFIG_PATH}: not found`);
+		}
+
 		// Overall status
 		yield* Effect.log("");
-		const hasIssues = !foundConfig || !hasHuskyHook || !managedStatus.found || managedStatus.needsUpdate;
+		const hasShellHookIssues = shellHookStatuses.some((s) => s.found && s.needsUpdate);
+		const hasMarkdownlintIssues = hasMarkdownlintConfig && !markdownlintStatus.isUpToDate;
+		const hasIssues =
+			!foundConfig ||
+			!hasHuskyHook ||
+			!managedStatus.found ||
+			managedStatus.needsUpdate ||
+			hasShellHookIssues ||
+			hasMarkdownlintIssues;
 
 		if (hasIssues) {
 			yield* Effect.log(`${WARNING} Some issues found. Run 'savvy-lint init' to fix.`);
