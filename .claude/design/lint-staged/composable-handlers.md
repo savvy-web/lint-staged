@@ -3,8 +3,8 @@ status: current
 module: lint-staged
 category: architecture
 created: 2026-01-25
-updated: 2026-02-04
-last-synced: 2026-02-04
+updated: 2026-02-06
+last-synced: 2026-02-06
 completeness: 100
 related: []
 dependencies: []
@@ -24,10 +24,12 @@ template repositories and provide version-controlled, shareable pre-commit tooli
 4. [System Architecture](#system-architecture)
 5. [Handler Specifications](#handler-specifications)
 6. [Configuration API](#configuration-api)
-7. [Integration Points](#integration-points)
-8. [Testing Strategy](#testing-strategy)
-9. [Future Enhancements](#future-enhancements)
-10. [Related Documentation](#related-documentation)
+7. [CLI Configuration Management](#cli-configuration-management)
+8. [Integration Points](#integration-points)
+9. [Build Pipeline](#build-pipeline)
+10. [Testing Strategy](#testing-strategy)
+11. [Future Enhancements](#future-enhancements)
+12. [Related Documentation](#related-documentation)
 
 ---
 
@@ -65,6 +67,8 @@ classes, utility classes, and configuration presets. The package dogfoods itself
 ### Source Files
 
 ```text
+scripts/
+└── generate-markdownlint-template.ts  # Codegen: JSONC → TypeScript template
 src/
 ├── index.ts              # Public API exports
 ├── index.test.ts         # Public API tests
@@ -86,9 +90,18 @@ src/
 │   ├── ShellScripts.ts   # Shell script permissions
 │   ├── TypeScript.ts     # TSDoc validation + type checking
 │   └── Yaml.ts           # YAML formatting/validation
-└── config/
-    ├── createConfig.ts   # Full config factory
-    └── Preset.ts         # Preset configurations (minimal/standard/silk)
+├── config/
+│   ├── createConfig.ts   # Full config factory
+│   └── Preset.ts         # Preset configurations (minimal/standard/silk)
+├── cli/
+│   ├── commands/
+│   │   ├── init.ts       # Init command (hooks, configs, markdownlint)
+│   │   └── check.ts      # Check command (validate setup)
+│   └── templates/
+│       └── markdownlint.gen.ts  # Generated markdownlint template (committed)
+└── public/
+    └── biome/
+        └── silk.jsonc    # Shareable Biome config for consumers
 ```
 
 ### Handler Classes (Implemented)
@@ -286,6 +299,8 @@ All seven handler classes follow the static class pattern with:
 
 ```text
 @savvy-web/lint-staged/
+├── scripts/
+│   └── generate-markdownlint-template.ts  # Codegen script (run with bun)
 ├── src/
 │   ├── index.ts              # Public API exports (classes, types, utilities)
 │   ├── index.test.ts         # Public API tests
@@ -308,14 +323,23 @@ All seven handler classes follow the static class pattern with:
 │   │   ├── TypeScript.ts     # Bundled TSDoc + typecheck
 │   │   ├── Yaml.ts           # Bundled yaml formatting
 │   │   └── index.ts          # Re-exports
-│   └── config/
-│       ├── createConfig.ts   # Full config factory
-│       ├── Preset.ts         # Preset configurations (minimal/standard/silk)
-│       └── index.ts          # Re-exports
+│   ├── config/
+│   │   ├── createConfig.ts   # Full config factory
+│   │   ├── Preset.ts         # Preset configurations (minimal/standard/silk)
+│   │   └── index.ts          # Re-exports
+│   ├── cli/
+│   │   ├── commands/
+│   │   │   ├── init.ts       # Init command (hooks + markdownlint config)
+│   │   │   └── check.ts      # Check command (validate current setup)
+│   │   └── templates/
+│   │       └── markdownlint.gen.ts  # Generated markdownlint template data
+│   └── public/
+│       └── biome/
+│           └── silk.jsonc    # Shareable Biome config for consumers
 ├── lib/configs/
 │   ├── lint-staged.config.ts # Dogfooding config
 │   ├── eslint.config.ts      # TSDoc ESLint config
-│   └── .markdownlint-cli2.jsonc
+│   └── .markdownlint-cli2.jsonc  # Source of truth for markdownlint rules
 ├── dist/
 │   ├── dev/                  # Development build with source maps
 │   └── npm/                  # Production build for npm
@@ -368,6 +392,7 @@ All seven handler classes follow the static class pattern with:
 │  │  eslint-plugin-tsdoc - TSDoc rule (TypeScript)                 │ │
 │  │  cosmiconfig      - Config file discovery (ConfigSearch)       │ │
 │  │  workspace-tools  - Monorepo workspace detection               │ │
+│  │  jsonc-parser     - JSONC parsing/surgical edits (CLI init)    │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -1139,6 +1164,92 @@ export default Preset.standard({
 
 ---
 
+## CLI Configuration Management
+
+The `savvy-lint` CLI manages configuration files for consumers beyond just husky hooks.
+The `init` and `check` commands handle markdownlint-cli2 configuration with preset-aware
+behavior.
+
+### markdownlint-cli2 Config Management
+
+The `init` command manages a `.markdownlint-cli2.jsonc` config file at the project root.
+Behavior varies by preset and file state:
+
+**`writeMarkdownlintConfig` behavior matrix:**
+
+| Condition | Action |
+| :--- | :--- |
+| File missing (any preset) | Write full template via `JSON.stringify(MARKDOWNLINT_TEMPLATE)` |
+| File exists + silk preset + no `--force` | Surgical: always update `$schema` silently; warn if `config` differs |
+| File exists + silk preset + `--force` | Overwrite entire file with fresh template |
+| File exists + standard preset | Skip (not managed) |
+| minimal preset | Skip entirely (no markdown tooling) |
+
+**Surgical edits** use `jsonc-parser`'s `modify()` and `applyEdits()` functions to update
+individual JSON properties without disturbing comments, formatting, or other fields. The
+`$schema` field is always updated silently. The `config` rules object is compared using
+`node:util` `isDeepStrictEqual` -- if it differs, a warning is emitted suggesting `--force`.
+
+**Preset gating** uses the `presetIncludesMarkdown(preset)` helper, which returns `true`
+for `standard` and `silk` presets (not `minimal`).
+
+### markdownlint-cli2 Config Checking
+
+The `check` command validates the existing `.markdownlint-cli2.jsonc` against template
+values:
+
+```typescript
+function checkMarkdownlintConfig(content: string): {
+  exists: true;
+  schemaMatches: boolean;   // $schema === MARKDOWNLINT_SCHEMA
+  configMatches: boolean;   // isDeepStrictEqual(config, MARKDOWNLINT_CONFIG)
+  isUpToDate: boolean;      // both match
+}
+```
+
+Results are integrated into:
+
+- **Quiet mode** (`--quiet`): specific warnings for `$schema` and `config` mismatches
+- **Full output**: shows per-field match status in the tool availability section
+- **Overall status**: `hasMarkdownlintIssues` contributes to the `hasIssues` flag
+
+### Template Codegen Pipeline
+
+The markdownlint template data is generated at build time from the source JSONC config:
+
+**Source of truth:** `lib/configs/.markdownlint-cli2.jsonc`
+
+**Codegen script:** `scripts/generate-markdownlint-template.ts` (run with `bun`):
+
+1. Reads the source JSONC file
+2. Parses with `jsonc-parser` to extract `$schema` and `config`
+3. Writes `src/cli/templates/markdownlint.gen.ts` with three exports:
+   - `MARKDOWNLINT_TEMPLATE` -- full config object (`as const`)
+   - `MARKDOWNLINT_SCHEMA` -- `$schema` URL string
+   - `MARKDOWNLINT_CONFIG` -- `config` rules object
+
+The generated file is committed to the repository (not gitignored). The npm script
+chains Biome formatting after codegen:
+
+```bash
+bun scripts/generate-markdownlint-template.ts && biome check --write src/cli/templates/markdownlint.gen.ts
+```
+
+### Key Exports
+
+From `src/cli/commands/init.ts`:
+
+- `MARKDOWNLINT_CONFIG_PATH` -- path constant (`.markdownlint-cli2.jsonc`)
+- `presetIncludesMarkdown(preset)` -- preset check helper (internal)
+
+From `src/cli/templates/markdownlint.gen.ts`:
+
+- `MARKDOWNLINT_TEMPLATE` -- full template object
+- `MARKDOWNLINT_SCHEMA` -- schema URL
+- `MARKDOWNLINT_CONFIG` -- config rules
+
+---
+
 ## Integration Points
 
 ### lint-staged Integration
@@ -1174,6 +1285,34 @@ typescript()
 typescript({ eslintConfig: './custom-eslint.config.ts' })
 ```
 
+### Biome Config Export
+
+The package exports an optional shareable Biome config at `./biome/silk.jsonc`. Consumers
+can extend it in their own `biome.jsonc`:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "extends": ["@savvy-web/lint-staged/biome/silk.jsonc"]
+}
+```
+
+This is entirely optional -- consumers can use any Biome config they want. The source file
+lives at `src/public/biome/silk.jsonc` and is exported via the package.json `exports` field:
+
+```json
+{
+  "exports": {
+    ".": "./src/index.ts",
+    "./biome/silk.jsonc": "./src/public/silk.jsonc"
+  }
+}
+```
+
+The config includes opinionated Biome settings for formatting (tabs, 120-char line width),
+linting (strict rules including import extensions, no unused variables, import type
+separation), and JSON/CSS handling.
+
 ### External Tool Dependencies (Actual)
 
 **Required (must be installed by consumer):**
@@ -1190,12 +1329,67 @@ typescript({ eslintConfig: './custom-eslint.config.ts' })
 - `eslint-plugin-tsdoc` - TSDoc syntax validation
 - `cosmiconfig` - Configuration file discovery
 - `workspace-tools` - Monorepo workspace detection
+- `jsonc-parser` - JSONC parsing and surgical edits (CLI init/check commands for
+  markdownlint config management)
 
 **No longer used:**
 
 - ~~`prettier`~~ - Replaced by bundled yaml package
 - ~~`yaml-lint`~~ - Replaced by bundled yaml package
 - ~~`yq`~~ - Replaced by bundled yaml package
+
+---
+
+## Build Pipeline
+
+### Turbo Task Graph
+
+The build pipeline uses Turborepo with a dependency chain that ensures generated code
+is available before type checking and building:
+
+```text
+generate:templates → types:check → build:dev
+                                  → build:prod
+                   → vitest:unit (via build:dev)
+```
+
+### Task Definitions
+
+**`generate:templates`**
+
+- **Script:** `bun scripts/generate-markdownlint-template.ts && biome check --write src/cli/templates/markdownlint.gen.ts`
+- **Inputs:** `lib/configs/.markdownlint-cli2.jsonc`, `scripts/generate-markdownlint-template.ts`
+- **Outputs:** `src/cli/templates/*.gen.ts`
+- **Cache:** Yes
+- **Dependencies:** None (leaf task)
+
+**`types:check`**
+
+- **Script:** `tsgo --noEmit`
+- **Dependencies:** `generate:templates` (must have generated template before type checking)
+- **Inputs:** `*.ts`, `lib/**/*.ts`, `lib/**/*.mts`
+- **Cache:** Yes
+
+**`build:dev` / `build:prod`**
+
+- **Script:** Rslib build with environment-specific config
+- **Dependencies:** `types:check`
+- **Outputs:** `dist/dev/**` / `dist/npm/**`
+- **Cache:** Yes
+
+**`vitest:unit`**
+
+- **Script:** `vitest run --coverage`
+- **Dependencies:** `build:dev`
+- **Cache:** No (always runs fresh)
+
+### Codegen Rationale
+
+The codegen approach keeps `lib/configs/.markdownlint-cli2.jsonc` as the single source of
+truth for markdownlint rules. This file is used directly by the project's own markdown
+linting (`pnpm run lint:md`), and the codegen script extracts its data into TypeScript
+constants for the CLI's init and check commands. This avoids runtime JSONC file reads and
+ensures the CLI template always matches the project's own config.
 
 ---
 
@@ -1256,13 +1450,22 @@ __fixtures__/
 - [x] Package manager detection and caching
 - [x] Dogfooding via lib/configs/lint-staged.config.ts
 
+### Completed (v0.2.x)
+
+- [x] CLI `init` command manages `.markdownlint-cli2.jsonc` with preset-aware behavior
+- [x] CLI `check` command validates markdownlint config against template
+- [x] Codegen pipeline: source JSONC to generated TypeScript template
+- [x] Turbo `generate:templates` task with proper dependency chain
+- [x] `jsonc-parser` dependency for runtime JSONC parsing and surgical edits
+- [x] Shareable Biome config export at `./biome/silk.jsonc`
+- [x] npm publishing with provenance (GitHub Packages + npmjs.org)
+
 ### Future Enhancements
 
 **Short-term:**
 
 - [ ] Integration tests with actual lint-staged execution
 - [ ] README with comprehensive usage examples
-- [ ] npm publishing with provenance
 
 **Medium-term:**
 
@@ -1298,7 +1501,7 @@ __fixtures__/
 
 ---
 
-**Document Status:** Current - Synced with implementation
+**Document Status:** Current - Synced with implementation (v0.2.2)
 
 **Implementation Notes:**
 
@@ -1306,9 +1509,13 @@ __fixtures__/
 - All handlers, utilities, and presets are functional
 - Bundled dependencies reduce external requirements
 - Workspace-aware TSDoc resolution is more sophisticated than originally planned
+- CLI init/check commands manage markdownlint config with surgical JSONC edits
+- Codegen pipeline generates TypeScript templates from source JSONC configs
+- Shareable Biome config available for consumers via package exports
 
 **Maintenance:**
 
 - Update this document when adding new handlers or utilities
 - Keep utility class signatures in sync with source code
 - Update "Implementation Status" checklist as features complete
+- Regenerate templates after modifying `lib/configs/.markdownlint-cli2.jsonc`

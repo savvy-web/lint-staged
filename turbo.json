@@ -38,10 +38,36 @@
 			"outputLogs": "full",
 			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
 		},
-		"types:check": {
+		"generate:templates": {
 			"cache": true,
 			"dependsOn": [],
-			"inputs": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yml",
+				"$TURBO_ROOT$/pnpm-workspace.yml",
+				"package.json",
+				"tsconfig.json",
+				"lib/configs/.markdownlint-cli2.jsonc",
+				"scripts/generate-markdownlint-template.ts"
+			],
+			"outputLogs": "full",
+			"outputs": ["src/cli/templates/*.gen.ts"]
+		},
+		"types:check": {
+			"cache": true,
+			"dependsOn": ["generate:templates"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yml",
+				"$TURBO_ROOT$/pnpm-workspace.yml",
+				"package.json",
+				"tsconfig.json",
+				"*.ts",
+				"lib/**/*.ts",
+				"lib/**/*.mts"
+			],
 			"outputLogs": "errors-only",
 			"outputs": []
 		},

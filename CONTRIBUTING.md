@@ -32,7 +32,8 @@ lint-staged/
 ├── src/                            # Source code
 │   ├── handlers/                   # Handler classes (Biome, Markdown, etc.)
 │   ├── config/                     # Configuration utilities (Preset, createConfig)
-│   ├── cli/                        # CLI commands
+│   ├── cli/                        # CLI commands (init, check)
+│   ├── public/                     # Shareable configs (e.g. biome/silk.jsonc)
 │   └── utils/                      # Utility classes (Filter, Command, etc.)
 ├── docs/                           # Documentation
 ├── lib/
@@ -44,17 +45,23 @@ lint-staged/
 
 ## Available Scripts
 
-| Script                   | Description                      |
-| ------------------------ | -------------------------------- |
-| `pnpm run build`         | Build all outputs (dev + prod)   |
-| `pnpm run build:dev`     | Build development output only    |
-| `pnpm run test`          | Run all tests                    |
-| `pnpm run test:watch`    | Run tests in watch mode          |
-| `pnpm run test:coverage` | Run tests with coverage          |
-| `pnpm run lint`          | Check code with Biome            |
-| `pnpm run lint:fix`      | Auto-fix lint issues             |
-| `pnpm run lint:md`       | Check markdown with markdownlint |
-| `pnpm run typecheck`     | Type-check with tsgo             |
+| Script | Description |
+| --- | --- |
+| `pnpm run build` | Build all outputs (dev + prod) |
+| `pnpm run build:dev` | Build development output only |
+| `pnpm run build:prod` | Build production output only |
+| `pnpm run test` | Run all tests with coverage |
+| `pnpm run test:watch` | Run tests in watch mode |
+| `pnpm run lint` | Check code with Biome |
+| `pnpm run lint:fix` | Auto-fix lint issues |
+| `pnpm run lint:md` | Check markdown with markdownlint |
+| `pnpm run typecheck` | Type-check with tsgo |
+
+To run a specific test file:
+
+```bash
+pnpm vitest run src/index.test.ts
+```
 
 ## Code Quality
 
@@ -83,7 +90,7 @@ The following checks run automatically:
 
 - **pre-commit**: Runs lint-staged (using this package!)
 - **commit-msg**: Validates commit message format
-- **pre-push**: Runs tests
+- **post-checkout / post-merge**: Ensures shell script permissions
 
 ## Testing
 
@@ -96,11 +103,11 @@ pnpm run test
 # Run tests in watch mode
 pnpm run test:watch
 
-# Run tests with coverage
-pnpm run test:coverage
-
 # Run a specific test file
 pnpm vitest run src/index.test.ts
+
+# Run tests matching a pattern
+pnpm vitest run -t "Biome"
 ```
 
 ## TypeScript

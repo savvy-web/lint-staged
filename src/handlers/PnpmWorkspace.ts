@@ -154,8 +154,7 @@ export class PnpmWorkspace {
 				const formatted = stringify(parsed, DEFAULT_STRINGIFY_OPTIONS);
 				writeFileSync(filepath, formatted, "utf-8");
 
-				// Re-stage the modified file so changes are included in the commit
-				return `git add ${filepath}`;
+				return [];
 			}
 
 			return [];

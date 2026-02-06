@@ -120,11 +120,6 @@ export class Yaml {
 				}
 			}
 
-			// Re-stage modified files so changes are included in the commit
-			if (!skipFormat && filtered.length > 0) {
-				return `git add ${Filter.shellEscape(filtered)}`;
-			}
-
 			return [];
 		};
 	}

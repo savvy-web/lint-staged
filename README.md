@@ -2,17 +2,19 @@
 
 [![npm version](https://img.shields.io/npm/v/@savvy-web/lint-staged)](https://www.npmjs.com/package/@savvy-web/lint-staged)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green)](https://nodejs.org/)
 
 Composable, configurable lint-staged handlers for pre-commit hooks. Stop
-duplicating lint-staged configs across projects - use reusable handlers with
+duplicating lint-staged configs across projects -- use reusable handlers with
 sensible defaults and easy customization.
 
 ## Features
 
 - Composable handlers for Biome, Markdown, YAML, TypeScript, and more
 - Zero-config presets for instant setup
+- CLI tool (`savvy-lint`) to bootstrap and validate your configuration
 - Workspace-aware TSDoc validation for public APIs
-- Bundled dependencies for fast, offline-capable execution
+- Shareable Biome configuration via `@savvy-web/lint-staged/biome/silk.jsonc`
 - Static class API with excellent TypeScript and TSDoc support
 
 ## Installation
@@ -30,7 +32,13 @@ npm install -D markdownlint-cli2
 
 ## Quick Start
 
-Use a preset for instant setup:
+Use the CLI to bootstrap your configuration:
+
+```bash
+npx savvy-lint init --preset standard
+```
+
+Or configure manually with a preset:
 
 ```typescript
 // lint-staged.config.ts
@@ -61,17 +69,6 @@ export default {
 | `standard()` | + Markdown, Yaml, PnpmWorkspace, ShellScripts |
 | `silk()` | + TypeScript |
 
-Extend any preset with options:
-
-```typescript
-import { Preset } from '@savvy-web/lint-staged';
-
-export default Preset.standard({
-  biome: { exclude: ['vendor/'] },
-  typescript: {}, // Enable TypeScript in standard
-});
-```
-
 ## Available Handlers
 
 | Handler | Files | Description |
@@ -82,14 +79,26 @@ export default Preset.standard({
 | `Yaml` | `**/*.{yml,yaml}` | Format and validate |
 | `PnpmWorkspace` | `pnpm-workspace.yaml` | Sort and format |
 | `ShellScripts` | `**/*.sh` | Manage permissions |
-| `TypeScript` | `*.{ts,tsx}` | TSDoc validation + typecheck |
+| `TypeScript` | `*.{ts,cts,mts,tsx}` | TSDoc validation + typecheck |
+
+## CLI
+
+The `savvy-lint` CLI helps bootstrap and validate your setup:
+
+```bash
+savvy-lint init              # Bootstrap hooks, config, and tooling
+savvy-lint init --preset silk --force  # Overwrite with silk preset
+savvy-lint check             # Validate current configuration
+savvy-lint check --quiet     # Warnings only (for postinstall)
+```
 
 ## Documentation
 
-- [Handler Configuration](./docs/handlers.md) - Detailed options for each handler
-- [Utilities](./docs/utilities.md) - Command, Filter, and advanced utilities
-- [Configuration API](./docs/configuration.md) - createConfig and Preset APIs
-- [Migration Guide](./docs/migration.md) - Migrating from raw lint-staged configs
+- [Handler Configuration](./docs/handlers.md) -- Detailed options for each handler
+- [Configuration API](./docs/configuration.md) -- createConfig and Preset APIs
+- [CLI Reference](./docs/cli.md) -- `savvy-lint init` and `savvy-lint check`
+- [Utilities](./docs/utilities.md) -- Command, Filter, and advanced utilities
+- [Migration Guide](./docs/migration.md) -- Migrating from raw lint-staged configs
 
 ## Contributing
 
