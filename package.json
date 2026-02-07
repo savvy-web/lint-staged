@@ -76,7 +76,7 @@
 		"@changesets/cli": "^2.29.8",
 		"@microsoft/api-extractor": "catalog:silk",
 		"@rslib/core": "catalog:silk",
-		"@savvy-web/commitlint": "^0.2.1",
+		"@savvy-web/commitlint": "^0.3.0",
 		"@savvy-web/rslib-builder": "^0.12.0",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",

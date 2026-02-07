@@ -10,13 +10,13 @@ catalogs:
       specifier: ^7.56.2
       version: 7.56.2
     '@rslib/core':
-      specifier: ^0.19.4
+      specifier: ^0.19.5
       version: 0.19.5
     '@types/node':
-      specifier: ^25.2.0
+      specifier: ^25.2.1
       version: 25.2.1
     '@typescript/native-preview':
-      specifier: ^7.0.0-dev.20260203.1
+      specifier: ^7.0.0-dev.20260206.1
       version: 7.0.0-dev.20260206.1
     '@vitest/coverage-v8':
       specifier: ^4.0.18
@@ -48,7 +48,7 @@ overrides:
   lodash: '>=4.17.23'
   tmp: '>=0.2.4'
 
-pnpmfileChecksum: sha256-t6LF0gafv3q+GZ6ulKnfBQdWI84oVxZDQL2jtOFm5e4=
+pnpmfileChecksum: sha256-MEh9N8RmloRexekTEH1+HFJp82zm0lgqklHhrvT+NkY=
 
 importers:
 
@@ -104,8 +104,8 @@ importers:
         specifier: catalog:silk
         version: 0.19.5(@microsoft/api-extractor@7.56.2(@types/node@25.2.1))(@typescript/native-preview@7.0.0-dev.20260206.1)(typescript@5.9.3)
       '@savvy-web/commitlint':
-        specifier: ^0.2.1
-        version: 0.2.1(95ac9d7cb2cb946f07056805735a2bd1)
+        specifier: ^0.3.0
+        version: 0.3.0(95ac9d7cb2cb946f07056805735a2bd1)
       '@savvy-web/rslib-builder':
         specifier: ^0.12.0
         version: 0.12.0(@microsoft/api-extractor@7.56.2(@types/node@25.2.1))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.5(@microsoft/api-extractor@7.56.2(@types/node@25.2.1))(@typescript/native-preview@7.0.0-dev.20260206.1)(typescript@5.9.3))(@types/node@25.2.1)(@typescript/native-preview@7.0.0-dev.20260206.1)(jiti@2.6.1)(typescript@5.9.3)
@@ -1310,8 +1310,8 @@ packages:
   '@rushstack/ts-command-line@5.2.0':
     resolution: {integrity: sha512-lYxCX0nDdkDtCkVpvF0m25ymf66SaMWuppbD6b7MdkIzvGXKBXNIVZlwBH/C0YfkanrupnICWf2n4z3AKSfaHw==}
 
-  '@savvy-web/commitlint@0.2.1':
-    resolution: {integrity: sha512-DQ6M6cQ8kmZesVEb5XiQ3CJwXW13L6VMI7Lo6TvFoFd7/mdKnVE6mpVcbTqIF9pk4GItQZo8bnnTIXBc790dwA==}
+  '@savvy-web/commitlint@0.3.0':
+    resolution: {integrity: sha512-kV0GM6Fnpja4fQEvR/nshgDnOGfiTxCDreVTiRfqxp422VX4KiqyOF7UPmx5ZYXA/Nc7lc0MUtPqgx2DJ0cGYA==}
     hasBin: true
     peerDependencies:
       '@commitlint/cli': ^20.4.1
@@ -3325,9 +3325,6 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
-  workspace-tools@0.40.4:
-    resolution: {integrity: sha512-iMC556Zi/WZQiTG6V40k1wPLM5gh2+SnF9U+lPUBrWZnX1aZBPVBGJ/ej9RKL6tsvo2S3Dn6b5zJANytoUtrcA==}
-
   workspace-tools@0.41.0:
     resolution: {integrity: sha512-iBB6LNqtJpfjTWnyjlgOwdJmf1wBTUsIr1V5phOBCJMywubpYAijDUqhgz7RfrTYdscA4vEFyhjiy4OSAGULcA==}
 
@@ -4548,7 +4545,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@savvy-web/commitlint@0.2.1(95ac9d7cb2cb946f07056805735a2bd1)':
+  '@savvy-web/commitlint@0.3.0(95ac9d7cb2cb946f07056805735a2bd1)':
     dependencies:
       '@commitlint/cli': 20.4.1(@types/node@25.2.1)(typescript@5.9.3)
       '@commitlint/config-conventional': 20.4.1
@@ -4557,7 +4554,7 @@ snapshots:
       '@effect/platform-node': 0.104.1(@effect/cluster@0.56.2(@effect/platform@0.94.3(effect@3.19.16))(@effect/rpc@0.73.0(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(@effect/platform@0.94.3(effect@3.19.16))(@effect/rpc@0.73.0(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(effect@3.19.16))(effect@3.19.16))(@effect/platform@0.94.3(effect@3.19.16))(@effect/rpc@0.73.0(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(@effect/platform@0.94.3(effect@3.19.16))(effect@3.19.16))(effect@3.19.16)
       effect: 3.19.16
       husky: 9.1.7
-      workspace-tools: 0.40.4
+      workspace-tools: 0.41.0
       zod: 4.3.6
     transitivePeerDependencies:
       - '@effect/cluster'
@@ -6687,16 +6684,6 @@ snapshots:
       stackback: 0.0.2
 
   word-wrap@1.2.5: {}
-
-  workspace-tools@0.40.4:
-    dependencies:
-      '@yarnpkg/lockfile': 1.1.0
-      fast-glob: 3.3.3
-      git-url-parse: 16.1.0
-      globby: 11.1.0
-      jju: 1.4.0
-      js-yaml: 4.1.1
-      micromatch: 4.0.8
 
   workspace-tools@0.41.0:
     dependencies:
