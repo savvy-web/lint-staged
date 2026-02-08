@@ -1,5 +1,15 @@
 # @savvy-web/lint-staged
 
+## 0.3.2
+
+### Patch Changes
+
+- 2e73a54: Update dependencies:
+
+  **Dependencies:**
+
+  - @savvy-web/commitlint: ^0.2.1 → ^0.3.1
+
 ## 0.3.1
 
 ### Patch Changes
