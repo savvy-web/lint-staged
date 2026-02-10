@@ -53,9 +53,9 @@
 		"prepare": "husky",
 		"test": "turbo run vitest:unit --log-prefix=none --log-order=grouped",
 		"test:watch": "vitest --watch",
+		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit",
-		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"vitest:unit": "vitest run --coverage"
 	},
 	"dependencies": {

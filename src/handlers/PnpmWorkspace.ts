@@ -154,7 +154,8 @@ export class PnpmWorkspace {
 				const formatted = stringify(parsed, DEFAULT_STRINGIFY_OPTIONS);
 				writeFileSync(filepath, formatted, "utf-8");
 
-				return [];
+				// Return no-op to trigger lint-staged auto-staging of in-place changes
+				return "true";
 			}
 
 			return [];

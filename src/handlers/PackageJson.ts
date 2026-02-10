@@ -78,9 +78,9 @@ export class PackageJson {
 				}
 			}
 
-			// When skipFormat is true, only sort — no biome command
+			// When skipFormat is true, only sort — return no-op to trigger staging
 			if (skipFormat) {
-				return [];
+				return "true";
 			}
 
 			// Build Biome formatting command with properly escaped file paths

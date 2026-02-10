@@ -135,7 +135,7 @@ export class Yaml {
 		const configPath = options.config ?? Yaml.findConfig();
 		const schema = configPath ? Yaml.loadConfig(configPath) : undefined;
 
-		return async (filenames: readonly string[]): Promise<string[]> => {
+		return async (filenames: readonly string[]): Promise<string | string[]> => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {
@@ -157,6 +157,11 @@ export class Yaml {
 						throw new Error(`Invalid YAML in ${filepath}: ${error instanceof Error ? error.message : String(error)}`);
 					}
 				}
+			}
+
+			// Return no-op to trigger lint-staged auto-staging of in-place changes
+			if (!skipFormat) {
+				return "true";
 			}
 
 			return [];

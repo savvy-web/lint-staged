@@ -86,8 +86,8 @@ describe("Handler classes", () => {
 			const handler = PackageJson.create({ skipFormat: true });
 			const result = handler([testFile]);
 
-			// Should return empty (no biome command)
-			expect(result).toEqual([]);
+			// Should return no-op to trigger staging (no biome command)
+			expect(result).toBe("true");
 
 			// File should still have been sorted
 			const content = readFileSync(testFile, "utf-8");
@@ -186,8 +186,8 @@ describe("Handler classes", () => {
 			const handler = Yaml.create();
 			const result = await handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
-			// Formatting is done in-place; lint-staged auto-stages modified files
-			expect(result).toEqual([]);
+			// Formatting is done in-place; returns no-op to trigger lint-staged staging
+			expect(result).toBe("true");
 
 			// File should be formatted by Prettier (extra spaces removed)
 			const formatted = readFileSync(testFile, "utf-8");
@@ -246,8 +246,8 @@ describe("Handler classes", () => {
 				const handler = PnpmWorkspace.create();
 				const result = handler([]);
 
-				// Sorting/formatting is done in-place; lint-staged auto-stages modified files
-				expect(result).toEqual([]);
+				// Sorting/formatting is done in-place; returns no-op to trigger lint-staged staging
+				expect(result).toBe("true");
 
 				// File should be sorted and formatted
 				const content = readFileSync(filepath, "utf-8");
