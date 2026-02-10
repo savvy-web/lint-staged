@@ -154,8 +154,8 @@ export class PnpmWorkspace {
 				const formatted = stringify(parsed, DEFAULT_STRINGIFY_OPTIONS);
 				writeFileSync(filepath, formatted, "utf-8");
 
-				// Return no-op to trigger lint-staged auto-staging of in-place changes
-				return "true";
+				// Stage in-place changes explicitly
+				return `git add ${filepath}`;
 			}
 
 			return [];

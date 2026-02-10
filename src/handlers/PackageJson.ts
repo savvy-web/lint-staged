@@ -78,9 +78,9 @@ export class PackageJson {
 				}
 			}
 
-			// When skipFormat is true, only sort — return no-op to trigger staging
+			// When skipFormat is true, only sort — stage in-place changes explicitly
 			if (skipFormat) {
-				return "true";
+				return `git add ${Filter.shellEscape(filtered)}`;
 			}
 
 			// Build Biome formatting command with properly escaped file paths

@@ -159,9 +159,9 @@ export class Yaml {
 				}
 			}
 
-			// Return no-op to trigger lint-staged auto-staging of in-place changes
+			// Stage in-place changes explicitly
 			if (!skipFormat) {
-				return "true";
+				return `git add ${Filter.shellEscape(filtered)}`;
 			}
 
 			return [];
