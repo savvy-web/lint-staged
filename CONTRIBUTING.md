@@ -6,7 +6,7 @@ document provides guidelines and instructions for development.
 ## Prerequisites
 
 - Node.js 24+
-- pnpm 10.28+
+- pnpm 10.29+
 
 ## Development Setup
 

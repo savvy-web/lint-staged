@@ -165,9 +165,8 @@ import { Yaml } from '@savvy-web/lint-staged';
 [Yaml.glob]: Yaml.handler,
 ```
 
-**Note:** The new handler uses the bundled `yaml` package instead of prettier
-and yaml-lint. Formatting and validation happen in-place without spawning
-external processes.
+**Note:** The handler uses Prettier for formatting and yaml-lint for validation,
+both as bundled dependencies. No external CLI tools need to be installed.
 
 ### pnpm-workspace.yaml Handler
 
@@ -359,7 +358,7 @@ To include excluded files, override the excludes:
 
 The new handlers may behave slightly differently:
 
-- **Yaml/PnpmWorkspace:** Uses bundled `yaml` package instead of prettier
+- **Yaml:** Uses Prettier for formatting and yaml-lint for validation (bundled)
 - **PackageJson:** Sorts files in-place before returning Biome command
 - **TypeScript:** Uses workspace-aware TSDoc detection instead of simple patterns
 

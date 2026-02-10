@@ -45,12 +45,17 @@ export default {
 | ------ | ---- | ------- | ----------- |
 | `exclude` | `string[]` | `['dist/package.json', '__fixtures__']` | Patterns to exclude |
 | `skipSort` | `boolean` | `false` | Skip sort-package-json |
+| `skipFormat` | `boolean` | `false` | Skip Biome formatting (sort only) |
 | `biomeConfig` | `string` | - | Path to Biome config |
 
 **Processing:**
 
 1. Reads each file, sorts with bundled `sort-package-json`, writes back
-2. Returns Biome command to format the files
+2. Returns Biome command to format the files (unless `skipFormat: true`)
+
+**Static Methods:**
+
+- `PackageJson.fmtCommand(options?)` - Create a handler that returns a CLI command for lint-staged array syntax
 
 ## Biome
 
@@ -115,7 +120,8 @@ export default {
 
 ## Yaml
 
-Formats and validates YAML files using the bundled `yaml` library.
+Formats YAML files with Prettier and validates with yaml-lint, both as bundled
+dependencies.
 
 **Glob:** `**/*.{yml,yaml}`
 
@@ -127,6 +133,7 @@ import { Yaml } from '@savvy-web/lint-staged';
 export default {
   [Yaml.glob]: Yaml.create({
     exclude: ['generated/'],
+    config: './lib/configs/.yaml-lint.json',
     skipFormat: false,
     skipValidate: false,
   }),
@@ -136,19 +143,24 @@ export default {
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
 | `exclude` | `string[]` | `['pnpm-lock.yaml', 'pnpm-workspace.yaml']` | Patterns to exclude |
+| `config` | `string` | Auto-discovered | Path to yaml-lint config file |
 | `skipFormat` | `boolean` | `false` | Skip YAML formatting |
 | `skipValidate` | `boolean` | `false` | Skip YAML validation |
 
 **Processing:**
 
-1. Validates each file by parsing with `yaml` package (throws on invalid YAML)
-2. Formats each file by parse + stringify with consistent indentation
+1. Formats each file in-place using Prettier with the `yaml` parser
+2. Validates each file using yaml-lint (throws on invalid YAML)
 3. Returns empty array (all processing done in-place)
 
 **Static Methods:**
 
-- `Yaml.formatFile(filepath)` - Format a single YAML file
-- `Yaml.validateFile(filepath)` - Validate a single YAML file
+- `Yaml.formatFile(filepath)` - Format a single YAML file with Prettier
+- `Yaml.validateFile(filepath, schema?)` - Validate a single YAML file with yaml-lint
+- `Yaml.findConfig()` - Find the yaml-lint config file
+- `Yaml.loadConfig(filepath)` - Load the yaml-lint schema from a config file
+- `Yaml.isAvailable()` - Always returns `true` (bundled dependency)
+- `Yaml.fmtCommand(options?)` - Create a handler that returns a CLI command for lint-staged array syntax
 
 ## PnpmWorkspace
 
@@ -187,6 +199,7 @@ export default {
 **Static Methods:**
 
 - `PnpmWorkspace.sortContent(content)` - Sort workspace content object
+- `PnpmWorkspace.fmtCommand()` - Create a handler that returns a CLI command for lint-staged array syntax
 
 ## ShellScripts
 
