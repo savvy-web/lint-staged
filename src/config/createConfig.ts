@@ -37,14 +37,29 @@ import type { CreateConfigOptions, LintStagedConfig } from "../types.js";
 export function createConfig(options: CreateConfigOptions = {}): LintStagedConfig {
 	const config: LintStagedConfig = {};
 
-	// PackageJson handler
-	if (options.packageJson !== false) {
-		const handlerOptions = typeof options.packageJson === "object" ? options.packageJson : {};
-		config[PackageJson.glob] = PackageJson.create(handlerOptions);
+	const pkgJsonEnabled = options.packageJson !== false;
+	const biomeEnabled = options.biome !== false;
+
+	// PackageJson + Biome: use array syntax for sequential execution
+	// Step 1: sort in-place (skipFormat), Step 2: biome format
+	if (pkgJsonEnabled && biomeEnabled) {
+		const pkgOpts = typeof options.packageJson === "object" ? options.packageJson : {};
+		const biomeOpts = typeof options.biome === "object" ? options.biome : {};
+
+		config[PackageJson.glob] = [
+			PackageJson.create({ ...pkgOpts, skipFormat: true }),
+			Biome.create({
+				...biomeOpts,
+				exclude: [...PackageJson.defaultExcludes],
+			}),
+		];
+	} else if (pkgJsonEnabled) {
+		const pkgOpts = typeof options.packageJson === "object" ? options.packageJson : {};
+		config[PackageJson.glob] = PackageJson.create(pkgOpts);
 	}
 
-	// Biome handler
-	if (options.biome !== false) {
+	// Biome handler (standalone — excludes package.json by default)
+	if (biomeEnabled) {
 		const handlerOptions = typeof options.biome === "object" ? options.biome : {};
 		config[Biome.glob] = Biome.create(handlerOptions);
 	}
@@ -55,16 +70,23 @@ export function createConfig(options: CreateConfigOptions = {}): LintStagedConfi
 		config[Markdown.glob] = Markdown.create(handlerOptions);
 	}
 
-	// Yaml handler
-	if (options.yaml !== false) {
-		const handlerOptions = typeof options.yaml === "object" ? options.yaml : {};
-		config[Yaml.glob] = Yaml.create(handlerOptions);
+	const pnpmEnabled = options.pnpmWorkspace !== false;
+	const yamlEnabled = options.yaml !== false;
+
+	// PnpmWorkspace + Yaml: use array syntax for sequential execution
+	// Step 1: sort + format in-place, Step 2: validate only
+	if (pnpmEnabled && yamlEnabled) {
+		const pnpmOpts = typeof options.pnpmWorkspace === "object" ? options.pnpmWorkspace : {};
+		config[PnpmWorkspace.glob] = [PnpmWorkspace.create(pnpmOpts), Yaml.create({ exclude: [], skipFormat: true })];
+	} else if (pnpmEnabled) {
+		const pnpmOpts = typeof options.pnpmWorkspace === "object" ? options.pnpmWorkspace : {};
+		config[PnpmWorkspace.glob] = PnpmWorkspace.create(pnpmOpts);
 	}
 
-	// PnpmWorkspace handler
-	if (options.pnpmWorkspace !== false) {
-		const handlerOptions = typeof options.pnpmWorkspace === "object" ? options.pnpmWorkspace : {};
-		config[PnpmWorkspace.glob] = PnpmWorkspace.create(handlerOptions);
+	// Yaml handler (standalone — wrap in array for proper staging)
+	if (yamlEnabled) {
+		const handlerOptions = typeof options.yaml === "object" ? options.yaml : {};
+		config[Yaml.glob] = [Yaml.create(handlerOptions)];
 	}
 
 	// ShellScripts handler

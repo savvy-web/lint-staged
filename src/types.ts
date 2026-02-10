@@ -12,10 +12,19 @@ import type { Configuration } from "lint-staged";
 export type LintStagedHandler = (filenames: readonly string[]) => string | string[] | Promise<string | string[]>;
 
 /**
- * A lint-staged configuration object.
- * Maps glob patterns to handlers.
+ * A single lint-staged command entry: a handler function, a string command, or an array of strings.
  */
-export type LintStagedConfig = Record<string, LintStagedHandler | string | string[]>;
+export type LintStagedEntry = LintStagedHandler | string | string[];
+
+/**
+ * A lint-staged configuration object.
+ * Maps glob patterns to handlers, commands, or arrays of sequential steps.
+ *
+ * @remarks
+ * When a value is an array of functions/strings, lint-staged runs each element
+ * sequentially with proper staging between steps.
+ */
+export type LintStagedConfig = Record<string, LintStagedEntry | LintStagedEntry[]>;
 
 /**
  * Re-export lint-staged's Configuration type for convenience.
@@ -42,6 +51,12 @@ export interface PackageJsonOptions extends BaseHandlerOptions {
 	 * @defaultValue false
 	 */
 	skipSort?: boolean;
+
+	/**
+	 * Skip Biome formatting (sort only).
+	 * @defaultValue false
+	 */
+	skipFormat?: boolean;
 
 	/**
 	 * Path to Biome config file.
@@ -119,6 +134,11 @@ export interface ShellScriptsOptions extends BaseHandlerOptions {
  * Options for the Yaml handler.
  */
 export interface YamlOptions extends BaseHandlerOptions {
+	/**
+	 * Path to yaml-lint config file (.yaml-lint.json).
+	 */
+	config?: string;
+
 	/**
 	 * Skip YAML formatting.
 	 * @defaultValue false

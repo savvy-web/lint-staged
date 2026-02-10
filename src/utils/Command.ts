@@ -24,6 +24,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { findProjectRoot } from "workspace-tools";
 
 /**
  * Supported package managers.
@@ -68,13 +69,56 @@ export class Command {
 	/** Cached package manager detection result */
 	private static cachedPackageManager: PackageManager | null = null;
 
+	/** Cached project root path */
+	private static cachedRoot: string | null = null;
+
+	/**
+	 * Find the project root directory using workspace-tools.
+	 *
+	 * Uses `findProjectRoot()` from `workspace-tools` to locate the nearest
+	 * directory containing a `package.json`. Falls back to the provided `cwd`
+	 * (or `process.cwd()`) on error.
+	 *
+	 * @remarks
+	 * This is more reliable than `process.cwd()` in environments like Husky
+	 * hooks where the working directory may point to `.husky/` or another
+	 * subdirectory.
+	 *
+	 * @param cwd - Starting directory for the search (defaults to `process.cwd()`)
+	 * @returns The resolved project root path
+	 *
+	 * @example
+	 * ```typescript
+	 * const root = Command.findRoot();
+	 * console.log(root); // '/Users/me/my-project'
+	 * ```
+	 */
+	static findRoot(cwd: string = process.cwd()): string {
+		if (Command.cachedRoot !== null) {
+			return Command.cachedRoot;
+		}
+
+		try {
+			const root = findProjectRoot(cwd);
+			if (root) {
+				Command.cachedRoot = root;
+				return root;
+			}
+		} catch {
+			// findProjectRoot failed
+		}
+
+		Command.cachedRoot = cwd;
+		return cwd;
+	}
+
 	/**
 	 * Detect the package manager from the root package.json's `packageManager` field.
 	 *
 	 * Parses the `packageManager` field (e.g., `pnpm\@9.0.0`) and extracts the manager name.
 	 * Falls back to "npm" if no packageManager field is found.
 	 *
-	 * @param cwd - Directory to search for package.json (defaults to process.cwd())
+	 * @param cwd - Directory to search for package.json (defaults to `Command.findRoot()`)
 	 * @returns The detected package manager
 	 *
 	 * @example
@@ -83,7 +127,7 @@ export class Command {
 	 * console.log(pm); // 'pnpm', 'npm', 'yarn', or 'bun'
 	 * ```
 	 */
-	static detectPackageManager(cwd: string = process.cwd()): PackageManager {
+	static detectPackageManager(cwd: string = Command.findRoot()): PackageManager {
 		// Return cached result if available
 		if (Command.cachedPackageManager !== null) {
 			return Command.cachedPackageManager;
@@ -127,7 +171,7 @@ export class Command {
 	 * Command.getExecPrefix('pnpm'); // ['pnpm', 'exec']
 	 * Command.getExecPrefix('npm');  // ['npx', '--no']
 	 * Command.getExecPrefix('yarn'); // ['yarn', 'exec']
-	 * Command.getExecPrefix('bun');  // ['bunx']
+	 * Command.getExecPrefix('bun');  // ['bun', 'x', "--no-install"]
 	 * ```
 	 */
 	static getExecPrefix(packageManager: PackageManager): string[] {
@@ -137,18 +181,19 @@ export class Command {
 			case "yarn":
 				return ["yarn", "exec"];
 			case "bun":
-				return ["bunx"];
+				return ["bun", "x", "--no-install"];
 			default:
 				return ["npx", "--no"];
 		}
 	}
 
 	/**
-	 * Clear the cached package manager detection.
+	 * Clear the cached package manager and project root detection.
 	 * Useful for testing or when package.json changes.
 	 */
 	static clearCache(): void {
 		Command.cachedPackageManager = null;
+		Command.cachedRoot = null;
 	}
 
 	/**

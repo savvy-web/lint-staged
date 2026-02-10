@@ -89,6 +89,11 @@ const TOOL_CONFIGS: Record<string, ToolConfig> = {
 			"package.json",
 		],
 	},
+	yamllint: {
+		moduleName: "yaml-lint",
+		libConfigFiles: [".yaml-lint.json"],
+		standardPlaces: [".yaml-lint.json"],
+	},
 };
 
 /**
@@ -125,7 +130,7 @@ export class ConfigSearch {
 	/**
 	 * Find a configuration file for a known tool.
 	 *
-	 * Supported tools: 'markdownlint', 'biome', 'eslint', 'prettier'
+	 * Supported tools: 'markdownlint', 'biome', 'eslint', 'prettier', 'yamllint'
 	 *
 	 * @param tool - The tool name
 	 * @param options - Search options
@@ -140,7 +145,7 @@ export class ConfigSearch {
 	 * ```
 	 */
 	static find(
-		tool: "markdownlint" | "biome" | "eslint" | "prettier",
+		tool: "markdownlint" | "biome" | "eslint" | "prettier" | "yamllint",
 		options: ConfigSearchOptions = {},
 	): ConfigSearchResult {
 		const config = TOOL_CONFIGS[tool];

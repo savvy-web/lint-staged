@@ -43,6 +43,7 @@ export type {
 	BiomeOptions,
 	CreateConfigOptions,
 	LintStagedConfig,
+	LintStagedEntry,
 	LintStagedHandler,
 	MarkdownOptions,
 	PackageJsonOptions,

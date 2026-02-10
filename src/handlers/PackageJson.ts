@@ -58,6 +58,7 @@ export class PackageJson {
 	static create(options: PackageJsonOptions = {}): LintStagedHandler {
 		const excludes = options.exclude ?? [...PackageJson.defaultExcludes];
 		const skipSort = options.skipSort ?? false;
+		const skipFormat = options.skipFormat ?? false;
 
 		return (filenames: readonly string[]): string | string[] => {
 			const filtered = Filter.exclude(filenames, excludes);
@@ -75,6 +76,11 @@ export class PackageJson {
 						writeFileSync(filepath, sorted, "utf-8");
 					}
 				}
+			}
+
+			// When skipFormat is true, only sort — no biome command
+			if (skipFormat) {
+				return [];
 			}
 
 			// Build Biome formatting command with properly escaped file paths

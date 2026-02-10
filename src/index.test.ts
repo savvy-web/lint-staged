@@ -78,6 +78,22 @@ describe("Handler classes", () => {
 			expect(content).toBe(unsorted);
 		});
 
+		it("should skip biome when skipFormat is set", () => {
+			const testFile = join(FIXTURES_DIR, "skip-format-package.json");
+			const unsorted = '{"version": "1.0.0", "name": "test"}';
+			writeFileSync(testFile, unsorted, "utf-8");
+
+			const handler = PackageJson.create({ skipFormat: true });
+			const result = handler([testFile]);
+
+			// Should return empty (no biome command)
+			expect(result).toEqual([]);
+
+			// File should still have been sorted
+			const content = readFileSync(testFile, "utf-8");
+			expect(content.indexOf('"name"')).toBeLessThan(content.indexOf('"version"'));
+		});
+
 		it("should return empty array when all files excluded", () => {
 			const handler = PackageJson.create();
 			const result = handler(["dist/package.json"]);
@@ -161,35 +177,49 @@ describe("Handler classes", () => {
 			expect(Yaml.glob).toBe("**/*.{yml,yaml}");
 		});
 
-		it("should exclude pnpm files by default and format in-place", () => {
+		it("should exclude pnpm files by default and format in-place", async () => {
 			// Create a test YAML file with valid but unformatted content
 			const testFile = join(FIXTURES_DIR, "config.yaml");
 			const unformatted = "key:   value\nother:    value2";
 			writeFileSync(testFile, unformatted, "utf-8");
 
 			const handler = Yaml.create();
-			const result = handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
+			const result = await handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
 			// Formatting is done in-place; lint-staged auto-stages modified files
 			expect(result).toEqual([]);
 
-			// File should be formatted (extra spaces removed)
+			// File should be formatted by Prettier (extra spaces removed)
 			const formatted = readFileSync(testFile, "utf-8");
 			expect(formatted).toContain("key: value");
 			expect(formatted).toContain("other: value2");
 		});
 
-		it("should skip formatting when option is set", () => {
+		it("should skip formatting when option is set", async () => {
 			const testFile = join(FIXTURES_DIR, "skip-format.yaml");
 			const content = "key:   value\n";
 			writeFileSync(testFile, content, "utf-8");
 
 			const handler = Yaml.create({ skipFormat: true, skipValidate: true });
-			const result = handler([testFile]);
+			const result = await handler([testFile]);
 
 			expect(result).toEqual([]);
 			// File should not be modified
 			expect(readFileSync(testFile, "utf-8")).toBe(content);
+		});
+
+		it("should validate and reject invalid YAML", async () => {
+			const testFile = join(FIXTURES_DIR, "invalid.yaml");
+			writeFileSync(testFile, "key: value\n  invalid: indent", "utf-8");
+
+			const handler = Yaml.create({ skipFormat: true });
+			await expect(handler([testFile])).rejects.toThrow("Invalid YAML");
+		});
+
+		it("should have findConfig and isAvailable static methods", () => {
+			expect(typeof Yaml.findConfig).toBe("function");
+			expect(typeof Yaml.isAvailable).toBe("function");
+			expect(Yaml.isAvailable()).toBe(true);
 		});
 
 		it("should have formatFile and validateFile static methods", () => {
@@ -292,14 +322,14 @@ describe("Handler classes", () => {
 			expect(result).toEqual([]);
 		});
 
-		it("should use detected package manager for typecheck command", () => {
-			// This repo uses pnpm and @typescript/native-preview, so command should use pnpm exec tsgo
+		it("should use detected compiler for typecheck command", () => {
+			TypeScript.clearCache();
 			const cmd = TypeScript.getDefaultTypecheckCommand();
-			expect(cmd).toBe("pnpm exec tsgo --noEmit");
+			expect(cmd).toContain("tsgo --noEmit");
 		});
 
-		it("should detect tsgo compiler when @typescript/native-preview is installed", () => {
-			// This repo has @typescript/native-preview installed
+		it("should detect tsgo compiler when tsgo is available", () => {
+			TypeScript.clearCache();
 			const compiler = TypeScript.detectCompiler();
 			expect(compiler).toBe("tsgo");
 		});
@@ -367,6 +397,12 @@ describe("Utility classes", () => {
 			expect(Command.isAvailable("definitely-not-a-real-command-12345")).toBe(false);
 		});
 
+		it("should find project root", () => {
+			Command.clearCache();
+			const root = Command.findRoot();
+			expect(root).toBe(import.meta.dirname.replace(/\/src$/, ""));
+		});
+
 		it("should detect package manager from package.json", () => {
 			// Clear cache first to ensure fresh detection
 			Command.clearCache();
@@ -379,7 +415,7 @@ describe("Utility classes", () => {
 			expect(Command.getExecPrefix("npm")).toEqual(["npx", "--no"]);
 			expect(Command.getExecPrefix("pnpm")).toEqual(["pnpm", "exec"]);
 			expect(Command.getExecPrefix("yarn")).toEqual(["yarn", "exec"]);
-			expect(Command.getExecPrefix("bun")).toEqual(["bunx"]);
+			expect(Command.getExecPrefix("bun")).toEqual(["bun", "x", "--no-install"]);
 		});
 
 		it("should cache package manager detection", () => {
@@ -447,6 +483,48 @@ describe("Configuration utilities", () => {
 			expect(config[PnpmWorkspace.glob]).toBeDefined();
 			expect(config[ShellScripts.glob]).toBeDefined();
 			expect(config[TypeScript.glob]).toBeDefined();
+		});
+
+		it("should use array syntax for PackageJson when Biome is enabled", () => {
+			const config = createConfig();
+			const entry = config[PackageJson.glob];
+
+			// Should be an array with two steps: sort handler + biome handler
+			expect(Array.isArray(entry)).toBe(true);
+			expect(entry).toHaveLength(2);
+		});
+
+		it("should use single handler for PackageJson when Biome is disabled", () => {
+			const config = createConfig({ biome: false });
+			const entry = config[PackageJson.glob];
+
+			// Should be a single handler function, not an array
+			expect(typeof entry).toBe("function");
+		});
+
+		it("should use array syntax for PnpmWorkspace when Yaml is enabled", () => {
+			const config = createConfig();
+			const entry = config[PnpmWorkspace.glob];
+
+			// Should be an array with two steps: sort/format handler + validate handler
+			expect(Array.isArray(entry)).toBe(true);
+			expect(entry).toHaveLength(2);
+		});
+
+		it("should use single handler for PnpmWorkspace when Yaml is disabled", () => {
+			const config = createConfig({ yaml: false });
+			const entry = config[PnpmWorkspace.glob];
+
+			// Should be a single handler function, not an array
+			expect(typeof entry).toBe("function");
+		});
+
+		it("should wrap standalone Yaml handler in array for proper staging", () => {
+			const config = createConfig({ pnpmWorkspace: false });
+			const entry = config[Yaml.glob];
+
+			expect(Array.isArray(entry)).toBe(true);
+			expect(entry).toHaveLength(1);
 		});
 
 		it("should allow disabling handlers", () => {
