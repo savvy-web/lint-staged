@@ -93,14 +93,23 @@
 	},
 	"peerDependencies": {
 		"@biomejs/biome": "2.3.14",
+		"@types/node": "catalog:silk",
+		"@typescript/native-preview": "catalog:silk",
 		"husky": "catalog:silk",
 		"lint-staged": "catalog:silk",
 		"markdownlint-cli2": "catalog:silk",
-		"markdownlint-cli2-formatter-codequality": "catalog:silk"
+		"markdownlint-cli2-formatter-codequality": "catalog:silk",
+		"typescript": "catalog:silk"
 	},
 	"peerDependenciesMeta": {
 		"@biomejs/biome": {
 			"optional": true
+		},
+		"@types/node": {
+			"optional": false
+		},
+		"@typescript/native-preview": {
+			"optional": false
 		},
 		"husky": {
 			"optional": false
@@ -112,6 +121,9 @@
 			"optional": false
 		},
 		"markdownlint-cli2-formatter-codequality": {
+			"optional": false
+		},
+		"typescript": {
 			"optional": false
 		}
 	},
