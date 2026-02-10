@@ -37,6 +37,7 @@
 		"savvy-lint": "./src/bin/cli.ts"
 	},
 	"scripts": {
+		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"build:dev": "rslib build --config-loader native --env-mode dev",
 		"build:inspect": "rslib inspect --verbose",
 		"build:prod": "rslib build --config-loader native --env-mode npm",
@@ -51,7 +52,6 @@
 		"lint:md": "markdownlint-cli2 '**/*.{md,mdx}' --config './lib/configs/.markdownlint-cli2.jsonc'",
 		"lint:md:fix": "markdownlint-cli2  --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
 		"prepare": "husky",
-		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"test": "turbo run vitest:unit --log-prefix=none --log-order=grouped",
 		"test:watch": "vitest --watch",
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",

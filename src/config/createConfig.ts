@@ -41,13 +41,13 @@ export function createConfig(options: CreateConfigOptions = {}): LintStagedConfi
 	const biomeEnabled = options.biome !== false;
 
 	// PackageJson + Biome: use array syntax for sequential execution
-	// Step 1: sort in-place (skipFormat), Step 2: biome format
+	// Step 1: sort via CLI command (auto-staged), Step 2: biome format
 	if (pkgJsonEnabled && biomeEnabled) {
 		const pkgOpts = typeof options.packageJson === "object" ? options.packageJson : {};
 		const biomeOpts = typeof options.biome === "object" ? options.biome : {};
 
 		config[PackageJson.glob] = [
-			PackageJson.create({ ...pkgOpts, skipFormat: true }),
+			PackageJson.fmtCommand(pkgOpts),
 			Biome.create({
 				...biomeOpts,
 				exclude: [...PackageJson.defaultExcludes],
@@ -74,19 +74,18 @@ export function createConfig(options: CreateConfigOptions = {}): LintStagedConfi
 	const yamlEnabled = options.yaml !== false;
 
 	// PnpmWorkspace + Yaml: use array syntax for sequential execution
-	// Step 1: sort + format in-place, Step 2: validate only
+	// Step 1: sort/format via CLI command (auto-staged), Step 2: validate only
 	if (pnpmEnabled && yamlEnabled) {
-		const pnpmOpts = typeof options.pnpmWorkspace === "object" ? options.pnpmWorkspace : {};
-		config[PnpmWorkspace.glob] = [PnpmWorkspace.create(pnpmOpts), Yaml.create({ exclude: [], skipFormat: true })];
+		config[PnpmWorkspace.glob] = [PnpmWorkspace.fmtCommand(), Yaml.create({ exclude: [], skipFormat: true })];
 	} else if (pnpmEnabled) {
 		const pnpmOpts = typeof options.pnpmWorkspace === "object" ? options.pnpmWorkspace : {};
 		config[PnpmWorkspace.glob] = PnpmWorkspace.create(pnpmOpts);
 	}
 
-	// Yaml handler (standalone — wrap in array for proper staging)
+	// Yaml handler: format via CLI command (auto-staged), then validate
 	if (yamlEnabled) {
-		const handlerOptions = typeof options.yaml === "object" ? options.yaml : {};
-		config[Yaml.glob] = [Yaml.create(handlerOptions)];
+		const yamlOpts = typeof options.yaml === "object" ? options.yaml : {};
+		config[Yaml.glob] = [Yaml.fmtCommand(yamlOpts), Yaml.create({ ...yamlOpts, skipFormat: true })];
 	}
 
 	// ShellScripts handler

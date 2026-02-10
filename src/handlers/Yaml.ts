@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { format, resolveConfig } from "prettier";
 import { lint } from "yaml-lint";
 import type { LintStagedHandler, YamlOptions } from "../types.js";
+import { Command } from "../utils/Command.js";
 import { ConfigSearch } from "../utils/ConfigSearch.js";
 import { Filter } from "../utils/Filter.js";
 
@@ -121,6 +122,33 @@ export class Yaml {
 	}
 
 	/**
+	 * Create a handler that returns a CLI command to format YAML files.
+	 *
+	 * @remarks
+	 * Unlike {@link create}, this does not modify files in the handler function
+	 * body. Instead it returns a `savvy-lint fmt yaml` command so lint-staged
+	 * can detect the modification and auto-stage it.
+	 * Use this in lint-staged array syntax for sequential execution.
+	 *
+	 * @param options - Configuration options
+	 * @returns A lint-staged compatible handler function
+	 */
+	static fmtCommand(options: YamlOptions = {}): LintStagedHandler {
+		const excludes = options.exclude ?? [...Yaml.defaultExcludes];
+
+		return (filenames: readonly string[]): string | string[] => {
+			const filtered = Filter.exclude(filenames, excludes);
+
+			if (filtered.length === 0) {
+				return [];
+			}
+
+			const cmd = Command.findSavvyLint();
+			return `${cmd} fmt yaml ${Filter.shellEscape(filtered)}`;
+		};
+	}
+
+	/**
 	 * Create a handler with custom options.
 	 *
 	 * @param options - Configuration options
@@ -157,11 +185,6 @@ export class Yaml {
 						throw new Error(`Invalid YAML in ${filepath}: ${error instanceof Error ? error.message : String(error)}`);
 					}
 				}
-			}
-
-			// Stage in-place changes explicitly
-			if (!skipFormat) {
-				return `git add ${Filter.shellEscape(filtered)}`;
 			}
 
 			return [];

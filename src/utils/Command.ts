@@ -287,6 +287,27 @@ export class Command {
 	}
 
 	/**
+	 * Find the savvy-lint CLI command.
+	 *
+	 * @remarks
+	 * Searches for the `savvy-lint` binary via the standard tool search,
+	 * then falls back to the dev build at `dist/dev/bin/savvy-lint.js`
+	 * for dogfooding scenarios where the package's own bin isn't linked.
+	 *
+	 * @returns The command string to invoke savvy-lint
+	 */
+	static findSavvyLint(): string {
+		const result = Command.findTool("savvy-lint");
+		if (result.available && result.command) {
+			return result.command;
+		}
+
+		// Fallback for dogfooding: use dev build directly
+		const root = Command.findRoot();
+		return `node ${root}/dist/dev/bin/savvy-lint.js`;
+	}
+
+	/**
 	 * Execute a command and return its output.
 	 *
 	 * @param command - The command to execute

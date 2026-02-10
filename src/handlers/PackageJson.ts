@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import sortPackageJson from "sort-package-json";
 import type { LintStagedHandler, PackageJsonOptions } from "../types.js";
+import { Command } from "../utils/Command.js";
 import { Filter } from "../utils/Filter.js";
 
 /**
@@ -55,6 +56,39 @@ export class PackageJson {
 	 * @param options - Configuration options
 	 * @returns A lint-staged compatible handler function
 	 */
+	/**
+	 * Create a handler that returns a CLI command to sort package.json files.
+	 *
+	 * @remarks
+	 * Unlike {@link create}, this does not modify files in the handler function
+	 * body. Instead it returns a `savvy-lint fmt package-json` command so
+	 * lint-staged can detect the modification and auto-stage it.
+	 * Use this in lint-staged array syntax for sequential execution.
+	 *
+	 * @param options - Configuration options
+	 * @returns A lint-staged compatible handler function
+	 */
+	static fmtCommand(options: PackageJsonOptions = {}): LintStagedHandler {
+		const excludes = options.exclude ?? [...PackageJson.defaultExcludes];
+
+		return (filenames: readonly string[]): string | string[] => {
+			const filtered = Filter.exclude(filenames, excludes);
+
+			if (filtered.length === 0) {
+				return [];
+			}
+
+			const cmd = Command.findSavvyLint();
+			return `${cmd} fmt package-json ${Filter.shellEscape(filtered)}`;
+		};
+	}
+
+	/**
+	 * Create a handler with custom options.
+	 *
+	 * @param options - Configuration options
+	 * @returns A lint-staged compatible handler function
+	 */
 	static create(options: PackageJsonOptions = {}): LintStagedHandler {
 		const excludes = options.exclude ?? [...PackageJson.defaultExcludes];
 		const skipSort = options.skipSort ?? false;
@@ -78,9 +112,9 @@ export class PackageJson {
 				}
 			}
 
-			// When skipFormat is true, only sort — stage in-place changes explicitly
+			// When skipFormat is true, only sort — no biome command
 			if (skipFormat) {
-				return `git add ${Filter.shellEscape(filtered)}`;
+				return [];
 			}
 
 			// Build Biome formatting command with properly escaped file paths

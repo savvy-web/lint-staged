@@ -11,10 +11,10 @@
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";
-import { checkCommand, initCommand } from "./commands/index.js";
+import { checkCommand, fmtCommand, initCommand } from "./commands/index.js";
 
 /** Root command for the CLI with all subcommands. */
-const rootCommand = Command.make("savvy-lint").pipe(Command.withSubcommands([initCommand, checkCommand]));
+const rootCommand = Command.make("savvy-lint").pipe(Command.withSubcommands([initCommand, checkCommand, fmtCommand]));
 
 /** CLI application runner. */
 const cli = Command.run(rootCommand, {
@@ -36,4 +36,4 @@ export function runCli(): void {
 	NodeRuntime.runMain(main);
 }
 
-export { checkCommand, initCommand, rootCommand };
+export { checkCommand, fmtCommand, initCommand, rootCommand };

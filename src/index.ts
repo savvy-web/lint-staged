@@ -20,7 +20,7 @@
  */
 
 // CLI
-export { checkCommand, initCommand, rootCommand, runCli } from "./cli/index.js";
+export { checkCommand, fmtCommand, initCommand, rootCommand, runCli } from "./cli/index.js";
 // Configuration utilities
 export { createConfig } from "./config/createConfig.js";
 export type { PresetExtendOptions } from "./config/Preset.js";

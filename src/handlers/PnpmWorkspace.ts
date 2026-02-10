@@ -7,6 +7,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { parse, stringify } from "yaml";
 import type { LintStagedHandler, PnpmWorkspaceOptions } from "../types.js";
+import { Command } from "../utils/Command.js";
 
 /**
  * Shape of pnpm-workspace.yaml content.
@@ -112,6 +113,27 @@ export class PnpmWorkspace {
 	}
 
 	/**
+	 * Create a handler that returns a CLI command to sort/format pnpm-workspace.yaml.
+	 *
+	 * @remarks
+	 * Unlike {@link create}, this does not modify files in the handler function
+	 * body. Instead it returns a `savvy-lint fmt pnpm-workspace` command so
+	 * lint-staged can detect the modification and auto-stage it.
+	 * Use this in lint-staged array syntax for sequential execution.
+	 *
+	 * @returns A lint-staged compatible handler function
+	 */
+	static fmtCommand(): LintStagedHandler {
+		return (): string | string[] => {
+			if (!existsSync("pnpm-workspace.yaml")) {
+				return [];
+			}
+			const cmd = Command.findSavvyLint();
+			return `${cmd} fmt pnpm-workspace`;
+		};
+	}
+
+	/**
 	 * Create a handler with custom options.
 	 *
 	 * @param options - Configuration options
@@ -154,8 +176,7 @@ export class PnpmWorkspace {
 				const formatted = stringify(parsed, DEFAULT_STRINGIFY_OPTIONS);
 				writeFileSync(filepath, formatted, "utf-8");
 
-				// Stage in-place changes explicitly
-				return `git add ${filepath}`;
+				return [];
 			}
 
 			return [];

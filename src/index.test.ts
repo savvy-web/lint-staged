@@ -86,12 +86,22 @@ describe("Handler classes", () => {
 			const handler = PackageJson.create({ skipFormat: true });
 			const result = handler([testFile]);
 
-			// Should return git add to stage in-place changes (no biome command)
-			expect(result).toBe(`git add '${testFile}'`);
+			// Should return empty (no biome command)
+			expect(result).toEqual([]);
 
 			// File should still have been sorted
 			const content = readFileSync(testFile, "utf-8");
 			expect(content.indexOf('"name"')).toBeLessThan(content.indexOf('"version"'));
+		});
+
+		it("should return sort CLI command via fmtCommand", () => {
+			const handler = PackageJson.fmtCommand();
+			const result = handler(["src/package.json", "dist/package.json"]);
+
+			// Command resolves dynamically (savvy-lint or node fallback)
+			expect(result).toContain("fmt package-json 'src/package.json'");
+			// dist/package.json should be excluded by default
+			expect(result).not.toContain("dist/package.json");
 		});
 
 		it("should return empty array when all files excluded", () => {
@@ -186,8 +196,8 @@ describe("Handler classes", () => {
 			const handler = Yaml.create();
 			const result = await handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
-			// Formatting is done in-place; returns git add to stage changes
-			expect(result).toBe(`git add '${testFile}'`);
+			// Formatting is done in-place; lint-staged auto-stages modified files
+			expect(result).toEqual([]);
 
 			// File should be formatted by Prettier (extra spaces removed)
 			const formatted = readFileSync(testFile, "utf-8");
@@ -246,8 +256,8 @@ describe("Handler classes", () => {
 				const handler = PnpmWorkspace.create();
 				const result = handler([]);
 
-				// Sorting/formatting is done in-place; returns git add to stage changes
-				expect(result).toBe("git add pnpm-workspace.yaml");
+				// Sorting/formatting is done in-place; lint-staged auto-stages modified files
+				expect(result).toEqual([]);
 
 				// File should be sorted and formatted
 				const content = readFileSync(filepath, "utf-8");
@@ -519,12 +529,13 @@ describe("Configuration utilities", () => {
 			expect(typeof entry).toBe("function");
 		});
 
-		it("should wrap standalone Yaml handler in array for proper staging", () => {
+		it("should use array syntax for Yaml with format command and validation", () => {
 			const config = createConfig({ pnpmWorkspace: false });
 			const entry = config[Yaml.glob];
 
+			// Should be an array with two steps: format command + validate handler
 			expect(Array.isArray(entry)).toBe(true);
-			expect(entry).toHaveLength(1);
+			expect(entry).toHaveLength(2);
 		});
 
 		it("should allow disabling handlers", () => {
