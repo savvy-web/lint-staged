@@ -76,6 +76,7 @@ export function createConfig(options: CreateConfigOptions = {}): LintStagedConfi
 	// PnpmWorkspace + Yaml: use array syntax for sequential execution
 	// Step 1: sort/format via CLI command (auto-staged), Step 2: validate only
 	if (pnpmEnabled && yamlEnabled) {
+		// exclude: [] overrides Yaml.defaultExcludes so pnpm-workspace.yaml is validated
 		config[PnpmWorkspace.glob] = [PnpmWorkspace.fmtCommand(), Yaml.create({ exclude: [], skipFormat: true })];
 	} else if (pnpmEnabled) {
 		const pnpmOpts = typeof options.pnpmWorkspace === "object" ? options.pnpmWorkspace : {};

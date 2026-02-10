@@ -391,6 +391,27 @@ describe("Utility classes", () => {
 			expect(result).toBe("'path/with'\\''quote/file.ts'");
 		});
 
+		it("should escape special shell characters", () => {
+			const files = ["path/$var/file.ts", "path/`cmd`/file.ts", 'path/"quoted"/file.ts', "path/back\\slash/file.ts"];
+			const result = Filter.shellEscape(files);
+			// Single-quoted strings prevent shell interpretation of $, `, ", and \
+			expect(result).toBe(
+				"'path/$var/file.ts' 'path/`cmd`/file.ts' 'path/\"quoted\"/file.ts' 'path/back\\slash/file.ts'",
+			);
+		});
+
+		it("should escape newlines in file paths", () => {
+			const files = ["path/with\nnewline/file.ts"];
+			const result = Filter.shellEscape(files);
+			expect(result).toBe("'path/with\nnewline/file.ts'");
+		});
+
+		it("should handle unicode characters", () => {
+			const files = ["path/café/file.ts", "path/日本語/file.ts"];
+			const result = Filter.shellEscape(files);
+			expect(result).toBe("'path/café/file.ts' 'path/日本語/file.ts'");
+		});
+
 		it("should handle empty array", () => {
 			const result = Filter.shellEscape([]);
 			expect(result).toBe("");
