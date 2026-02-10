@@ -4,10 +4,14 @@ Advanced utility classes for building custom handlers and extending functionalit
 
 ## Command
 
-Utilities for checking command availability and package manager detection.
+Utilities for checking command availability, package manager detection, and
+project root resolution.
 
 ```typescript
 import { Command } from '@savvy-web/lint-staged';
+
+// Find the project root (reliable in Husky hooks)
+const root = Command.findRoot();
 
 // Check if a command exists
 if (Command.isAvailable('biome')) {
@@ -24,15 +28,26 @@ const prefix = Command.getExecPrefix('pnpm');
 
 // Find a tool (global or via package manager)
 const result = Command.findTool('biome');
-// Returns: { command: 'biome', args: [] } or { command: 'pnpm', args: ['exec', 'biome'] }
+// Returns: { available: true, command: 'biome', source: 'global' }
+//      or: { available: true, command: 'pnpm exec biome', source: 'pnpm' }
+
+// Find the savvy-lint CLI (with dogfooding fallback)
+const savvyLint = Command.findSavvyLint();
+// Returns: 'savvy-lint' or 'pnpm exec savvy-lint' or fallback to dev build
 ```
 
 | Method | Description |
 | ------ | ----------- |
+| `findRoot(cwd?)` | Find project root using workspace-tools |
 | `isAvailable(cmd)` | Check if command exists in PATH |
-| `detectPackageManager()` | Detect package manager from packageManager field or lockfiles |
+| `detectPackageManager(cwd?)` | Detect package manager from packageManager field |
 | `getExecPrefix(pm)` | Get exec command prefix for a package manager |
 | `findTool(name)` | Find a tool globally or via package manager |
+| `requireTool(name, msg?)` | Find a tool or throw if not available |
+| `findSavvyLint()` | Find the savvy-lint CLI command |
+| `exec(cmd)` | Execute a command and return trimmed output |
+| `execSilent(cmd)` | Execute a command silently, return success boolean |
+| `clearCache()` | Clear cached package manager and project root |
 
 ## Filter
 
@@ -80,6 +95,9 @@ if (result.filepath) {
   console.log(`Found config at: ${result.filepath}`);
   console.log(`Config content:`, result.config);
 }
+
+// Find yaml-lint config
+const yamlConfig = ConfigSearch.find('yamllint');
 
 // Search with custom options
 const custom = ConfigSearch.find('eslint', {

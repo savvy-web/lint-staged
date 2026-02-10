@@ -127,6 +127,44 @@ Tool availability:
 ✓ Lint-staged is configured correctly.
 ```
 
+### `savvy-lint fmt`
+
+Format files in-place. These subcommands are used internally by handler
+`fmtCommand()` methods to produce CLI commands that lint-staged can detect
+and auto-stage. They can also be run manually.
+
+```bash
+savvy-lint fmt <subcommand> [files...]
+```
+
+**Subcommands:**
+
+| Subcommand | Description |
+| ---------- | ----------- |
+| `package-json` | Sort package.json fields with sort-package-json |
+| `pnpm-workspace` | Sort and format pnpm-workspace.yaml |
+| `yaml` | Format YAML files with Prettier |
+
+**Examples:**
+
+```bash
+# Sort a package.json file
+savvy-lint fmt package-json package.json
+
+# Format YAML files
+savvy-lint fmt yaml config.yaml .github/workflows/ci.yaml
+
+# Sort pnpm-workspace.yaml (no file argument needed)
+savvy-lint fmt pnpm-workspace
+```
+
+**Why `fmt` exists:**
+
+lint-staged v16 only auto-stages file changes made by commands it executes,
+not by JavaScript handler function bodies. The `fmt` subcommands wrap in-place
+file modifications as CLI commands so lint-staged can detect and stage the
+changes between sequential steps.
+
 ## Postinstall Usage
 
 You can run `savvy-lint check --quiet` as a postinstall script to alert

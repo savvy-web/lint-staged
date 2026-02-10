@@ -79,6 +79,12 @@ export default Preset.get(presetName, {
 
 Generate a complete configuration with fine-grained control.
 
+`createConfig()` automatically uses lint-staged array syntax for handlers that
+modify files in-place (PackageJson, Yaml, PnpmWorkspace). This ensures
+lint-staged can detect and auto-stage file modifications between sequential
+steps -- for example, sorting package.json fields first, then formatting with
+Biome second.
+
 ### Basic Usage
 
 ```typescript

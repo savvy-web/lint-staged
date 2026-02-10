@@ -76,27 +76,30 @@ export default {
 | `PackageJson` | `**/package.json` | Sort and format with Biome |
 | `Biome` | `*.{js,ts,jsx,tsx,json,jsonc}` | Format and lint |
 | `Markdown` | `**/*.{md,mdx}` | Lint with markdownlint-cli2 |
-| `Yaml` | `**/*.{yml,yaml}` | Format and validate |
+| `Yaml` | `**/*.{yml,yaml}` | Format (Prettier) and validate (yaml-lint) |
 | `PnpmWorkspace` | `pnpm-workspace.yaml` | Sort and format |
 | `ShellScripts` | `**/*.sh` | Manage permissions |
 | `TypeScript` | `*.{ts,cts,mts,tsx}` | TSDoc validation + typecheck |
 
 ## CLI
 
-The `savvy-lint` CLI helps bootstrap and validate your setup:
+The `savvy-lint` CLI helps bootstrap, validate, and format your setup:
 
 ```bash
 savvy-lint init              # Bootstrap hooks, config, and tooling
 savvy-lint init --preset silk --force  # Overwrite with silk preset
 savvy-lint check             # Validate current configuration
 savvy-lint check --quiet     # Warnings only (for postinstall)
+savvy-lint fmt package-json  # Sort package.json fields
+savvy-lint fmt yaml          # Format YAML files with Prettier
+savvy-lint fmt pnpm-workspace  # Sort and format pnpm-workspace.yaml
 ```
 
 ## Documentation
 
 - [Handler Configuration](./docs/handlers.md) -- Detailed options for each handler
 - [Configuration API](./docs/configuration.md) -- createConfig and Preset APIs
-- [CLI Reference](./docs/cli.md) -- `savvy-lint init` and `savvy-lint check`
+- [CLI Reference](./docs/cli.md) -- `savvy-lint init`, `check`, and `fmt`
 - [Utilities](./docs/utilities.md) -- Command, Filter, and advanced utilities
 - [Migration Guide](./docs/migration.md) -- Migrating from raw lint-staged configs
 

@@ -1,34 +1,28 @@
 /**
  * Handler for YAML files.
  *
- * Formats and validates YAML files using the bundled yaml library.
+ * Formats with Prettier and validates with yaml-lint, both as bundled dependencies.
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { parse, stringify } from "yaml";
+import { format, resolveConfig } from "prettier";
+import { lint } from "yaml-lint";
 import type { LintStagedHandler, YamlOptions } from "../types.js";
+import { Command } from "../utils/Command.js";
+import { ConfigSearch } from "../utils/ConfigSearch.js";
 import { Filter } from "../utils/Filter.js";
-
-/**
- * Default YAML stringify options for consistent formatting.
- */
-const DEFAULT_STRINGIFY_OPTIONS = {
-	indent: 2,
-	lineWidth: 0, // Disable line wrapping
-	singleQuote: false,
-} as const;
 
 /**
  * Handler for YAML files.
  *
- * Formats and validates YAML files using the bundled yaml library.
+ * Formats with Prettier and validates with yaml-lint, both as bundled dependencies.
  *
  * @remarks
  * Excludes pnpm-lock.yaml and pnpm-workspace.yaml by default.
  * pnpm-workspace.yaml has its own dedicated handler.
  *
- * Uses the `yaml` package for both formatting and validation
- * as a bundled dependency (no CLI spawning required).
+ * Uses Prettier for formatting and yaml-lint for validation.
+ * Both are bundled dependencies (no CLI spawning required).
  *
  * @example
  * ```typescript
@@ -61,27 +55,97 @@ export class Yaml {
 	static readonly handler: LintStagedHandler = Yaml.create();
 
 	/**
-	 * Format a YAML file in-place.
+	 * Find the yaml-lint config file.
+	 *
+	 * Searches in order:
+	 * 1. `lib/configs/` directory
+	 * 2. Standard locations (repo root)
+	 *
+	 * @returns The config file path, or undefined if not found
+	 */
+	static findConfig(): string | undefined {
+		const result = ConfigSearch.find("yamllint");
+		return result.filepath;
+	}
+
+	/**
+	 * Load the yaml-lint schema from a config file.
+	 *
+	 * @param filepath - Path to the yaml-lint config file
+	 * @returns The schema string, or undefined if not found
+	 */
+	static loadConfig(filepath: string): string | undefined {
+		try {
+			const content = readFileSync(filepath, "utf-8");
+			const config = JSON.parse(content) as { schema?: string };
+			return config.schema;
+		} catch {
+			return undefined;
+		}
+	}
+
+	/**
+	 * Check if yaml-lint is available.
+	 *
+	 * @returns Always `true` since yaml-lint is a bundled dependency
+	 */
+	static isAvailable(): boolean {
+		return true;
+	}
+
+	/**
+	 * Format a YAML file in-place using Prettier.
 	 *
 	 * @param filepath - Path to the YAML file
-	 * @param options - Stringify options for the yaml package
 	 */
-	static formatFile(filepath: string, options?: Parameters<typeof stringify>[1]): void {
+	static async formatFile(filepath: string): Promise<void> {
 		const content = readFileSync(filepath, "utf-8");
-		const parsed = parse(content);
-		const formatted = stringify(parsed, { ...DEFAULT_STRINGIFY_OPTIONS, ...options });
+		const prettierConfig = await resolveConfig(filepath);
+		const formatted = await format(content, {
+			...prettierConfig,
+			filepath,
+			parser: "yaml",
+		});
 		writeFileSync(filepath, formatted, "utf-8");
 	}
 
 	/**
-	 * Validate a YAML file.
+	 * Validate a YAML file using yaml-lint.
 	 *
 	 * @param filepath - Path to the YAML file
+	 * @param schema - The YAML schema to validate against
 	 * @throws Error if the YAML is invalid
 	 */
-	static validateFile(filepath: string): void {
+	static async validateFile(filepath: string, schema?: string): Promise<void> {
 		const content = readFileSync(filepath, "utf-8");
-		parse(content); // Throws on invalid YAML
+		await lint(content, schema ? { schema: schema as "DEFAULT_SCHEMA" } : undefined);
+	}
+
+	/**
+	 * Create a handler that returns a CLI command to format YAML files.
+	 *
+	 * @remarks
+	 * Unlike {@link create}, this does not modify files in the handler function
+	 * body. Instead it returns a `savvy-lint fmt yaml` command so lint-staged
+	 * can detect the modification and auto-stage it.
+	 * Use this in lint-staged array syntax for sequential execution.
+	 *
+	 * @param options - Configuration options
+	 * @returns A lint-staged compatible handler function
+	 */
+	static fmtCommand(options: YamlOptions = {}): LintStagedHandler {
+		const excludes = options.exclude ?? [...Yaml.defaultExcludes];
+
+		return (filenames: readonly string[]): string | string[] => {
+			const filtered = Filter.exclude(filenames, excludes);
+
+			if (filtered.length === 0) {
+				return [];
+			}
+
+			const cmd = Command.findSavvyLint();
+			return `${cmd} fmt yaml ${Filter.shellEscape(filtered)}`;
+		};
 	}
 
 	/**
@@ -95,25 +159,28 @@ export class Yaml {
 		const skipFormat = options.skipFormat ?? false;
 		const skipValidate = options.skipValidate ?? false;
 
-		return (filenames: readonly string[]): string | string[] => {
+		// Resolve yaml-lint config once at create-time
+		const configPath = options.config ?? Yaml.findConfig();
+		const schema = configPath ? Yaml.loadConfig(configPath) : undefined;
+
+		return async (filenames: readonly string[]): Promise<string | string[]> => {
 			const filtered = Filter.exclude(filenames, excludes);
 
 			if (filtered.length === 0) {
 				return [];
 			}
 
-			// Format YAML files in-place using the bundled yaml library
+			// Format first (Prettier), then validate (yaml-lint)
 			if (!skipFormat) {
 				for (const filepath of filtered) {
-					Yaml.formatFile(filepath);
+					await Yaml.formatFile(filepath);
 				}
 			}
 
-			// Validate YAML files - parsing throws on invalid YAML
 			if (!skipValidate) {
 				for (const filepath of filtered) {
 					try {
-						Yaml.validateFile(filepath);
+						await Yaml.validateFile(filepath, schema);
 					} catch (error) {
 						throw new Error(`Invalid YAML in ${filepath}: ${error instanceof Error ? error.message : String(error)}`);
 					}

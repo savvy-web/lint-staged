@@ -4,9 +4,10 @@
  * Validates TSDoc syntax with ESLint and runs type checking.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import type { LintStagedHandler, TypeScriptOptions } from "../types.js";
+import type { ToolSearchResult } from "../utils/Command.js";
 import { Command } from "../utils/Command.js";
 import { Filter } from "../utils/Filter.js";
 import { TsDocLinter } from "../utils/TsDocLinter.js";
@@ -76,43 +77,41 @@ export class TypeScript {
 	 */
 	static readonly defaultTsdocExcludes = [".test.", ".spec.", "__test__", "__tests__"] as const;
 
-	/**
-	 * Detect which TypeScript compiler to use based on package.json dependencies.
-	 *
-	 * Checks for:
-	 * 1. `\@typescript/native-preview` in dependencies/devDependencies → `tsgo`
-	 * 2. `typescript` in dependencies/devDependencies → `tsc`
-	 *
-	 * @param cwd - Directory to search for package.json (defaults to process.cwd())
-	 * @returns The compiler to use, or undefined if neither is installed
-	 */
-	static detectCompiler(cwd: string = process.cwd()): TypeScriptCompiler | undefined {
-		const packageJsonPath = join(cwd, "package.json");
+	/** Cached compiler detection result */
+	private static cachedCompilerResult: { compiler: TypeScriptCompiler; tool: ToolSearchResult } | null = null;
 
-		if (!existsSync(packageJsonPath)) {
-			return undefined;
+	/**
+	 * Detect which TypeScript compiler to use.
+	 *
+	 * Uses `Command.findTool()` to check for available compilers:
+	 * 1. `tsgo` (native TypeScript) — checked first
+	 * 2. `tsc` (standard TypeScript) — fallback
+	 *
+	 * @remarks
+	 * Unlike the previous implementation that parsed `package.json` dependencies,
+	 * this uses runtime tool detection which works correctly with pnpm catalogs,
+	 * peer dependencies, and hoisted/transitive deps.
+	 *
+	 * @param _cwd - Ignored (kept for backward compatibility)
+	 * @returns The compiler to use, or undefined if neither is available
+	 */
+	static detectCompiler(_cwd?: string): TypeScriptCompiler | undefined {
+		if (TypeScript.cachedCompilerResult !== null) {
+			return TypeScript.cachedCompilerResult.compiler;
 		}
 
-		try {
-			const content = readFileSync(packageJsonPath, "utf-8");
-			const pkg = JSON.parse(content) as {
-				dependencies?: Record<string, string>;
-				devDependencies?: Record<string, string>;
-			};
+		// Check for native TypeScript (tsgo) first
+		const tsgo = Command.findTool("tsgo");
+		if (tsgo.available) {
+			TypeScript.cachedCompilerResult = { compiler: "tsgo", tool: tsgo };
+			return "tsgo";
+		}
 
-			const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
-
-			// Check for native TypeScript (tsgo) first
-			if ("@typescript/native-preview" in allDeps) {
-				return "tsgo";
-			}
-
-			// Fall back to standard TypeScript (tsc)
-			if ("typescript" in allDeps) {
-				return "tsc";
-			}
-		} catch {
-			// Failed to read or parse package.json
+		// Fall back to standard TypeScript (tsc)
+		const tsc = Command.findTool("tsc");
+		if (tsc.available) {
+			TypeScript.cachedCompilerResult = { compiler: "tsc", tool: tsc };
+			return "tsc";
 		}
 
 		return undefined;
@@ -128,22 +127,32 @@ export class TypeScript {
 	}
 
 	/**
-	 * Get the default type checking command for the detected package manager and compiler.
+	 * Get the default type checking command for the detected compiler.
 	 *
-	 * @returns Command string like `pnpm exec tsgo --noEmit` or `npx --no tsc --noEmit`
-	 * @throws Error if no TypeScript compiler is detected in package.json
+	 * @remarks
+	 * Uses the cached `ToolSearchResult` from `detectCompiler()` to build
+	 * the command string, avoiding a separate package manager detection step.
+	 *
+	 * @returns Command string like `pnpm exec tsgo --noEmit` or `tsgo --noEmit`
+	 * @throws Error if no TypeScript compiler is available
 	 */
 	static getDefaultTypecheckCommand(): string {
 		const compiler = TypeScript.detectCompiler();
-		if (!compiler) {
+		if (!compiler || !TypeScript.cachedCompilerResult) {
 			throw new Error(
 				"No TypeScript compiler found. Install 'typescript' or '@typescript/native-preview' as a dev dependency.",
 			);
 		}
 
-		const pm = Command.detectPackageManager();
-		const prefix = Command.getExecPrefix(pm);
-		return [...prefix, compiler, "--noEmit"].join(" ");
+		return `${TypeScript.cachedCompilerResult.tool.command} --noEmit`;
+	}
+
+	/**
+	 * Clear the cached compiler detection result.
+	 * Useful for testing or when the environment changes.
+	 */
+	static clearCache(): void {
+		TypeScript.cachedCompilerResult = null;
 	}
 
 	/**
@@ -162,7 +171,7 @@ export class TypeScript {
 	 * @param cwd - Directory to search from (defaults to process.cwd())
 	 * @returns `true` if TSDoc linting can be performed
 	 */
-	static isTsdocAvailable(cwd: string = process.cwd()): boolean {
+	static isTsdocAvailable(cwd: string = Command.findRoot()): boolean {
 		// Check for tsdoc.json
 		const tsdocPath = join(cwd, "tsdoc.json");
 		return existsSync(tsdocPath);
@@ -179,7 +188,7 @@ export class TypeScript {
 		const tsdocExcludes = options.excludeTsdoc ?? [...TypeScript.defaultTsdocExcludes];
 		const skipTsdoc = options.skipTsdoc ?? false;
 		const skipTypecheck = options.skipTypecheck ?? false;
-		const rootDir = options.rootDir ?? process.cwd();
+		const rootDir = options.rootDir ?? Command.findRoot();
 
 		// Lazy-load typecheck command to avoid throwing during import
 		let typecheckCommand: string | undefined;
