@@ -79,7 +79,7 @@
 		"@microsoft/api-extractor": "catalog:silk",
 		"@rslib/core": "catalog:silk",
 		"@savvy-web/commitlint": "^0.3.2",
-		"@savvy-web/rslib-builder": "^0.12.2",
+		"@savvy-web/rslib-builder": "^0.14.1",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"@vitest/coverage-v8": "catalog:silk",
