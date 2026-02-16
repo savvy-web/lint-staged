@@ -1,5 +1,19 @@
 # @savvy-web/lint-staged
 
+## 0.4.1
+
+### Patch Changes
+
+- 769379f: ## Features
+  - Support for @savvy-web/changesets
+- 75ff905: ## Dependencies
+  - @savvy-web/commitlint: ^0.3.1 → ^0.3.2
+  - @savvy-web/rslib-builder: ^0.12.1 → ^0.12.2
+- 29b48cc: Update dependencies:
+
+  **Dependencies:**
+  - @savvy-web/rslib-builder: ^0.12.2 → ^0.14.1
+
 ## 0.4.0
 
 ### Minor Changes
