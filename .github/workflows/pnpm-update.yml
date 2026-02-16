@@ -55,6 +55,7 @@ jobs:
             @savvy-web/*
           run: |
             pnpm savvy-commit init --force
+            pnpm savvy-changesets init --force
             pnpm lint:fix
       - name: Summary
         if: always()
