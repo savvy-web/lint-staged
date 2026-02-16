@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.4.1/schema.json",
 	"assist": {
 		"actions": {
 			"source": {
@@ -58,10 +58,10 @@
 					"options": {
 						"forceJsExtensions": true
 					}
-				}
+				},
+				"noUnresolvedImports": "off"
 			},
 			"nursery": {
-				"noImportCycles": "error",
 				"useExplicitType": "off"
 			},
 			"recommended": true,
@@ -76,6 +76,8 @@
 				"useNodejsImportProtocol": "error"
 			},
 			"suspicious": {
+				"noDuplicateDependencies": "error",
+				"noImportCycles": "error",
 				"noBiomeFirstException": "error",
 				"noDuplicateObjectKeys": "error",
 				"noQuickfixBiome": "error",
