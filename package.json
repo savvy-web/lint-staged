@@ -1,6 +1,6 @@
 {
 	"name": "@savvy-web/lint-staged",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"private": false,
 	"description": "Composable, configurable lint-staged handlers for pre-commit hooks. Provides reusable handlers for Biome, Markdown, YAML, TypeScript, and more.",
 	"keywords": [
