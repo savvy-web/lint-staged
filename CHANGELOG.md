@@ -1,33 +1,42 @@
 # @savvy-web/lint-staged
 
+## 0.4.2
+
+### Dependencies
+
+* [`50bbd75`](https://github.com/savvy-web/lint-staged/commit/50bbd758ea98f2dc701d4c062c43be2e5cc18990) @savvy-web/commitlint: ^0.3.2 → ^0.3.3
+* @savvy-web/rslib-builder: ^0.14.1 → ^0.14.2
+
 ## 0.4.1
 
 ### Patch Changes
 
-- 769379f: ## Features
-  - Support for @savvy-web/changesets
-- 75ff905: ## Dependencies
-  - @savvy-web/commitlint: ^0.3.1 → ^0.3.2
-  - @savvy-web/rslib-builder: ^0.12.1 → ^0.12.2
-- 29b48cc: Update dependencies:
+* 769379f: ## Features
+  * Support for @savvy-web/changesets
+* 75ff905: ## Dependencies
+  * @savvy-web/commitlint: ^0.3.1 → ^0.3.2
+  * @savvy-web/rslib-builder: ^0.12.1 → ^0.12.2
+* 29b48cc: Update dependencies:
 
   **Dependencies:**
-  - @savvy-web/rslib-builder: ^0.12.2 → ^0.14.1
+
+  * @savvy-web/rslib-builder: ^0.12.2 → ^0.14.1
 
 ## 0.4.0
 
 ### Minor Changes
 
-- 0040923: Fix lint-staged handler execution order for reliable auto-staging.
+* 0040923: Fix lint-staged handler execution order for reliable auto-staging.
 
   In-place file modifications (sorting package.json, formatting YAML/pnpm-workspace)
   were not being staged by lint-staged v16 because it only auto-stages changes made
   by commands it executes, not by handler function bodies.
 
   **New `savvy-lint fmt` CLI subcommand** with three formatters:
-  - `fmt package-json` — sorts package.json fields with sort-package-json
-  - `fmt pnpm-workspace` — sorts and formats pnpm-workspace.yaml
-  - `fmt yaml` — formats YAML files with Prettier
+
+  * `fmt package-json` — sorts package.json fields with sort-package-json
+  * `fmt pnpm-workspace` — sorts and formats pnpm-workspace.yaml
+  * `fmt yaml` — formats YAML files with Prettier
 
   **New `fmtCommand()` static methods** on PackageJson, PnpmWorkspace, and Yaml
   handlers that return CLI command strings instead of modifying files in function
@@ -44,25 +53,27 @@
 
 ### Patch Changes
 
-- c5b26f5: Update dependencies:
+* c5b26f5: Update dependencies:
 
   **Dependencies:**
-  - @savvy-web/rslib-builder: ^0.12.0 → ^0.12.1
+
+  * @savvy-web/rslib-builder: ^0.12.0 → ^0.12.1
 
 ## 0.3.2
 
 ### Patch Changes
 
-- 2e73a54: Update dependencies:
+* 2e73a54: Update dependencies:
 
   **Dependencies:**
-  - @savvy-web/commitlint: ^0.2.1 → ^0.3.1
+
+  * @savvy-web/commitlint: ^0.2.1 → ^0.3.1
 
 ## 0.3.1
 
 ### Patch Changes
 
-- 703b57d: Fix markdownlint config output path and simplify generated lint-staged config.
+* 703b57d: Fix markdownlint config output path and simplify generated lint-staged config.
 
   The init command was writing the markdownlint-cli2 config to the repository
   root instead of lib/configs/. It now correctly writes to
@@ -75,16 +86,17 @@
 
 ### Minor Changes
 
-- b114abb: ### Managed markdownlint-cli2 config via CLI
+* b114abb: ### Managed markdownlint-cli2 config via CLI
 
   The `savvy-lint init` command now manages a `.markdownlint-cli2.jsonc` config
   file for consumers, using the same preset-aware logic as husky hooks:
-  - **File missing** (standard or silk): writes the full template
-  - **File exists + silk preset**: surgically updates `$schema` via jsonc-parser;
+
+  * **File missing** (standard or silk): writes the full template
+  * **File exists + silk preset**: surgically updates `$schema` via jsonc-parser;
     compares `config` rules with `node:util` `isDeepStrictEqual` and warns on
     mismatch (only overwrites with `--force`)
-  - **File exists + standard preset**: skips (not managed)
-  - **minimal preset**: skips entirely (no markdown tooling)
+  * **File exists + standard preset**: skips (not managed)
+  * **minimal preset**: skips entirely (no markdown tooling)
 
   The `savvy-lint check` command now validates the markdownlint config against the
   template, reporting `$schema` and `config` mismatches in both quiet and full
@@ -114,98 +126,105 @@
   chain: `generate:templates` → `types:check` → `build:dev` / `build:prod`.
 
   ### Handler bug fixes
-  - **PackageJson**: removed erroneous `git add` chaining — lint-staged
+
+  * **PackageJson**: removed erroneous `git add` chaining — lint-staged
     auto-stages modified files
-  - **PnpmWorkspace**: removed manual `git add` return — lint-staged auto-stages
-  - **Yaml**: removed manual `git add` return — lint-staged auto-stages
+  * **PnpmWorkspace**: removed manual `git add` return — lint-staged auto-stages
+  * **Yaml**: removed manual `git add` return — lint-staged auto-stages
 
   ### Husky hook improvements
-  - **post-checkout / post-merge**: now use savvy-lint managed sections with
+
+  * **post-checkout / post-merge**: now use savvy-lint managed sections with
     `BEGIN`/`END` markers, matching the pre-commit hook pattern
-  - **pre-push**: removed — the 175-line zsh-specific turbo query hook was
+  * **pre-push**: removed — the 175-line zsh-specific turbo query hook was
     fragile and not portable across shells
 
   ### New dependency
-  - `jsonc-parser` (^3.3.1) — runtime JSONC parsing and surgical edits for
+
+  * `jsonc-parser` (^3.3.1) — runtime JSONC parsing and surgical edits for
     markdownlint config management in the CLI
 
 ## 0.2.2
 
 ### Patch Changes
 
-- 7f5669e: Fix runtime issues with PackageJson handler, shell escaping, and CLI configuration
-  - Fix PackageJson and Biome handler race condition by sorting in-process with bundled sort-package-json library instead of shelling out, and excluding `package.json` from Biome's default patterns
-  - Add `Filter.shellEscape()` to properly quote file paths with spaces or special characters in all handlers
-  - Rename `Preset.full()` to `Preset.silk()` for branding consistency
-  - CLI init now generates `.ts` config files and uses `--preset silk` as default
-  - Fix bin key in package.json (use command name `savvy-lint`, not path `./savvy-lint`) and correct repository URL for npm publish
-  - Remove unnecessary `satisfies Configuration` type assertion from init config template
+* 7f5669e: Fix runtime issues with PackageJson handler, shell escaping, and CLI configuration
+  * Fix PackageJson and Biome handler race condition by sorting in-process with bundled sort-package-json library instead of shelling out, and excluding `package.json` from Biome's default patterns
+  * Add `Filter.shellEscape()` to properly quote file paths with spaces or special characters in all handlers
+  * Rename `Preset.full()` to `Preset.silk()` for branding consistency
+  * CLI init now generates `.ts` config files and uses `--preset silk` as default
+  * Fix bin key in package.json (use command name `savvy-lint`, not path `./savvy-lint`) and correct repository URL for npm publish
+  * Remove unnecessary `satisfies Configuration` type assertion from init config template
 
 ## 0.2.1
 
 ### Patch Changes
 
-- 61df0a6: Fix PackageJson handler race condition and rename Preset.full to Preset.silk
-  - Reverted to using bundled sort-package-json library programmatically (CLI approach failed for consumers)
-  - Added `package.json` to Biome handler's default excludes to prevent parallel processing race condition
-  - PackageJson handler now exclusively handles package.json files (sort + biome + git add)
-  - Renamed `Preset.full()` to `Preset.silk()` for branding consistency
-  - CLI init command now uses `--preset silk` as default (replacing `--preset full`)
-  - Added `Filter.shellEscape()` to properly escape file paths with spaces or special characters
-  - All handlers now use shell-escaped paths to prevent command injection issues
+* 61df0a6: Fix PackageJson handler race condition and rename Preset.full to Preset.silk
+  * Reverted to using bundled sort-package-json library programmatically (CLI approach failed for consumers)
+  * Added `package.json` to Biome handler's default excludes to prevent parallel processing race condition
+  * PackageJson handler now exclusively handles package.json files (sort + biome + git add)
+  * Renamed `Preset.full()` to `Preset.silk()` for branding consistency
+  * CLI init command now uses `--preset silk` as default (replacing `--preset full`)
+  * Added `Filter.shellEscape()` to properly escape file paths with spaces or special characters
+  * All handlers now use shell-escaped paths to prevent command injection issues
 
 ## 0.2.0
 
 ### Minor Changes
 
-- d923c65: Add `savvy-lint` CLI with `init` and `check` commands for bootstrapping and validating lint-staged configuration.
+* d923c65: Add `savvy-lint` CLI with `init` and `check` commands for bootstrapping and validating lint-staged configuration.
 
   **New features:**
-  - `savvy-lint init` - Creates `.husky/pre-commit` hook and `lib/configs/lint-staged.config.js` with preset selection
-  - `savvy-lint check` - Validates configuration status and tool availability
-  - Managed section markers in husky hooks to preserve custom code during updates
-  - `--quiet` flag for postinstall usage
+
+  * `savvy-lint init` - Creates `.husky/pre-commit` hook and `lib/configs/lint-staged.config.js` with preset selection
+  * `savvy-lint check` - Validates configuration status and tool availability
+  * Managed section markers in husky hooks to preserve custom code during updates
+  * `--quiet` flag for postinstall usage
 
   **Breaking changes:**
-  - Removed `DesignDocs` handler (moved to separate Claude Code plugin)
-  - Removed `DesignDocsOptions` type
-  - Removed `designDocs` option from `CreateConfigOptions` and presets
+
+  * Removed `DesignDocs` handler (moved to separate Claude Code plugin)
+  * Removed `DesignDocsOptions` type
+  * Removed `designDocs` option from `CreateConfigOptions` and presets
 
 ### Patch Changes
 
-- d923c65: Switch to @savvy-web/pnpm-plugin-silk for centralized dependency management
+* d923c65: Switch to @savvy-web/pnpm-plugin-silk for centralized dependency management
 
 ## 0.1.3
 
 ### Patch Changes
 
-- 467c3c8: Sets peer dependencies to non-optional
+* 467c3c8: Sets peer dependencies to non-optional
 
 ## 0.1.2
 
 ### Patch Changes
 
-- 4c03d03: Fix ConfigSearch failing to find config files and Biome config flag
+* 4c03d03: Fix ConfigSearch failing to find config files and Biome config flag
 
   ConfigSearch fixes:
-  - Add custom loaders for `.jsonc`, `.yaml`, and `.yml` extensions that cosmiconfig doesn't handle by default
-  - Search `lib/configs/` directory first using direct file existence checks before falling back to cosmiconfig
-  - Simplify `exists()` method to use `existsSync()` directly
+
+  * Add custom loaders for `.jsonc`, `.yaml`, and `.yml` extensions that cosmiconfig doesn't handle by default
+  * Search `lib/configs/` directory first using direct file existence checks before falling back to cosmiconfig
+  * Simplify `exists()` method to use `existsSync()` directly
 
   Biome fixes:
-  - Change `--config=` to `--config-path=` to match Biome CLI expectations
+
+  * Change `--config=` to `--config-path=` to match Biome CLI expectations
 
 ## 0.1.1
 
 ### Patch Changes
 
-- 693d648: Fix PnpmWorkspace handler to gracefully handle missing pnpm-workspace.yaml file instead of throwing an error.
+* 693d648: Fix PnpmWorkspace handler to gracefully handle missing pnpm-workspace.yaml file instead of throwing an error.
 
 ## 0.1.0
 
 ### Minor Changes
 
-- 16b0317: Initial release of `@savvy-web/lint-staged` - composable, configurable handlers for lint-staged pre-commit hooks.
+* 16b0317: Initial release of `@savvy-web/lint-staged` - composable, configurable handlers for lint-staged pre-commit hooks.
 
   ## What This Package Does
 
@@ -238,10 +257,11 @@
   ## Handler Classes
 
   Each handler follows a consistent static class-based API:
-  - `Handler.glob` - The glob pattern for matching files
-  - `Handler.handler` - Pre-configured handler with sensible defaults
-  - `Handler.create(options)` - Factory for customized handlers
-  - `Handler.defaultExcludes` - Default patterns excluded from processing
+
+  * `Handler.glob` - The glob pattern for matching files
+  * `Handler.handler` - Pre-configured handler with sensible defaults
+  * `Handler.create(options)` - Factory for customized handlers
+  * `Handler.defaultExcludes` - Default patterns excluded from processing
 
   ### Available Handlers
 
@@ -259,9 +279,10 @@
   ## Presets
 
   Three presets for quick setup:
-  - **`Preset.minimal()`** - PackageJson + Biome (formatting only)
-  - **`Preset.standard()`** - Adds Markdown, Yaml, PnpmWorkspace, ShellScripts
-  - **`Preset.full()`** - Adds TypeScript and DesignDocs handlers
+
+  * **`Preset.minimal()`** - PackageJson + Biome (formatting only)
+  * **`Preset.standard()`** - Adds Markdown, Yaml, PnpmWorkspace, ShellScripts
+  * **`Preset.full()`** - Adds TypeScript and DesignDocs handlers
 
   All presets accept options to customize or override handlers:
 
@@ -276,20 +297,23 @@
   ## Key Features
 
   ### Auto-Discovery
-  - **Config files**: Searches `lib/configs/` first, then standard locations
-  - **Package manager**: Detects from `packageManager` field or lockfiles
-  - **Tools**: Checks global availability, falls back to package manager exec
+
+  * **Config files**: Searches `lib/configs/` first, then standard locations
+  * **Package manager**: Detects from `packageManager` field or lockfiles
+  * **Tools**: Checks global availability, falls back to package manager exec
 
   ### Programmatic Processing
 
   Several handlers process files in-place without spawning external commands:
-  - **PackageJson**: Uses bundled `sort-package-json` for sorting
-  - **Yaml/PnpmWorkspace**: Uses bundled `yaml` library for formatting/validation
-  - **TypeScript TSDoc**: Uses bundled ESLint with `eslint-plugin-tsdoc`
+
+  * **PackageJson**: Uses bundled `sort-package-json` for sorting
+  * **Yaml/PnpmWorkspace**: Uses bundled `yaml` library for formatting/validation
+  * **TypeScript TSDoc**: Uses bundled ESLint with `eslint-plugin-tsdoc`
 
   ### Intelligent TSDoc Linting
 
   The TypeScript handler includes workspace-aware TSDoc validation:
+
   1. Detects monorepo workspaces via `workspace-tools`
   2. Finds `tsdoc.json` at workspace or repo level
   3. Extracts entry points from `package.json` exports
@@ -299,13 +323,14 @@
   ## Utility Classes
 
   For building custom handlers:
-  - **`Command`** - Tool availability checking and package manager detection
-  - **`Filter`** - Include/exclude file filtering with pattern matching
-  - **`ConfigSearch`** - Config file discovery via cosmiconfig
-  - **`EntryExtractor`** - Extract TypeScript entries from package.json exports
-  - **`ImportGraph`** - Trace imports from entry points
-  - **`TsDocResolver`** - Resolve files needing TSDoc linting
-  - **`TsDocLinter`** - Programmatic TSDoc linting with ESLint
+
+  * **`Command`** - Tool availability checking and package manager detection
+  * **`Filter`** - Include/exclude file filtering with pattern matching
+  * **`ConfigSearch`** - Config file discovery via cosmiconfig
+  * **`EntryExtractor`** - Extract TypeScript entries from package.json exports
+  * **`ImportGraph`** - Trace imports from entry points
+  * **`TsDocResolver`** - Resolve files needing TSDoc linting
+  * **`TsDocLinter`** - Programmatic TSDoc linting with ESLint
 
   ## Installation
 
@@ -321,7 +346,8 @@
   ```
 
   ## Documentation
-  - [Handler Configuration](./docs/handlers.md)
-  - [Configuration API](./docs/configuration.md)
-  - [Utilities](./docs/utilities.md)
-  - [Migration Guide](./docs/migration.md)
+
+  * [Handler Configuration](./docs/handlers.md)
+  * [Configuration API](./docs/configuration.md)
+  * [Utilities](./docs/utilities.md)
+  * [Migration Guide](./docs/migration.md)
