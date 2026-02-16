@@ -1,5 +1,12 @@
 # @savvy-web/lint-staged
 
+## 0.4.3
+
+### Dependencies
+
+* [`b68f5b3`](https://github.com/savvy-web/lint-staged/commit/b68f5b38c9a5333bb51a7407ae8f6d200efdb29d) Upgrade Biome to 2.4.1
+* Turbo marked as non-optional peerDependency
+
 ## 0.4.2
 
 ### Dependencies
