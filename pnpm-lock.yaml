@@ -43,7 +43,7 @@ overrides:
   markdown-it: ^14.1.1
   tmp: ^0.2.4
 
-pnpmfileChecksum: sha256-16+mM2LnerrX3SpyMygmC0B/maIfLEZyKJoK6J1yHlI=
+pnpmfileChecksum: sha256-4o+XvtdGPwEfG8f3fufVazlnEb1pzkIdrCypGH0JgU0=
 
 importers:
 
