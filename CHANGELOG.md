@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.4.4
+
+### Dependencies
+
+* [`ada7c22`](https://github.com/savvy-web/lint-staged/commit/ada7c225f425e6e538bb0d47ccaf56f095558fd9) @savvy-web/rslib-builder: ^0.14.2 → ^0.14.3
+
 ## 0.4.3
 
 ### Dependencies
