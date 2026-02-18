@@ -77,18 +77,13 @@
 	"devDependencies": {
 		"@savvy-web/changesets": "^0.1.1",
 		"@savvy-web/commitlint": "^0.3.3",
-		"@savvy-web/rslib-builder": "^0.14.3",
+		"@savvy-web/rslib-builder": "^0.14.4",
 		"@savvy-web/vitest": "^0.1.0",
-		"@types/node": "catalog:silk",
-		"@typescript/native-preview": "catalog:silk",
-		"@vitest/coverage-v8": "catalog:silk",
 		"husky": "catalog:silk",
 		"lint-staged": "catalog:silk",
 		"markdownlint-cli2": "catalog:silk",
 		"markdownlint-cli2-formatter-codequality": "catalog:silk",
-		"turbo": "catalog:silk",
-		"typescript": "catalog:silk",
-		"vitest": "catalog:silk"
+		"turbo": "catalog:silk"
 	},
 	"peerDependencies": {
 		"@biomejs/biome": "2.4.1",
