@@ -104,6 +104,9 @@ importers:
       '@savvy-web/rslib-builder':
         specifier: ^0.14.3
         version: 0.14.3(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.6(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260217.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260217.1)(jiti@2.6.1)(typescript@5.9.3)
+      '@savvy-web/vitest':
+        specifier: ^0.1.0
+        version: 0.1.0(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260217.1)(@vitest/coverage-v8@4.0.18(vitest@4.0.18(@types/node@25.2.3)(jiti@2.6.1)(yaml@2.8.2)))(typescript@5.9.3)(vitest@4.0.18(@types/node@25.2.3)(jiti@2.6.1)(yaml@2.8.2))
       '@types/node':
         specifier: catalog:silk
         version: 25.2.3
@@ -1339,6 +1342,15 @@ packages:
       '@types/node': ^25.2.3
       '@typescript/native-preview': ^7.0.0-dev.20260216.1
       typescript: ^5.9.3
+
+  '@savvy-web/vitest@0.1.0':
+    resolution: {integrity: sha512-cfK6B3GGRHiU1OgTw80e60w7b1WPSIcryecO19RE0qqPxmOnsP06BxQAHzPnsOXy2wiHorWbR8qlLjA9ZbGeXQ==}
+    peerDependencies:
+      '@types/node': ^25.2.3
+      '@typescript/native-preview': ^7.0.0-dev.20260216.1
+      '@vitest/coverage-v8': ^4.0.18
+      typescript: ^5.9.3
+      vitest: ^4.0.18
 
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
@@ -4830,6 +4842,15 @@ snapshots:
       - '@pnpm/logger'
       - jiti
       - supports-color
+
+  '@savvy-web/vitest@0.1.0(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260217.1)(@vitest/coverage-v8@4.0.18(vitest@4.0.18(@types/node@25.2.3)(jiti@2.6.1)(yaml@2.8.2)))(typescript@5.9.3)(vitest@4.0.18(@types/node@25.2.3)(jiti@2.6.1)(yaml@2.8.2))':
+    dependencies:
+      '@types/node': 25.2.3
+      '@typescript/native-preview': 7.0.0-dev.20260217.1
+      '@vitest/coverage-v8': 4.0.18(vitest@4.0.18(@types/node@25.2.3)(jiti@2.6.1)(yaml@2.8.2))
+      typescript: 5.9.3
+      vitest: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)(yaml@2.8.2)
+      workspace-tools: 0.41.0
 
   '@sindresorhus/merge-streams@4.0.0': {}
 

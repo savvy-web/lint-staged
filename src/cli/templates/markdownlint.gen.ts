@@ -23,6 +23,7 @@ export const MARKDOWNLINT_TEMPLATE = {
 		"**/CHANGELOG.md",
 		"**/.claude/plans",
 	],
+	customRules: ["@savvy-web/changesets/markdownlint"],
 	config: {
 		default: true,
 		MD001: true,
@@ -91,6 +92,9 @@ export const MARKDOWNLINT_TEMPLATE = {
 		MD060: {
 			style: "compact",
 		},
+		"changeset-heading-hierarchy": false,
+		"changeset-required-sections": false,
+		"changeset-content-structure": false,
 	},
 } as const;
 
@@ -167,4 +171,7 @@ export const MARKDOWNLINT_CONFIG = {
 	MD060: {
 		style: "compact",
 	},
+	"changeset-heading-hierarchy": false,
+	"changeset-required-sections": false,
+	"changeset-content-structure": false,
 } as const;

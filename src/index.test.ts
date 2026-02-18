@@ -236,6 +236,33 @@ describe("Handler classes", () => {
 			expect(typeof Yaml.formatFile).toBe("function");
 			expect(typeof Yaml.validateFile).toBe("function");
 		});
+
+		it("should return CLI command via fmtCommand", () => {
+			const handler = Yaml.fmtCommand();
+			const result = handler(["config.yaml", "pnpm-lock.yaml"]);
+			// Should exclude pnpm-lock.yaml by default and return fmt command
+			expect(result).toContain("fmt yaml");
+			expect(result).toContain("config.yaml");
+			expect(result).not.toContain("pnpm-lock.yaml");
+		});
+
+		it("should return empty via fmtCommand when all files excluded", () => {
+			const handler = Yaml.fmtCommand();
+			const result = handler(["pnpm-lock.yaml", "pnpm-workspace.yaml"]);
+			expect(result).toEqual([]);
+		});
+
+		it("should return empty when all files are excluded", async () => {
+			const handler = Yaml.create();
+			const result = await handler(["pnpm-lock.yaml"]);
+			expect(result).toEqual([]);
+		});
+
+		it("should have loadConfig method that handles errors", () => {
+			// loadConfig with nonexistent file returns undefined
+			const result = Yaml.loadConfig("/nonexistent/config.json");
+			expect(result).toBeUndefined();
+		});
 	});
 
 	describe("PnpmWorkspace", () => {
@@ -283,6 +310,84 @@ describe("Handler classes", () => {
 			expect(sorted.onlyBuiltDependencies).toEqual(["a", "z"]);
 			// packages should be first key
 			expect(Object.keys(sorted)[0]).toBe("packages");
+		});
+
+		it("should handle skipSort option", () => {
+			const filepath = "pnpm-workspace.yaml";
+			const original = readFileSync(filepath, "utf-8");
+
+			try {
+				const content = "packages:\n  - z-pkg\n  - a-pkg\n";
+				writeFileSync(filepath, content, "utf-8");
+
+				const handler = PnpmWorkspace.create({ skipSort: true });
+				const result = handler([]);
+				// Should still format (skipFormat defaults to false)
+				expect(result).toEqual([]);
+			} finally {
+				writeFileSync(filepath, original, "utf-8");
+			}
+		});
+
+		it("should return empty when both skipSort and skipFormat are true", () => {
+			const filepath = "pnpm-workspace.yaml";
+			const original = readFileSync(filepath, "utf-8");
+
+			try {
+				const content = "packages:\n  - z-pkg\n";
+				writeFileSync(filepath, content, "utf-8");
+
+				const handler = PnpmWorkspace.create({ skipSort: true, skipFormat: true });
+				const result = handler([]);
+				expect(result).toEqual([]);
+				// Content should be unchanged
+				expect(readFileSync(filepath, "utf-8")).toBe(content);
+			} finally {
+				writeFileSync(filepath, original, "utf-8");
+			}
+		});
+
+		it("should throw on invalid YAML when skipLint is false", () => {
+			const filepath = "pnpm-workspace.yaml";
+			const original = readFileSync(filepath, "utf-8");
+
+			try {
+				writeFileSync(filepath, ":\n  invalid: [\nyaml", "utf-8");
+				const handler = PnpmWorkspace.create();
+				expect(() => handler([])).toThrow("Invalid YAML");
+			} finally {
+				writeFileSync(filepath, original, "utf-8");
+			}
+		});
+
+		it("should return empty on invalid YAML when skipLint is true", () => {
+			const filepath = "pnpm-workspace.yaml";
+			const original = readFileSync(filepath, "utf-8");
+
+			try {
+				writeFileSync(filepath, ":\n  invalid: [\nyaml", "utf-8");
+				const handler = PnpmWorkspace.create({ skipLint: true });
+				const result = handler([]);
+				expect(result).toEqual([]);
+			} finally {
+				writeFileSync(filepath, original, "utf-8");
+			}
+		});
+
+		it("should handle fmtCommand method", () => {
+			const handler = PnpmWorkspace.fmtCommand();
+			const result = handler([]);
+			// Should return a fmt command string
+			expect(result).toContain("fmt pnpm-workspace");
+		});
+
+		it("should sort non-array values without modification", () => {
+			const sorted = PnpmWorkspace.sortContent({
+				packages: ["b", "a"],
+				customKey: "string-value",
+			});
+			expect(sorted.customKey).toBe("string-value");
+			expect(sorted.packages).toEqual(["a", "b"]);
 		});
 	});
 
@@ -352,6 +457,27 @@ describe("Handler classes", () => {
 
 		it("should have isTsdocAvailable method", () => {
 			expect(typeof TypeScript.isTsdocAvailable).toBe("function");
+		});
+
+		it("should check isTsdocAvailable against cwd", () => {
+			// This repo has tsdoc.json
+			expect(TypeScript.isTsdocAvailable()).toBe(true);
+		});
+
+		it("should return empty when all files are excluded", async () => {
+			const handler = TypeScript.create({
+				skipTsdoc: true,
+				exclude: ["src/"],
+			});
+			const result = await handler(["src/index.ts"]);
+			expect(result).toEqual([]);
+		});
+
+		it("should use cached compiler result on second call", () => {
+			TypeScript.clearCache();
+			const first = TypeScript.detectCompiler();
+			const second = TypeScript.detectCompiler();
+			expect(first).toBe(second);
 		});
 	});
 });
