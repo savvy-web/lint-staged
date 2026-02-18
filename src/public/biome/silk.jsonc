@@ -103,6 +103,16 @@
 				}
 			},
 			"includes": ["**/turbo.json", "**/tsconfig.json", "**/tsconfig.*.json"]
+		},
+		{
+			"includes": ["**/*.test.ts"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUndeclaredDependencies": "off"
+					}
+				}
+			}
 		}
 	],
 	"root": true,
