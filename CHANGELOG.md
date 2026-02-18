@@ -1,5 +1,12 @@
 # @savvy-web/lint-staged
 
+## 0.4.5
+
+### Bug Fixes
+
+* [`0b878c3`](https://github.com/savvy-web/lint-staged/commit/0b878c34162525560953d424e8f4deeece7708f4) Sets peerDependenices to silkCatalog versions to avoid circular peerDependency issues
+* Improves test coverage
+
 ## 0.4.4
 
 ### Dependencies
