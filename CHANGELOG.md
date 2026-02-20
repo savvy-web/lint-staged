@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.4.6
+
+### Features
+
+* [`a8cd58e`](https://github.com/savvy-web/lint-staged/commit/a8cd58e284030c7bac5b7148c6ae1c82068d4f10) Sets markdownlint peerDependencies less strictly
+
 ## 0.4.5
 
 ### Bug Fixes
