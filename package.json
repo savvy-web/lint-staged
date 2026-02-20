@@ -86,13 +86,13 @@
 		"turbo": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@biomejs/biome": "2.4.1",
+		"@biomejs/biome": "catalog:silk",
 		"@types/node": "catalog:silkPeers",
 		"@typescript/native-preview": "catalog:silkPeers",
 		"husky": "catalog:silkPeers",
 		"lint-staged": "catalog:silkPeers",
-		"markdownlint-cli2": "catalog:silk",
-		"markdownlint-cli2-formatter-codequality": "catalog:silk",
+		"markdownlint-cli2": "catalog:silkPeers",
+		"markdownlint-cli2-formatter-codequality": "catalog:silkPeers",
 		"turbo": "catalog:silkPeers",
 		"typescript": "catalog:silkPeers"
 	},
