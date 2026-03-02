@@ -75,9 +75,9 @@
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/changesets": "^0.1.1",
+		"@savvy-web/changesets": "^0.3.0",
 		"@savvy-web/commitlint": "^0.3.3",
-		"@savvy-web/rslib-builder": "^0.14.4",
+		"@savvy-web/rslib-builder": "^0.15.0",
 		"@savvy-web/vitest": "^0.1.0",
 		"husky": "catalog:silk",
 		"lint-staged": "catalog:silk",
