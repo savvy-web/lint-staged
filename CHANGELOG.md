@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.5.0
+
+### Features
+
+* [`644e0ac`](https://github.com/savvy-web/lint-staged/commit/644e0ace4fc6166e2da033f9ee67418c2faa5fc4) Add biome `$schema` URL sync to `savvy-lint init` and `savvy-lint check` commands. When the `@biomejs/biome` peer dependency version changes, the CLI now automatically detects and updates stale schema URLs in `biome.json`/`biome.jsonc` files across the workspace.
+
 ## 0.4.6
 
 ### Features
