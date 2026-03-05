@@ -10,7 +10,7 @@ import { FileSystem } from "@effect/platform";
 import { Effect } from "effect";
 import type { FormattingOptions } from "jsonc-parser";
 import { applyEdits, modify, parse } from "jsonc-parser";
-import { BIOME_EXCLUDE_DIRS, SCHEMA_URL_PREFIX, getExpectedSchemaUrl } from "../../utils/BiomeSchema.js";
+import { SCHEMA_URL_PREFIX, findBiomeConfigs, getExpectedSchemaUrl } from "../../utils/BiomeSchema.js";
 import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA, MARKDOWNLINT_TEMPLATE } from "../templates/markdownlint.gen.js";
 
 /** Unicode checkmark symbol. */
@@ -301,25 +301,14 @@ function writeMarkdownlintConfig(fs: FileSystem.FileSystem, preset: PresetType, 
  * Find and sync biome config `$schema` URLs to match the peer dependency version.
  *
  * @param fs - FileSystem service
- * @param quiet - Whether to suppress up-to-date messages
  * @returns Effect that syncs biome schemas
  */
-function syncBiomeSchemas(fs: FileSystem.FileSystem, quiet: boolean) {
+function syncBiomeSchemas(fs: FileSystem.FileSystem) {
 	return Effect.gen(function* () {
 		const expectedUrl = getExpectedSchemaUrl();
 		if (!expectedUrl) return;
 
-		// Find all biome config files, excluding common non-source directories
-		const configs = yield* Effect.tryPromise(async () => {
-			const { glob } = await import("node:fs/promises");
-			const results: string[] = [];
-			for await (const entry of glob("**/biome.{json,jsonc}", {
-				exclude: (name: string) => BIOME_EXCLUDE_DIRS.includes(name),
-			})) {
-				results.push(entry);
-			}
-			return results;
-		});
+		const configs = yield* findBiomeConfigs();
 
 		for (const configPath of configs) {
 			const content = yield* fs.readFileString(configPath);
@@ -329,9 +318,7 @@ function syncBiomeSchemas(fs: FileSystem.FileSystem, quiet: boolean) {
 			if (!parsed.$schema.startsWith(SCHEMA_URL_PREFIX)) continue;
 
 			if (parsed.$schema === expectedUrl) {
-				if (!quiet) {
-					yield* Effect.log(`${CHECK_MARK} ${configPath}: biome $schema up-to-date`);
-				}
+				yield* Effect.log(`${CHECK_MARK} ${configPath}: biome $schema up-to-date`);
 				continue;
 			}
 
@@ -479,7 +466,7 @@ export const initCommand = Command.make(
 			}
 
 			// Sync biome $schema URLs
-			yield* syncBiomeSchemas(fs, false);
+			yield* syncBiomeSchemas(fs);
 
 			// Handle config file
 			const configExists = yield* fs.exists(config);

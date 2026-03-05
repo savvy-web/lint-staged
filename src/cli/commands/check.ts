@@ -11,7 +11,7 @@ import { parse } from "jsonc-parser";
 import { Biome } from "../../handlers/Biome.js";
 import { Markdown } from "../../handlers/Markdown.js";
 import { TypeScript } from "../../handlers/TypeScript.js";
-import { BIOME_EXCLUDE_DIRS, SCHEMA_URL_PREFIX, getExpectedSchemaUrl } from "../../utils/BiomeSchema.js";
+import { SCHEMA_URL_PREFIX, findBiomeConfigs, getExpectedSchemaUrl } from "../../utils/BiomeSchema.js";
 import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA } from "../templates/markdownlint.gen.js";
 import {
 	BEGIN_MARKER,
@@ -176,21 +176,11 @@ function checkMarkdownlintConfig(content: string): {
 function checkBiomeSchemas(fs: FileSystem.FileSystem) {
 	return Effect.gen(function* () {
 		const expectedUrl = getExpectedSchemaUrl();
-		const results: { path: string; matches: boolean }[] = [];
+		const statuses: { path: string; matches: boolean }[] = [];
 
-		if (!expectedUrl) return { results, warnings: [] as string[] };
+		if (!expectedUrl) return { statuses, warnings: [] as string[] };
 
-		const configs = yield* Effect.tryPromise(async () => {
-			const { glob } = await import("node:fs/promises");
-			const results: string[] = [];
-			for await (const entry of glob("**/biome.{json,jsonc}", {
-				exclude: (name: string) => BIOME_EXCLUDE_DIRS.includes(name),
-			})) {
-				results.push(entry);
-			}
-			return results;
-		});
-
+		const configs = yield* findBiomeConfigs();
 		const warnings: string[] = [];
 
 		for (const configPath of configs) {
@@ -202,14 +192,14 @@ function checkBiomeSchemas(fs: FileSystem.FileSystem) {
 			}
 
 			const matches = parsed.$schema === expectedUrl;
-			results.push({ path: configPath, matches });
+			statuses.push({ path: configPath, matches });
 
 			if (!matches) {
 				warnings.push(`${WARNING}  ${configPath}: biome $schema is outdated.\n   Run 'savvy-lint init' to update it.`);
 			}
 		}
 
-		return { results, warnings };
+		return { statuses, warnings };
 	});
 }
 
@@ -424,7 +414,7 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 		}
 
 		// Biome schema status
-		for (const status of biomeSchemaStatus.results) {
+		for (const status of biomeSchemaStatus.statuses) {
 			if (status.matches) {
 				yield* Effect.log(`  ${CHECK_MARK} ${status.path}: biome $schema up-to-date`);
 			} else {
@@ -436,7 +426,7 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 		yield* Effect.log("");
 		const hasShellHookIssues = shellHookStatuses.some((s) => s.found && s.needsUpdate);
 		const hasMarkdownlintIssues = hasMarkdownlintConfig && !markdownlintStatus.isUpToDate;
-		const hasBiomeSchemaIssues = biomeSchemaStatus.results.some((s) => !s.matches);
+		const hasBiomeSchemaIssues = biomeSchemaStatus.statuses.some((s) => !s.matches);
 		const hasIssues =
 			!foundConfig ||
 			!hasHuskyHook ||

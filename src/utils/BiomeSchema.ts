@@ -10,18 +10,19 @@
  *
  * @internal
  */
+import { Effect } from "effect";
 
 /** URL prefix for Biome JSON schemas. */
 export const SCHEMA_URL_PREFIX = "https://biomejs.dev/schemas/";
 
 /** URL suffix for Biome JSON schemas. */
-export const SCHEMA_URL_SUFFIX = "/schema.json";
+const SCHEMA_URL_SUFFIX = "/schema.json";
 
 /** Glob pattern for finding Biome config files. */
-export const BIOME_GLOB_PATTERN = "**/biome.{json,jsonc}";
+const BIOME_GLOB_PATTERN = "**/biome.{json,jsonc}";
 
 /** Directories to exclude when searching for Biome configs. */
-export const BIOME_EXCLUDE_DIRS = ["node_modules", "dist", ".turbo", ".git", ".rslib"];
+const BIOME_EXCLUDE_DIRS = ["node_modules", "dist", ".turbo", ".git", ".rslib"];
 
 /**
  * Strip range prefixes from a semver version string.
@@ -71,4 +72,24 @@ export function getExpectedSchemaUrl(): string | undefined {
 	const version = getBiomePeerVersion();
 	if (!version) return undefined;
 	return buildSchemaUrl(version);
+}
+
+/**
+ * Find all biome config files in the workspace, excluding common non-source directories.
+ *
+ * @returns Effect yielding an array of relative paths to biome config files
+ *
+ * @internal
+ */
+export function findBiomeConfigs() {
+	return Effect.tryPromise(async () => {
+		const { glob } = await import("node:fs/promises");
+		const paths: string[] = [];
+		for await (const entry of glob(BIOME_GLOB_PATTERN, {
+			exclude: (name: string) => BIOME_EXCLUDE_DIRS.includes(name),
+		})) {
+			paths.push(entry);
+		}
+		return paths;
+	});
 }
