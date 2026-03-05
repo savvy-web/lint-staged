@@ -1,5 +1,12 @@
 # @savvy-web/lint-staged
 
+## 0.5.1
+
+### Dependencies
+
+* [`7e693e2`](https://github.com/savvy-web/lint-staged/commit/7e693e2ccb91f3eeed9be75f7ced9bdf831d9e3d) @savvy-web/rslib-builder: ^0.15.0 → ^0.16.0
+* @savvy-web/vitest: ^0.1.0 → ^0.2.0
+
 ## 0.5.0
 
 ### Features
