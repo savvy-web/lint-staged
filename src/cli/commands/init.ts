@@ -10,6 +10,7 @@ import { FileSystem } from "@effect/platform";
 import { Effect } from "effect";
 import type { FormattingOptions } from "jsonc-parser";
 import { applyEdits, modify, parse } from "jsonc-parser";
+import { SCHEMA_URL_PREFIX, findBiomeConfigs, getExpectedSchemaUrl } from "../../utils/BiomeSchema.js";
 import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA, MARKDOWNLINT_TEMPLATE } from "../templates/markdownlint.gen.js";
 
 /** Unicode checkmark symbol. */
@@ -296,6 +297,39 @@ function writeMarkdownlintConfig(fs: FileSystem.FileSystem, preset: PresetType, 
 	});
 }
 
+/**
+ * Find and sync biome config `$schema` URLs to match the peer dependency version.
+ *
+ * @param fs - FileSystem service
+ * @returns Effect that syncs biome schemas
+ */
+function syncBiomeSchemas(fs: FileSystem.FileSystem) {
+	return Effect.gen(function* () {
+		const expectedUrl = getExpectedSchemaUrl();
+		if (!expectedUrl) return;
+
+		const configs = yield* findBiomeConfigs();
+
+		for (const configPath of configs) {
+			const content = yield* fs.readFileString(configPath);
+			const parsed = parse(content) as Record<string, unknown>;
+
+			if (typeof parsed.$schema !== "string") continue;
+			if (!parsed.$schema.startsWith(SCHEMA_URL_PREFIX)) continue;
+
+			if (parsed.$schema === expectedUrl) {
+				yield* Effect.log(`${CHECK_MARK} ${configPath}: biome $schema up-to-date`);
+				continue;
+			}
+
+			const edits = modify(content, ["$schema"], expectedUrl, { formattingOptions: JSONC_FORMAT });
+			const updated = applyEdits(content, edits);
+			yield* fs.writeFileString(configPath, updated);
+			yield* Effect.log(`${CHECK_MARK} Updated $schema in ${configPath}`);
+		}
+	});
+}
+
 const forceOption = Options.boolean("force").pipe(
 	Options.withAlias("f"),
 	Options.withDescription("Overwrite entire hook file (not just managed section)"),
@@ -430,6 +464,9 @@ export const initCommand = Command.make(
 			if (presetIncludesMarkdown(preset)) {
 				yield* writeMarkdownlintConfig(fs, preset, force);
 			}
+
+			// Sync biome $schema URLs
+			yield* syncBiomeSchemas(fs);
 
 			// Handle config file
 			const configExists = yield* fs.exists(config);

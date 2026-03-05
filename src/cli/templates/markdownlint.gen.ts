@@ -9,7 +9,7 @@
 /** Full markdownlint-cli2 config template. */
 export const MARKDOWNLINT_TEMPLATE = {
 	$schema:
-		"https://raw.githubusercontent.com/DavidAnson/markdownlint-cli2/v0.20.0/schema/markdownlint-cli2-config-schema.json",
+		"https://raw.githubusercontent.com/DavidAnson/markdownlint-cli2/v0.21.0/schema/markdownlint-cli2-config-schema.json",
 	globs: ["**/*.{md,mdx}"],
 	fix: true,
 	gitignore: true,
@@ -95,12 +95,13 @@ export const MARKDOWNLINT_TEMPLATE = {
 		"changeset-heading-hierarchy": false,
 		"changeset-required-sections": false,
 		"changeset-content-structure": false,
+		"changeset-uncategorized-content": false,
 	},
 } as const;
 
 /** The `$schema` URL from the template. */
 export const MARKDOWNLINT_SCHEMA =
-	"https://raw.githubusercontent.com/DavidAnson/markdownlint-cli2/v0.20.0/schema/markdownlint-cli2-config-schema.json" as const;
+	"https://raw.githubusercontent.com/DavidAnson/markdownlint-cli2/v0.21.0/schema/markdownlint-cli2-config-schema.json" as const;
 
 /** The `config` rules object from the template. */
 export const MARKDOWNLINT_CONFIG = {
@@ -174,4 +175,5 @@ export const MARKDOWNLINT_CONFIG = {
 	"changeset-heading-hierarchy": false,
 	"changeset-required-sections": false,
 	"changeset-content-structure": false,
+	"changeset-uncategorized-content": false,
 } as const;
