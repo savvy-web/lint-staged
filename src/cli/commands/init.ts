@@ -10,6 +10,7 @@ import { FileSystem } from "@effect/platform";
 import { Effect } from "effect";
 import type { FormattingOptions } from "jsonc-parser";
 import { applyEdits, modify, parse } from "jsonc-parser";
+import { BIOME_EXCLUDE_DIRS, SCHEMA_URL_PREFIX, getExpectedSchemaUrl } from "../../utils/BiomeSchema.js";
 import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA, MARKDOWNLINT_TEMPLATE } from "../templates/markdownlint.gen.js";
 
 /** Unicode checkmark symbol. */
@@ -296,6 +297,52 @@ function writeMarkdownlintConfig(fs: FileSystem.FileSystem, preset: PresetType, 
 	});
 }
 
+/**
+ * Find and sync biome config `$schema` URLs to match the peer dependency version.
+ *
+ * @param fs - FileSystem service
+ * @param quiet - Whether to suppress up-to-date messages
+ * @returns Effect that syncs biome schemas
+ */
+function syncBiomeSchemas(fs: FileSystem.FileSystem, quiet: boolean) {
+	return Effect.gen(function* () {
+		const expectedUrl = getExpectedSchemaUrl();
+		if (!expectedUrl) return;
+
+		// Find all biome config files, excluding common non-source directories
+		const configs = yield* Effect.tryPromise(async () => {
+			const { glob } = await import("node:fs/promises");
+			const results: string[] = [];
+			for await (const entry of glob("**/biome.{json,jsonc}", {
+				exclude: (name: string) => BIOME_EXCLUDE_DIRS.includes(name),
+			})) {
+				results.push(entry);
+			}
+			return results;
+		});
+
+		for (const configPath of configs) {
+			const content = yield* fs.readFileString(configPath);
+			const parsed = parse(content) as Record<string, unknown>;
+
+			if (typeof parsed.$schema !== "string") continue;
+			if (!parsed.$schema.startsWith(SCHEMA_URL_PREFIX)) continue;
+
+			if (parsed.$schema === expectedUrl) {
+				if (!quiet) {
+					yield* Effect.log(`${CHECK_MARK} ${configPath}: biome $schema up-to-date`);
+				}
+				continue;
+			}
+
+			const edits = modify(content, ["$schema"], expectedUrl, { formattingOptions: JSONC_FORMAT });
+			const updated = applyEdits(content, edits);
+			yield* fs.writeFileString(configPath, updated);
+			yield* Effect.log(`${CHECK_MARK} Updated $schema in ${configPath}`);
+		}
+	});
+}
+
 const forceOption = Options.boolean("force").pipe(
 	Options.withAlias("f"),
 	Options.withDescription("Overwrite entire hook file (not just managed section)"),
@@ -430,6 +477,9 @@ export const initCommand = Command.make(
 			if (presetIncludesMarkdown(preset)) {
 				yield* writeMarkdownlintConfig(fs, preset, force);
 			}
+
+			// Sync biome $schema URLs
+			yield* syncBiomeSchemas(fs, false);
 
 			// Handle config file
 			const configExists = yield* fs.exists(config);
