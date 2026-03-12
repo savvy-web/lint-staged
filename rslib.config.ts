@@ -16,12 +16,13 @@ export default NodeLibraryBuilder.create({
 		},
 	],
 	transform({ pkg }) {
-		pkg.scripts = {
-			postinstall: "savvy-lint check --quiet || true",
-		};
 		delete pkg.devDependencies;
+		delete pkg.bundleDependencies;
 		delete pkg.publishConfig;
+		delete pkg.packageManager;
 		delete pkg.devEngines;
+		delete pkg.config;
+		delete pkg.scripts;
 		return pkg;
 	},
 });
