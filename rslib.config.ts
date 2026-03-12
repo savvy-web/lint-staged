@@ -16,9 +16,6 @@ export default NodeLibraryBuilder.create({
 		},
 	],
 	transform({ pkg }) {
-		pkg.scripts = {
-			postinstall: "savvy-lint check --quiet || true",
-		};
 		delete pkg.devDependencies;
 		delete pkg.publishConfig;
 		delete pkg.devEngines;
