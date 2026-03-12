@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.5.2
+
+### Bug Fixes
+
+* [`ff9da10`](https://github.com/savvy-web/lint-staged/commit/ff9da10a4af852c85792178bee4ffeefb80c0c29) Remove injected postinstall script from published package.json. Fixes #63.
+
 ## 0.5.1
 
 ### Dependencies
