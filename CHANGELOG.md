@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.6.0
+
+### Features
+
+* [`d56232b`](https://github.com/savvy-web/lint-staged/commit/d56232b9e09732de487ab2f204ccc9295fdd3129) Exclude `__test__/fixtures` directories from Biome and Yaml handlers by default, preventing lint-staged from processing test fixture files.
+
 ## 0.5.2
 
 ### Bug Fixes
