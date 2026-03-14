@@ -132,7 +132,9 @@
 			"!**/.rslib",
 			"!**/.vitest",
 			"!**/.coverage",
-			"!coverage"
+			"!coverage",
+			"!**/__test__/fixtures",
+			"!**/__fixtures__"
 		]
 	}
 }

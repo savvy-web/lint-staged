@@ -52,9 +52,9 @@ export class Biome {
 	/**
 	 * Default patterns to exclude from processing.
 	 * Excludes package.json since PackageJson handler processes those files.
-	 * @defaultValue `['package.json', 'package-lock.json', '__fixtures__']`
+	 * @defaultValue `['package.json', 'package-lock.json', '__fixtures__', '__test__/fixtures']`
 	 */
-	static readonly defaultExcludes = ["package.json", "package-lock.json", "__fixtures__"] as const;
+	static readonly defaultExcludes = ["package.json", "package-lock.json", "__fixtures__", "__test__/fixtures"] as const;
 
 	/**
 	 * Pre-configured handler with default options.

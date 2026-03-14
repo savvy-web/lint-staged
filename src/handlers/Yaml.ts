@@ -45,9 +45,9 @@ export class Yaml {
 
 	/**
 	 * Default patterns to exclude from processing.
-	 * @defaultValue `['pnpm-lock.yaml', 'pnpm-workspace.yaml']`
+	 * @defaultValue `['pnpm-lock.yaml', 'pnpm-workspace.yaml', '__test__/fixtures']`
 	 */
-	static readonly defaultExcludes = ["pnpm-lock.yaml", "pnpm-workspace.yaml"] as const;
+	static readonly defaultExcludes = ["pnpm-lock.yaml", "pnpm-workspace.yaml", "__test__/fixtures"] as const;
 
 	/**
 	 * Pre-configured handler with default options.

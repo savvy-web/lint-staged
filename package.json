@@ -62,10 +62,10 @@
 		"@effect/cli": "^0.73.2",
 		"@effect/platform": "^0.94.5",
 		"@effect/platform-node": "^0.104.1",
-		"@typescript-eslint/parser": "^8.56.1",
+		"@typescript-eslint/parser": "^8.57.0",
 		"cosmiconfig": "^9.0.1",
 		"effect": "^3.19.16",
-		"eslint": "^10.0.2",
+		"eslint": "^10.0.3",
 		"eslint-plugin-tsdoc": "^0.5.2",
 		"jsonc-parser": "^3.3.1",
 		"prettier": "^3.8.1",
@@ -75,15 +75,15 @@
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/changesets": "^0.4.1",
-		"@savvy-web/commitlint": "^0.4.0",
-		"@savvy-web/rslib-builder": "^0.16.0",
-		"@savvy-web/vitest": "^0.2.0",
+		"@savvy-web/changesets": "^0.5.1",
+		"@savvy-web/commitlint": "^0.4.1",
+		"@savvy-web/rslib-builder": "^0.18.1",
+		"@savvy-web/vitest": "^0.2.1",
 		"husky": "catalog:silk",
-		"lint-staged": "^16.3.2",
+		"lint-staged": "^16.4.0",
 		"markdownlint-cli2": "^0.21.0",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.8.13"
+		"turbo": "^2.8.17"
 	},
 	"peerDependencies": {
 		"@biomejs/biome": "2.4.5",
