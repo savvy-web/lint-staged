@@ -1,5 +1,19 @@
 # @savvy-web/lint-staged
 
+## 0.6.1
+
+### Dependencies
+
+* | [`44e90bd`](https://github.com/savvy-web/lint-staged/commit/44e90bdf7c45701b7c5fbea13cd7faf5af3eaecb) | Dependency | Type    | Action  | From    | To |
+  | :---------------------------------------------------------------------------------------------------- | :--------- | :------ | :------ | :------ | -- |
+  | @savvy-web/commitlint                                                                                 | dependency | updated | ^0.4.1  | ^0.4.2  |    |
+  | @savvy-web/rslib-builder                                                                              | dependency | updated | ^0.18.1 | ^0.18.2 |    |
+
+### Other
+
+* [`765f3cc`](https://github.com/savvy-web/lint-staged/commit/765f3cc5827738f11cdd55c513ad9739a8ff8717) Migrate Effect dependencies to `catalog:silk` for centralized version management via pnpm-plugin-silk.
+* Replace `jsonc-parser` with `jsonc-effect` for Effect-native JSONC parsing and modification.
+
 ## 0.6.0
 
 ### Features
