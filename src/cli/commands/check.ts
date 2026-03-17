@@ -7,7 +7,7 @@ import { isDeepStrictEqual } from "node:util";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
 import { Effect } from "effect";
-import { parse } from "jsonc-parser";
+import { parse } from "jsonc-effect";
 import { Biome } from "../../handlers/Biome.js";
 import { Markdown } from "../../handlers/Markdown.js";
 import { TypeScript } from "../../handlers/TypeScript.js";
@@ -154,17 +154,14 @@ function checkManagedSectionStatus(existingManaged: string): {
  * @param content - The existing file content
  * @returns Status object with match details
  */
-function checkMarkdownlintConfig(content: string): {
-	exists: true;
-	schemaMatches: boolean;
-	configMatches: boolean;
-	isUpToDate: boolean;
-} {
-	const parsed = parse(content) as Record<string, unknown>;
-	const schemaMatches = parsed.$schema === MARKDOWNLINT_SCHEMA;
-	const existingConfig = parsed.config as Record<string, unknown> | undefined;
-	const configMatches = existingConfig !== undefined && isDeepStrictEqual(existingConfig, MARKDOWNLINT_CONFIG);
-	return { exists: true, schemaMatches, configMatches, isUpToDate: schemaMatches && configMatches };
+function checkMarkdownlintConfig(content: string) {
+	return Effect.gen(function* () {
+		const parsed = (yield* parse(content)) as Record<string, unknown>;
+		const schemaMatches = parsed.$schema === MARKDOWNLINT_SCHEMA;
+		const existingConfig = parsed.config as Record<string, unknown> | undefined;
+		const configMatches = existingConfig !== undefined && isDeepStrictEqual(existingConfig, MARKDOWNLINT_CONFIG);
+		return { exists: true as const, schemaMatches, configMatches, isUpToDate: schemaMatches && configMatches };
+	});
 }
 
 /**
@@ -185,7 +182,7 @@ function checkBiomeSchemas(fs: FileSystem.FileSystem) {
 
 		for (const configPath of configs) {
 			const content = yield* fs.readFileString(configPath);
-			const parsed = parse(content) as Record<string, unknown>;
+			const parsed = (yield* parse(content)) as Record<string, unknown>;
 
 			if (typeof parsed.$schema !== "string" || !parsed.$schema.startsWith(SCHEMA_URL_PREFIX)) {
 				continue;
@@ -298,7 +295,7 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 
 		if (hasMarkdownlintConfig) {
 			const mdContent = yield* fs.readFileString(MARKDOWNLINT_CONFIG_PATH);
-			markdownlintStatus = checkMarkdownlintConfig(mdContent);
+			markdownlintStatus = yield* checkMarkdownlintConfig(mdContent);
 
 			if (!markdownlintStatus.schemaMatches) {
 				warnings.push(

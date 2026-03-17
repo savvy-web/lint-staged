@@ -8,8 +8,8 @@ import { isDeepStrictEqual } from "node:util";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
 import { Effect } from "effect";
-import type { FormattingOptions } from "jsonc-parser";
-import { applyEdits, modify, parse } from "jsonc-parser";
+import type { JsoncFormattingOptions } from "jsonc-effect";
+import { applyEdits, modify, parse } from "jsonc-effect";
 import { SCHEMA_URL_PREFIX, findBiomeConfigs, getExpectedSchemaUrl } from "../../utils/BiomeSchema.js";
 import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA, MARKDOWNLINT_TEMPLATE } from "../templates/markdownlint.gen.js";
 
@@ -37,8 +37,8 @@ const DEFAULT_CONFIG_PATH = "lib/configs/lint-staged.config.ts";
 /** Path for the markdownlint-cli2 config file. */
 const MARKDOWNLINT_CONFIG_PATH = "lib/configs/.markdownlint-cli2.jsonc";
 
-/** Formatting options for jsonc-parser surgical edits. */
-const JSONC_FORMAT: FormattingOptions = { tabSize: 1, insertSpaces: false };
+/** Formatting options for jsonc-effect surgical edits. */
+const JSONC_FORMAT: Partial<JsoncFormattingOptions> = { tabSize: 1, insertSpaces: false };
 
 /** Begin marker for managed section. */
 const BEGIN_MARKER = "# --- BEGIN SAVVY-LINT MANAGED SECTION ---";
@@ -260,15 +260,15 @@ function writeMarkdownlintConfig(fs: FileSystem.FileSystem, preset: PresetType, 
 
 		// Silk preset, no force: surgical management of $schema + config
 		const existingText = yield* fs.readFileString(MARKDOWNLINT_CONFIG_PATH);
-		const existingParsed = parse(existingText) as Record<string, unknown>;
+		const existingParsed = (yield* parse(existingText)) as Record<string, unknown>;
 
 		let updatedText = existingText;
 		let schemaUpdated = false;
 
 		// Always update $schema silently
 		if (existingParsed.$schema !== MARKDOWNLINT_SCHEMA) {
-			const edits = modify(updatedText, ["$schema"], MARKDOWNLINT_SCHEMA, { formattingOptions: JSONC_FORMAT });
-			updatedText = applyEdits(updatedText, edits);
+			const edits = yield* modify(updatedText, ["$schema"], MARKDOWNLINT_SCHEMA, { formattingOptions: JSONC_FORMAT });
+			updatedText = yield* applyEdits(updatedText, edits);
 			schemaUpdated = true;
 		}
 
@@ -312,7 +312,7 @@ function syncBiomeSchemas(fs: FileSystem.FileSystem) {
 
 		for (const configPath of configs) {
 			const content = yield* fs.readFileString(configPath);
-			const parsed = parse(content) as Record<string, unknown>;
+			const parsed = (yield* parse(content)) as Record<string, unknown>;
 
 			if (typeof parsed.$schema !== "string") continue;
 			if (!parsed.$schema.startsWith(SCHEMA_URL_PREFIX)) continue;
@@ -322,8 +322,8 @@ function syncBiomeSchemas(fs: FileSystem.FileSystem) {
 				continue;
 			}
 
-			const edits = modify(content, ["$schema"], expectedUrl, { formattingOptions: JSONC_FORMAT });
-			const updated = applyEdits(content, edits);
+			const edits = yield* modify(content, ["$schema"], expectedUrl, { formattingOptions: JSONC_FORMAT });
+			const updated = yield* applyEdits(content, edits);
 			yield* fs.writeFileString(configPath, updated);
 			yield* Effect.log(`${CHECK_MARK} Updated $schema in ${configPath}`);
 		}

@@ -96,6 +96,7 @@ export const MARKDOWNLINT_TEMPLATE = {
 		"changeset-required-sections": false,
 		"changeset-content-structure": false,
 		"changeset-uncategorized-content": false,
+		"changeset-dependency-table-format": false,
 	},
 } as const;
 
@@ -176,4 +177,5 @@ export const MARKDOWNLINT_CONFIG = {
 	"changeset-required-sections": false,
 	"changeset-content-structure": false,
 	"changeset-uncategorized-content": false,
+	"changeset-dependency-table-format": false,
 } as const;
