@@ -78,9 +78,9 @@ importers:
       eslint-plugin-tsdoc:
         specifier: ^0.5.2
         version: 0.5.2(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3)
-      jsonc-parser:
-        specifier: ^3.3.1
-        version: 3.3.1
+      jsonc-effect:
+        specifier: ^0.2.0
+        version: 0.2.0
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
@@ -2252,6 +2252,9 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  jsonc-effect@0.2.0:
+    resolution: {integrity: sha512-tMDWhm8efXWz4k0zvgLu4dXLrlyjHrErJ4S2l28lyW5RFl3+Pg8XMRyl+PlMK4x9eIbOGs/TyKrW67eU7hqgZw==}
 
   jsonc-parser@3.3.1:
     resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
@@ -5689,6 +5692,10 @@ snapshots:
   json-stable-stringify-without-jsonify@1.0.1: {}
 
   json5@2.2.3: {}
+
+  jsonc-effect@0.2.0:
+    dependencies:
+      effect: 3.20.0
 
   jsonc-parser@3.3.1: {}
 

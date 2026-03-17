@@ -67,7 +67,7 @@
 		"effect": "catalog:silk",
 		"eslint": "^10.0.3",
 		"eslint-plugin-tsdoc": "^0.5.2",
-		"jsonc-parser": "^3.3.1",
+		"jsonc-effect": "^0.2.0",
 		"prettier": "^3.8.1",
 		"sort-package-json": "^3.6.1",
 		"workspace-tools": "^0.41.0",

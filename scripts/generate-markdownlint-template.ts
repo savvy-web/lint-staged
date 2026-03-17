@@ -8,14 +8,15 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { parse } from "jsonc-parser";
+import { Effect } from "effect";
+import { parse } from "jsonc-effect";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const SOURCE_PATH = resolve(ROOT, "lib/configs/.markdownlint-cli2.jsonc");
 const OUTPUT_PATH = resolve(ROOT, "src/cli/templates/markdownlint.gen.ts");
 
 const sourceText = readFileSync(SOURCE_PATH, "utf-8");
-const parsed = parse(sourceText) as Record<string, unknown>;
+const parsed = Effect.runSync(parse(sourceText)) as Record<string, unknown>;
 
 const schema = parsed.$schema as string;
 const config = parsed.config as Record<string, unknown>;
