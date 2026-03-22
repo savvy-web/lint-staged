@@ -81,19 +81,19 @@
 		"@savvy-web/vitest": "^0.3.0",
 		"husky": "catalog:silk",
 		"lint-staged": "^16.4.0",
-		"markdownlint-cli2": "^0.21.0",
+		"markdownlint-cli2": "^0.22.0",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.8.17"
+		"turbo": "^2.8.20"
 	},
 	"peerDependencies": {
 		"@biomejs/biome": "2.4.5",
 		"@types/node": "catalog:silkPeers",
 		"@typescript/native-preview": "catalog:silkPeers",
 		"husky": "catalog:silkPeers",
-		"lint-staged": "^16.3.2",
-		"markdownlint-cli2": "^0.21.0",
+		"lint-staged": "^16.4.0",
+		"markdownlint-cli2": "^0.22.0",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.8.13",
+		"turbo": "^2.8.20",
 		"typescript": "catalog:silkPeers"
 	},
 	"peerDependenciesMeta": {
