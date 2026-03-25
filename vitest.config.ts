@@ -1,13 +1,5 @@
 import { VitestConfig } from "@savvy-web/vitest";
 
-export default VitestConfig.create(({ projects, coverage, reporters }) => ({
-	test: {
-		reporters,
-		projects: projects.map((p) => p.toConfig()),
-		coverage: {
-			provider: "v8",
-			...coverage,
-			exclude: [...(coverage.exclude ?? []), "src/bin/**", "src/cli/**", "src/types.ts"],
-		},
-	},
-}));
+export default VitestConfig.create({
+	coverageExclude: ["src/bin/**", "src/cli/**"],
+});
