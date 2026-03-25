@@ -1,5 +1,23 @@
 # @savvy-web/lint-staged
 
+## 0.6.3
+
+### Bug Fixes
+
+* [`7b78f9a`](https://github.com/savvy-web/lint-staged/commit/7b78f9ad226a5925fe31c406e125c5a04dc1b1bc) Fix `savvy-lint init` CLI crash caused by stale npm build resolving `jsonc-effect` to `jsonc-parser`, which stripped Effect wrapping from JSONC operations. Update `jsonc-effect` to ^0.2.1 and rebuild.
+
+### Tests
+
+* [`7b78f9a`](https://github.com/savvy-web/lint-staged/commit/7b78f9ad226a5925fe31c406e125c5a04dc1b1bc) Add coverage exclusions for CLI code (`src/bin/**`, `src/cli/**`) and new `BiomeSchema` test suite (14 tests) to meet strict coverage thresholds.
+
+### Dependencies
+
+* | [`2f173f0`](https://github.com/savvy-web/lint-staged/commit/2f173f0c201c4e8ca60cff759eb126fbf80ee628) | Dependency | Type    | Action | From   | To |
+  | :---------------------------------------------------------------------------------------------------- | :--------- | :------ | :----- | :----- | -- |
+  | @savvy-web/changesets                                                                                 | dependency | updated | ^0.5.3 | ^0.6.0 |    |
+  | @savvy-web/commitlint                                                                                 | dependency | updated | ^0.4.2 | ^0.4.3 |    |
+  | @savvy-web/vitest                                                                                     | dependency | updated | ^0.3.0 | ^1.0.0 |    |
+
 ## 0.6.2
 
 ### Dependencies
