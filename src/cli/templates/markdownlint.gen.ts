@@ -22,6 +22,7 @@ export const MARKDOWNLINT_TEMPLATE = {
 		"**/dist",
 		"**/CHANGELOG.md",
 		"**/.claude/plans",
+		"**/docs/superpowers",
 	],
 	customRules: ["@savvy-web/changesets/markdownlint"],
 	config: {
