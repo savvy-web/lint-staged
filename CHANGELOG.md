@@ -1,5 +1,14 @@
 # @savvy-web/lint-staged
 
+## 0.6.4
+
+### Dependencies
+
+* | [`a3dc44e`](https://github.com/savvy-web/lint-staged/commit/a3dc44ed61aaff250f0954bf8d95a3261f9902ae) | Dependency    | Type    | Action | From   | To |
+  | :---------------------------------------------------------------------------------------------------- | :------------ | :------ | :----- | :----- | -- |
+  | @savvy-web/changesets                                                                                 | devDependency | updated | ^0.6.0 | ^0.7.0 |    |
+  | @savvy-web/vitest                                                                                     | devDependency | updated | ^1.0.0 | ^1.0.1 |    |
+
 ## 0.6.3
 
 ### Bug Fixes
