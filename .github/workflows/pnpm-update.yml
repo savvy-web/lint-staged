@@ -72,4 +72,4 @@ jobs:
           run: |
             pnpm savvy-commit init
             pnpm savvy-changesets init
-            pnpm biome format --write --max-diagnostics=none
+            pnpm lint:fix 2>/dev/null || true
