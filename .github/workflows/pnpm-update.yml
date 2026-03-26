@@ -49,21 +49,27 @@ jobs:
           branch: ${{ inputs.branch || 'pnpm/config-deps' }}
           dry-run: ${{ inputs.dry-run || false }}
           log-level: ${{ inputs.log-level || 'info' }}
+          auto-merge: "squash"
           config-dependencies: |
             @savvy-web/pnpm-plugin-silk
           dependencies: |
             @savvy-web/*
+            eslint
+            eslint-plugin-tsdoc
+            husky
+            jsonc-effect
+            lint-staged
+            markdownlint-cli2
+            markdownlint-cli2-formatter-codequality
+            turbo
+          peer-lock: |
+            markdownlint-cli2-formatter-codequality
+          peer-minor: |
+            turbo
+            husky
+            markdownlint-cli2
+            lint-staged
           run: |
             pnpm savvy-commit init
             pnpm savvy-changesets init
-            pnpm lint:fix
-      - name: Summary
-        if: always()
-        run: |
-          echo "## Update Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Has Changes:** ${{ steps.update.outputs.has-changes }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Updates Count:** ${{ steps.update.outputs.updates-count }}" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ steps.update.outputs.pr-url }}" ]; then
-            echo "- **PR:** ${{ steps.update.outputs.pr-url }}" >> $GITHUB_STEP_SUMMARY
-          fi
+            pnpm biome format --write --max-diagnostics=none

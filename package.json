@@ -45,7 +45,6 @@
 		"ci:test": "CI=\"true\" turbo run vitest:unit --log-prefix=none --log-order=grouped",
 		"ci:version": "savvy-changesets version && biome format --write .",
 		"generate:templates": "node scripts/generate-markdownlint-template.ts && biome check --write src/cli/templates/markdownlint.gen.ts",
-		"postinstall": "savvy-lint check --quiet || true",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
@@ -71,7 +70,7 @@
 		"prettier": "^3.8.1",
 		"sort-package-json": "^3.6.1",
 		"workspace-tools": "^0.41.0",
-		"yaml": "^2.8.2",
+		"yaml": "^2.8.3",
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
@@ -79,21 +78,21 @@
 		"@savvy-web/commitlint": "^0.4.3",
 		"@savvy-web/rslib-builder": "^0.19.0",
 		"@savvy-web/vitest": "^1.0.0",
-		"husky": "catalog:silk",
+		"husky": "^9.1.7",
 		"lint-staged": "^16.4.0",
 		"markdownlint-cli2": "^0.22.0",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
 		"turbo": "^2.8.20"
 	},
 	"peerDependencies": {
-		"@biomejs/biome": "2.4.5",
+		"@biomejs/biome": "catalog:silk",
 		"@types/node": "catalog:silkPeers",
 		"@typescript/native-preview": "catalog:silkPeers",
-		"husky": "catalog:silkPeers",
+		"husky": "^9.1.0",
 		"lint-staged": "^16.4.0",
 		"markdownlint-cli2": "^0.22.0",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.8.20",
+		"turbo": "^2.8.0",
 		"typescript": "catalog:silkPeers"
 	},
 	"peerDependenciesMeta": {
