@@ -53,6 +53,15 @@ jobs:
             @savvy-web/pnpm-plugin-silk
           dependencies: |
             @savvy-web/*
+            markdownlint-cli2"
+            lint-staged
+            markdownlint-cli2-formatter-codequality
+            turbo
+          peer-lock: |
+            lint-staged
+            markdownlint-cli2"
+            markdownlint-cli2-formatter-codequality
+            turbo
           run: |
             pnpm savvy-commit init
             pnpm savvy-changesets init
