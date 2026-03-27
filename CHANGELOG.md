@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.6.5
+
+### Bug Fixes
+
+* [`01d8803`](https://github.com/savvy-web/lint-staged/commit/01d8803db34df34299e1d57aa23fdbf3591eb3c5) Pins workspace-tools to version 0.41.0. Microsoft had an upstream change when they migrated to their new lage repo that causes the module to be CJS.
+
 ## 0.6.4
 
 ### Dependencies
