@@ -1,5 +1,16 @@
 # @savvy-web/lint-staged
 
+## 0.6.6
+
+### Dependencies
+
+* | [`9d0bdaf`](https://github.com/savvy-web/lint-staged/commit/9d0bdaff6442a228eeffcbe7ef34a75201177db0) | Dependency    | Type    | Action  | From    | To |
+  | :---------------------------------------------------------------------------------------------------- | :------------ | :------ | :------ | :------ | -- |
+  | @savvy-web/commitlint                                                                                 | devDependency | updated | ^0.4.3  | ^0.4.4  |    |
+  | @savvy-web/rslib-builder                                                                              | devDependency | updated | ^0.19.0 | ^0.19.1 |    |
+  | @savvy-web/vitest                                                                                     | devDependency | updated | ^1.0.1  | ^1.1.0  |    |
+  | turbo                                                                                                 | devDependency | updated | ^2.8.20 | ^2.8.21 |    |
+
 ## 0.6.5
 
 ### Bug Fixes
