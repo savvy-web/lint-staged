@@ -62,7 +62,7 @@
 	},
 	"devDependencies": {
 		"@microsoft/api-extractor": "^7.57.7",
-		"@rslib/core": "0.20.0",
+		"@rslib/core": "0.20.2",
 		"@savvy-web/rslib-builder": "^0.19.1",
 		"@types/node": "catalog:silk",
 		"@types/ws": "^8.18.1",
