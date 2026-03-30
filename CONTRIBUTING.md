@@ -6,7 +6,7 @@ document provides guidelines and instructions for development.
 ## Prerequisites
 
 - Node.js 24+
-- pnpm 10.29+
+- pnpm 10.33+
 
 ## Development Setup
 
@@ -27,20 +27,27 @@ pnpm run test
 
 ## Project Structure
 
+This is a monorepo managed with pnpm workspaces and Turborepo.
+
 ```text
 lint-staged/
-├── src/                            # Source code
-│   ├── handlers/                   # Handler classes (Biome, Markdown, etc.)
-│   ├── config/                     # Configuration utilities (Preset, createConfig)
-│   ├── cli/                        # CLI commands (init, check)
-│   ├── public/                     # Shareable configs (e.g. biome/silk.jsonc)
-│   └── utils/                      # Utility classes (Filter, Command, etc.)
-├── docs/                           # Documentation
+├── package/                        # @savvy-web/lint-staged npm package
+│   ├── src/                        # Source code
+│   │   ├── handlers/               # Handler classes (Biome, Markdown, etc.)
+│   │   ├── config/                 # Configuration utilities (Preset, createConfig)
+│   │   ├── cli/                    # CLI commands (init, check)
+│   │   ├── public/                 # Shareable configs (e.g. biome/silk.jsonc)
+│   │   └── utils/                  # Utility classes (Filter, Command, etc.)
+│   └── dist/                       # Build output (dev + npm)
+├── plugin/                         # Claude Code companion plugin
+│   ├── .claude-plugin/             # Plugin manifest
+│   └── hooks/                      # SessionStart hook
+├── docs/                           # Repository documentation
 ├── lib/
 │   └── configs/                    # Shared configuration files
-└── dist/                           # Build output
-    ├── dev/                        # Development build
-    └── npm/                        # Production build for npm
+├── package.json                    # Workspace root
+├── pnpm-workspace.yaml
+└── turbo.json
 ```
 
 ## Available Scripts
@@ -171,12 +178,12 @@ export function myFunction(name: string): string {
 
 To add a new handler:
 
-1. Create `src/handlers/MyHandler.ts` following the existing pattern
-2. Export from `src/handlers/index.ts`
-3. Add to public exports in `src/index.ts`
-4. Add options interface to `src/types.ts`
-5. Update `src/config/createConfig.ts` to include the handler
-6. Add tests in `src/handlers/MyHandler.test.ts`
+1. Create `package/src/handlers/MyHandler.ts` following the existing pattern
+2. Export from `package/src/handlers/index.ts`
+3. Add to public exports in `package/src/index.ts`
+4. Add options interface to `package/src/types.ts`
+5. Update `package/src/config/createConfig.ts` to include the handler
+6. Add tests in `package/src/handlers/MyHandler.test.ts`
 7. Document in `docs/handlers.md`
 
 ## License

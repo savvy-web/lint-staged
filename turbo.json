@@ -2,91 +2,25 @@
 	"$schema": "https://turborepo.com/schema.v2.json",
 	"globalPassThroughEnv": ["GITHUB_ACTIONS", "CI"],
 	"tasks": {
-		"build:dev": {
-			"cache": true,
-			"dependsOn": ["types:check"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"rslib.config.ts",
-				"tsconfig.json",
-				"src/**/*.ts",
-				"README.md",
-				"LICENSE"
-			],
-			"outputLogs": "errors-only",
-			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
-		},
-		"build:prod": {
-			"cache": true,
-			"dependsOn": ["types:check"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"rslib.config.ts",
-				"tsconfig.json",
-				"src/**/*.ts",
-				"README.md",
-				"LICENSE"
-			],
-			"outputLogs": "full",
-			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
-		},
-		"generate:templates": {
+		"types:check": {
 			"cache": true,
 			"dependsOn": [],
 			"inputs": [
 				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"tsconfig.json",
-				"lib/configs/.markdownlint-cli2.jsonc",
-				"scripts/generate-markdownlint-template.ts"
-			],
-			"outputLogs": "full",
-			"outputs": ["src/cli/templates/*.gen.ts"]
-		},
-		"types:check": {
-			"cache": true,
-			"dependsOn": ["generate:templates"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"tsconfig.json",
-				"*.ts",
+				"!**/*.md",
+				"!.changeset/**",
+				"!.claude/**",
+				"!.github/**",
+				"!.husky/**",
+				"!.vscode/**",
 				"lib/**/*.ts",
-				"lib/**/*.mts"
+				"src/**/*.ts",
+				"!.rslib/**",
+				"!dist/**",
+				"!.turbo/**"
 			],
 			"outputLogs": "errors-only",
 			"outputs": []
-		},
-		"vitest:unit": {
-			"cache": false,
-			"dependsOn": ["build:dev"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"tsconfig.json",
-				"src/**/*.ts",
-				"tests/**/*.ts",
-				"vitest.config.ts"
-			],
-			"outputLogs": "full",
-			"outputs": ["coverage/**"]
 		}
 	}
 }

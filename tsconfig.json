@@ -1,4 +1,14 @@
 {
-	"exclude": ["lib/configs/lint-staged.config.ts"],
-	"extends": ["@savvy-web/rslib-builder/tsconfig/ecma/lib.json"]
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		"composite": true,
+		"declaration": true,
+		"module": "node20",
+		"outDir": "dist",
+		"resolveJsonModule": true,
+		"strict": true,
+		"strictNullChecks": true,
+		"target": "es2023"
+	},
+	"include": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"]
 }

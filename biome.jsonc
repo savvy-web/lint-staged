@@ -1,4 +1,4 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.4.9/schema.json",
-	"extends": ["./src/public/biome/silk.jsonc"]
+	"extends": ["./package/src/public/biome/silk.jsonc"]
 }

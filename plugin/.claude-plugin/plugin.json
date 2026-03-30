@@ -1,0 +1,12 @@
+{
+	"name": "lint-staged",
+	"version": "0.6.6",
+	"description": "Companion plugin for @savvy-web/lint-staged that informs agents about available code quality tools and conventions",
+	"author": {
+		"name": "C. Spencer Beggs",
+		"email": "spencer@savvyweb.systems"
+	},
+	"repository": "https://github.com/savvy-web/lint-staged.git",
+	"license": "MIT",
+	"keywords": ["lint-staged", "biome", "markdownlint", "code-quality", "silk-suite"]
+}

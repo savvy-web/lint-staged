@@ -1,112 +1,86 @@
-# @savvy-web/lint-staged
+# savvy-web-lint-staged
 
-[![npm version](https://img.shields.io/npm/v/@savvy-web/lint-staged)](https://www.npmjs.com/package/@savvy-web/lint-staged)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green)](https://nodejs.org/)
 
-Composable, configurable lint-staged handlers for pre-commit hooks. Stop
-duplicating lint-staged configs across projects -- use reusable handlers with
-sensible defaults and easy customization.
+Monorepo containing the [`@savvy-web/lint-staged`](./package/) npm package and a
+Claude Code companion plugin for code quality context injection.
 
-## Features
+## Packages
 
-- Composable handlers for Biome, Markdown, YAML, TypeScript, and more
-- Zero-config presets for instant setup
-- CLI tool (`savvy-lint`) to bootstrap and validate your configuration
-- Workspace-aware TSDoc validation for public APIs
-- Shareable Biome configuration via `@savvy-web/lint-staged/biome/silk.jsonc`
-- Static class API with excellent TypeScript and TSDoc support
+### @savvy-web/lint-staged
 
-## Installation
+Composable, configurable lint-staged handlers for pre-commit hooks. Provides
+reusable handlers for Biome, Markdown, YAML, TypeScript, and more.
 
-```bash
-# Install the package and required peer dependencies
-npm install -D @savvy-web/lint-staged lint-staged husky
+See the full package documentation at [`package/README.md`](./package/README.md).
 
-# For Biome handler (recommended)
-npm install -D @biomejs/biome
+### Claude Code Plugin
 
-# For Markdown handler
-npm install -D markdownlint-cli2
-```
+A companion plugin that injects code quality context at the start of every Claude
+Code session. It detects your project's tooling and informs the agent about:
 
-## Quick Start
+- **Biome** formatting and linting rules (indent style, line width, import
+  conventions)
+- **markdownlint** configuration (enabled rules, allowed HTML elements, table
+  style)
+- **TypeScript** conventions (strict mode, ESM imports, `verbatimModuleSyntax`)
 
-Use the CLI to bootstrap your configuration:
+This means Claude Code automatically follows your project's code style without
+needing to be told each session.
+
+#### Plugin Installation
 
 ```bash
-npx savvy-lint init --preset standard
+# Add the Savvy Web plugin marketplace (one-time setup)
+/plugin marketplace add savvy-web/systems
+
+# Install the lint-staged plugin for this project
+/plugin install lint-staged@savvy-web-systems --scope project
 ```
 
-Or configure manually with a preset:
+## Repository Structure
 
-```typescript
-// lint-staged.config.ts
-import { Preset } from '@savvy-web/lint-staged';
-
-export default Preset.standard();
+```text
+lint-staged/
+├── package/              # @savvy-web/lint-staged npm package
+│   ├── src/              # Package source code
+│   ├── package.json
+│   └── README.md
+├── plugin/               # Claude Code companion plugin
+│   ├── .claude-plugin/   # Plugin manifest
+│   └── hooks/            # SessionStart hook
+├── lib/configs/          # Shared lint configs (markdownlint, lint-staged)
+├── docs/                 # Repository documentation
+├── package.json          # Workspace root
+├── pnpm-workspace.yaml
+├── turbo.json
+└── biome.jsonc
 ```
 
-Or compose individual handlers:
-
-```typescript
-// lint-staged.config.ts
-import { PackageJson, Biome, Markdown, Yaml } from '@savvy-web/lint-staged';
-
-export default {
-  [PackageJson.glob]: PackageJson.handler,
-  [Biome.glob]: Biome.handler,
-  [Markdown.glob]: Markdown.handler,
-  [Yaml.glob]: Yaml.handler,
-};
-```
-
-## Presets
-
-| Preset | Handlers |
-| ------ | -------- |
-| `minimal()` | PackageJson, Biome |
-| `standard()` | + Markdown, Yaml, PnpmWorkspace, ShellScripts |
-| `silk()` | + TypeScript |
-
-## Available Handlers
-
-| Handler | Files | Description |
-| ------- | ----- | ----------- |
-| `PackageJson` | `**/package.json` | Sort and format with Biome |
-| `Biome` | `*.{js,ts,jsx,tsx,json,jsonc}` | Format and lint |
-| `Markdown` | `**/*.{md,mdx}` | Lint with markdownlint-cli2 |
-| `Yaml` | `**/*.{yml,yaml}` | Format (Prettier) and validate (yaml-lint) |
-| `PnpmWorkspace` | `pnpm-workspace.yaml` | Sort and format |
-| `ShellScripts` | `**/*.sh` | Manage permissions |
-| `TypeScript` | `*.{ts,cts,mts,tsx}` | TSDoc validation + typecheck |
-
-## CLI
-
-The `savvy-lint` CLI helps bootstrap, validate, and format your setup:
+## Development
 
 ```bash
-savvy-lint init              # Bootstrap hooks, config, and tooling
-savvy-lint init --preset silk --force  # Overwrite with silk preset
-savvy-lint check             # Validate current configuration
-savvy-lint check --quiet     # Warnings only (for postinstall)
-savvy-lint fmt package-json  # Sort package.json fields
-savvy-lint fmt yaml          # Format YAML files with Prettier
-savvy-lint fmt pnpm-workspace  # Sort and format pnpm-workspace.yaml
+# Install dependencies
+pnpm install
+
+# Build all outputs
+pnpm run build
+
+# Run tests
+pnpm run test
+
+# Lint with Biome
+pnpm run lint
+
+# Fix lint issues
+pnpm run lint:fix
+
+# Lint markdown
+pnpm run lint:md
+
+# Type-check with tsgo
+pnpm run typecheck
 ```
-
-## Documentation
-
-- [Handler Configuration](./docs/handlers.md) -- Detailed options for each handler
-- [Configuration API](./docs/configuration.md) -- createConfig and Preset APIs
-- [CLI Reference](./docs/cli.md) -- `savvy-lint init`, `check`, and `fmt`
-- [Utilities](./docs/utilities.md) -- Command, Filter, and advanced utilities
-- [Migration Guide](./docs/migration.md) -- Migrating from raw lint-staged configs
-
-## Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup
-and guidelines.
 
 ## License
 
