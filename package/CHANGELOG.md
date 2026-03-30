@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.7.1
+
+### Bug Fixes
+
+* [`242afde`](https://github.com/savvy-web/lint-staged/commit/242afde70b8df6e977b6a161af9186cc2b41989c) Convert session-start.sh hook from plain text stdout to structured JSON `hookSpecificOutput.additionalContext` response, matching the Claude Code plugin hook contract
+
 ## 0.7.0
 
 ### Breaking Changes

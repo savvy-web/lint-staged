@@ -1,6 +1,6 @@
 {
 	"name": "lint-staged",
-	"version": "0.7.0",
+	"version": "0.7.1",
 	"description": "Companion plugin for @savvy-web/lint-staged that informs agents about available code quality tools and conventions",
 	"author": {
 		"name": "C. Spencer Beggs",
