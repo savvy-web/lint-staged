@@ -13,8 +13,8 @@
 	"enabledPlugins": {
 		"design-docs@spencerbeggs": true,
 		"vitest-agent-reporter@spencerbeggs": true,
-		"commitlint@savvy-web-systems": true,
 		"changesets@savvy-web-systems": true,
+		"commitlint@savvy-web-systems": true,
 		"vitest@savvy-web-systems": true
 	},
 	"plansDirectory": ".claude/plans"
