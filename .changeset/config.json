@@ -3,7 +3,14 @@
 	"changelog": [
 		"@savvy-web/changesets/changelog",
 		{
-			"repo": "savvy-web/lint-staged"
+			"repo": "savvy-web/lint-staged",
+			"versionFiles": [
+				{
+					"glob": "plugin/.claude-plugin/plugin.json",
+					"paths": ["$.version"],
+					"package": "@savvy-web/lint-staged"
+				}
+			]
 		}
 	],
 	"commit": false,

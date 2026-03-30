@@ -1,19 +1,8 @@
 {
-	"name": "@savvy-web/lint-staged",
+	"name": "savvy-web-lint-staged",
 	"version": "0.6.6",
 	"private": false,
 	"description": "Composable, configurable lint-staged handlers for pre-commit hooks. Provides reusable handlers for Biome, Markdown, YAML, TypeScript, and more.",
-	"keywords": [
-		"lint-staged",
-		"pre-commit",
-		"hooks",
-		"biome",
-		"markdown",
-		"yaml",
-		"typescript",
-		"formatting",
-		"linting"
-	],
 	"homepage": "https://github.com/savvy-web/lint-staged#readme",
 	"bugs": {
 		"url": "https://github.com/savvy-web/lint-staged/issues"
@@ -29,100 +18,30 @@
 		"url": "https://savvyweb.systems"
 	},
 	"type": "module",
-	"exports": {
-		".": "./src/index.ts",
-		"./biome/silk.jsonc": "./src/public/biome/silk.jsonc"
-	},
-	"bin": {
-		"savvy-lint": "./src/bin/cli.ts"
-	},
 	"scripts": {
-		"build": "turbo run build:dev build:prod --log-order=grouped",
-		"build:dev": "rslib build --config-loader native --env-mode dev",
-		"build:inspect": "rslib inspect --verbose",
-		"build:prod": "rslib build --config-loader native --env-mode npm",
-		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full",
-		"ci:test": "CI=\"true\" turbo run vitest:unit --log-prefix=none --log-order=grouped",
+		"build": "turbo run build:dev build:prod --log-order=grouped --output-logs=full --log-prefix=none",
+		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --log-prefix=none --output-logs=full --no-color",
+		"ci:test": "CI=\"true\" vitest run --coverage",
 		"ci:version": "savvy-changesets version && biome format --write .",
-		"generate:templates": "node scripts/generate-markdownlint-template.ts && biome check --write src/cli/templates/markdownlint.gen.ts",
+		"commit:check": "savvy-commit check",
+		"commit:init": "savvy-commit init",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
-		"lint:md": "markdownlint-cli2 '**/*.{md,mdx}' --config './lib/configs/.markdownlint-cli2.jsonc'",
+		"lint:md": "markdownlint-cli2 --config './lib/configs/.markdownlint-cli2.jsonc'",
 		"lint:md:fix": "markdownlint-cli2  --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
 		"prepare": "husky",
-		"test": "turbo run vitest:unit --log-prefix=none --log-order=grouped",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest --watch",
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
-		"types:check": "tsgo --noEmit",
-		"vitest:unit": "vitest run --coverage"
-	},
-	"dependencies": {
-		"@effect/cli": "catalog:silk",
-		"@effect/platform": "catalog:silk",
-		"@effect/platform-node": "catalog:silk",
-		"@typescript-eslint/parser": "^8.57.2",
-		"cosmiconfig": "^9.0.1",
-		"effect": "catalog:silk",
-		"eslint": "^10.0.3",
-		"eslint-plugin-tsdoc": "^0.5.2",
-		"jsonc-effect": "^0.2.1",
-		"prettier": "^3.8.1",
-		"sort-package-json": "^3.6.1",
-		"workspace-tools": "0.41.0",
-		"yaml": "^2.8.3",
-		"yaml-lint": "^1.7.0"
+		"types:check": "tsgo --noEmit"
 	},
 	"devDependencies": {
-		"@savvy-web/changesets": "^0.7.1",
-		"@savvy-web/commitlint": "^0.4.4",
-		"@savvy-web/rslib-builder": "^0.19.1",
-		"@savvy-web/vitest": "^1.1.0",
-		"husky": "^9.1.7",
-		"lint-staged": "^16.4.0",
-		"markdownlint-cli2": "^0.22.0",
-		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.8.21"
-	},
-	"peerDependencies": {
-		"@biomejs/biome": "catalog:silk",
-		"@types/node": "catalog:silkPeers",
-		"@typescript/native-preview": "catalog:silkPeers",
-		"husky": "^9.1.0",
-		"lint-staged": "^16.4.0",
-		"markdownlint-cli2": "^0.22.0",
-		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.8.0",
-		"typescript": "catalog:silkPeers"
-	},
-	"peerDependenciesMeta": {
-		"@biomejs/biome": {
-			"optional": true
-		},
-		"@types/node": {
-			"optional": false
-		},
-		"@typescript/native-preview": {
-			"optional": false
-		},
-		"husky": {
-			"optional": false
-		},
-		"lint-staged": {
-			"optional": false
-		},
-		"markdownlint-cli2": {
-			"optional": false
-		},
-		"markdownlint-cli2-formatter-codequality": {
-			"optional": false
-		},
-		"turbo": {
-			"optional": false
-		},
-		"typescript": {
-			"optional": false
-		}
+		"@savvy-web/changesets": "^0.7.2",
+		"@savvy-web/commitlint": "^0.5.0",
+		"@savvy-web/lint-staged": "workspace:*",
+		"@savvy-web/vitest": "^1.2.0"
 	},
 	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
 	"engines": {
@@ -139,27 +58,6 @@
 				"name": "node",
 				"version": "24.11.0",
 				"onFail": "ignore"
-			}
-		]
-	},
-	"publishConfig": {
-		"access": "public",
-		"dist": "dist/dev",
-		"linkDirectory": true,
-		"targets": [
-			{
-				"protocol": "npm",
-				"registry": "https://npm.pkg.github.com/",
-				"directory": "dist/npm",
-				"access": "public",
-				"provenance": true
-			},
-			{
-				"protocol": "npm",
-				"registry": "https://registry.npmjs.org/",
-				"directory": "dist/npm",
-				"access": "public",
-				"provenance": true
 			}
 		]
 	}

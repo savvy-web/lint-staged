@@ -48,7 +48,25 @@ pnpm vitest run -t "Biome"
 - **Handlers**: `src/handlers/` - Biome, Markdown, TypeScript, etc.
 - **Config**: `src/config/` - Preset and createConfig utilities
 - **Utils**: `src/utils/` - Filter, Command, TsDocLinter, etc.
+- **CLI**: `src/cli/` - Effect-based CLI with silk-effects service layers
 - **Shared Configs**: `lib/configs/` - lint-staged, markdownlint configs
+
+### Key Dependencies
+
+- **`@savvy-web/silk-effects`**: Provides `ManagedSection`, `BiomeSchemaSync`,
+  `ConfigDiscovery`, and `ConfigDiscoveryLive` as Effect service layers
+- **`effect` / `@effect/cli` / `@effect/platform`**: Functional runtime for CLI
+- `cosmiconfig` was removed; handlers use inline `existsSync` for config
+  discovery, CLI uses silk-effects services
+
+### Config Discovery
+
+- **Handlers** (`Biome`, `Markdown`, `Yaml`): Use `existsSync` to probe
+  `lib/configs/` then project root for config files (synchronous, no deps)
+- **CLI layer**: Composes `ManagedSectionLive` and `BiomeSchemaSyncLive` via
+  `Layer.mergeAll` on top of `NodeContext.layer`
+- **Public API**: Re-exports `ConfigDiscovery` and `ConfigDiscoveryLive` from
+  `@savvy-web/silk-effects/config` for consumers
 
 ### Build Pipeline
 

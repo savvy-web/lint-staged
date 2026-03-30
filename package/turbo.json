@@ -1,0 +1,71 @@
+{
+	"extends": ["//"],
+	"tasks": {
+		"build:dev": {
+			"cache": true,
+			"dependsOn": ["types:check"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"!**/*.test.ts",
+				"!**/*.spec.ts",
+				"!**/*.md",
+				"!.rslib/**",
+				"!dist/**",
+				"!.turbo/**"
+			],
+			"outputLogs": "errors-only",
+			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
+		},
+		"build:prod": {
+			"cache": true,
+			"dependsOn": ["types:check"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"!**/*.test.ts",
+				"!**/*.spec.ts",
+				"!**/*.md",
+				"!.rslib/**",
+				"!dist/**",
+				"!.turbo/**"
+			],
+			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
+		},
+		"generate:templates": {
+			"cache": true,
+			"dependsOn": [],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yaml",
+				"$TURBO_ROOT$/pnpm-workspace.yaml",
+				"package.json",
+				"tsconfig.json",
+				"../lib/configs/.markdownlint-cli2.jsonc",
+				"lib/scripts/generate-markdownlint-template.ts",
+				"!.rslib/**",
+				"!dist/**",
+				"!.turbo/**"
+			],
+			"outputLogs": "errors-only",
+			"outputs": ["src/cli/templates/*.gen.ts"]
+		},
+		"types:check": {
+			"cache": true,
+			"dependsOn": ["generate:templates", "^build:dev"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"!**/*.md",
+				"!.changeset/**",
+				"!.claude/**",
+				"!.github/**",
+				"!.husky/**",
+				"!.vscode/**",
+				"!.rslib/**",
+				"!dist/**",
+				"!.turbo/**"
+			],
+			"outputLogs": "errors-only",
+			"outputs": ["dist/.tsbuildinfo.lib"]
+		}
+	}
+}

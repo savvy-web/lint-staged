@@ -3,8 +3,8 @@ status: current
 module: lint-staged
 category: architecture
 created: 2026-01-25
-updated: 2026-02-10
-last-synced: 2026-02-10
+updated: 2026-03-29
+last-synced: 2026-03-29
 completeness: 100
 related: []
 dependencies: []
@@ -77,15 +77,14 @@ src/
 ├── Handler.ts            # Abstract base Handler class
 ├── utils/
 │   ├── Command.ts        # Command availability, package manager detection, savvy-lint finder
-│   ├── ConfigSearch.ts   # Configuration file discovery using cosmiconfig
 │   ├── EntryExtractor.ts # Package exports entry point extraction
 │   ├── Filter.ts         # File filtering utilities + shell escaping
 │   ├── ImportGraph.ts    # Import dependency tracing
 │   ├── TsDocLinter.ts    # Bundled ESLint TSDoc linter
 │   └── TsDocResolver.ts  # Workspace-aware TSDoc file resolution
 ├── handlers/
-│   ├── Biome.ts          # JS/TS/JSON formatting
-│   ├── Markdown.ts       # Markdown linting
+│   ├── Biome.ts          # JS/TS/JSON formatting (inline existsSync config discovery)
+│   ├── Markdown.ts       # Markdown linting (inline existsSync config discovery)
 │   ├── PackageJson.ts    # package.json sorting/formatting + fmtCommand()
 │   ├── PnpmWorkspace.ts  # pnpm-workspace.yaml handling + fmtCommand()
 │   ├── ShellScripts.ts   # Shell script permissions
@@ -95,9 +94,9 @@ src/
 │   ├── createConfig.ts   # Full config factory (array syntax for sequential execution)
 │   └── Preset.ts         # Preset configurations (minimal/standard/silk)
 ├── cli/
-│   ├── index.ts          # CLI root command with init, check, fmt subcommands
+│   ├── index.ts          # CLI root command; composes silk-effects Layer
 │   ├── commands/
-│   │   ├── init.ts       # Init command (hooks, configs, markdownlint)
+│   │   ├── init.ts       # Init command (hooks, configs, managed sections, biome schema)
 │   │   ├── check.ts      # Check command (validate setup)
 │   │   └── fmt.ts        # Fmt command (package-json, pnpm-workspace, yaml)
 │   └── templates/
@@ -132,19 +131,28 @@ All seven handler classes follow the static class pattern with:
 | Utility | Purpose |
 | :--- | :--- |
 | Command | Package manager detection, tool availability checks, `findSavvyLint()` |
-| ConfigSearch | cosmiconfig-based config file discovery (incl. yamllint) |
 | Filter | Include/exclude pattern filtering, shell escaping |
 | TsDocLinter | Programmatic ESLint for TSDoc validation |
 | TsDocResolver | Workspace-aware TSDoc file resolution |
 | ImportGraph | Import dependency tracing from package exports |
 | EntryExtractor | Package.json exports field parsing |
 
+**Silk-effects services (from `@savvy-web/silk-effects`):**
+
+| Service | Purpose |
+| :--- | :--- |
+| ConfigDiscovery | Effect-based config file discovery (replaces cosmiconfig-based ConfigSearch) |
+| ManagedSection | Managed section read/write in hook files (replaces inline marker logic) |
+| BiomeSchemaSync | Biome schema version synchronization (replaces inline BiomeSchema utility) |
+
 ### Key Implementation Decisions Made
 
 1. **Bundled dependencies** - yaml, sort-package-json, ESLint, Prettier, yaml-lint are bundled
 2. **Programmatic ESLint** - TsDocLinter uses ESLint Node.js API, not CLI
 3. **Workspace-aware TSDoc** - Uses workspace-tools to detect monorepo packages
-4. **Auto-discovery** - Commands and configs auto-discovered via cosmiconfig
+4. **Inline config discovery** - Handlers use `existsSync()` checks for config file discovery
+   (Biome, Markdown, Yaml); `ConfigDiscovery` from `@savvy-web/silk-effects` re-exported for
+   consumers needing programmatic config search
 5. **fmtCommand() pattern** - Handlers that modify files in-place expose a `fmtCommand()` static
    method that returns a CLI command (`savvy-lint fmt ...`) so lint-staged can detect and
    auto-stage the modifications
@@ -152,6 +160,9 @@ All seven handler classes follow the static class pattern with:
    (e.g., `[PackageJson.fmtCommand(), Biome.create()]`)
 7. **Runtime tool detection** - TypeScript.detectCompiler() uses `Command.findTool()` instead
    of parsing package.json dependencies, for correct pnpm catalog/hoisting behavior
+8. **Silk-effects for CLI services** - CLI commands consume `ManagedSection` and
+   `BiomeSchemaSync` Effect services from `@savvy-web/silk-effects` via Layer composition,
+   replacing inline managed-section markers and the BiomeSchema utility class
 
 ---
 
@@ -387,15 +398,14 @@ package.json, formatting YAML) were not being committed.
 │   ├── Handler.ts            # Abstract base Handler class
 │   ├── utils/
 │   │   ├── Command.ts        # PM detection, tool finding, findSavvyLint()
-│   │   ├── ConfigSearch.ts   # cosmiconfig-based config discovery (incl. yamllint)
 │   │   ├── EntryExtractor.ts # Package.json exports parsing
 │   │   ├── Filter.ts         # Include/exclude file filtering, shellEscape()
 │   │   ├── ImportGraph.ts    # Import dependency tracing
 │   │   ├── TsDocLinter.ts    # Bundled ESLint TSDoc linter
 │   │   └── TsDocResolver.ts  # Workspace-aware TSDoc resolution
 │   ├── handlers/
-│   │   ├── Biome.ts          # JS/TS/JSON formatting (auto-discovers)
-│   │   ├── Markdown.ts       # Markdown linting (auto-discovers)
+│   │   ├── Biome.ts          # JS/TS/JSON formatting (inline existsSync discovery)
+│   │   ├── Markdown.ts       # Markdown linting (inline existsSync discovery)
 │   │   ├── PackageJson.ts    # sort-package-json + Biome; fmtCommand()
 │   │   ├── PnpmWorkspace.ts  # Bundled yaml sorting; fmtCommand()
 │   │   ├── ShellScripts.ts   # chmod permission management
@@ -407,10 +417,10 @@ package.json, formatting YAML) were not being committed.
 │   │   ├── Preset.ts         # Preset configurations (minimal/standard/silk)
 │   │   └── index.ts          # Re-exports
 │   ├── cli/
-│   │   ├── index.ts          # Root command (init, check, fmt subcommands)
+│   │   ├── index.ts          # Root command; composes ManagedSectionLive + BiomeSchemaSyncLive
 │   │   ├── commands/
-│   │   │   ├── init.ts       # Init command (hooks + markdownlint config)
-│   │   │   ├── check.ts      # Check command (validate current setup)
+│   │   │   ├── init.ts       # Init command (hooks, managed sections, biome schema, markdownlint)
+│   │   │   ├── check.ts      # Check command (validate setup, managed sections, biome schema)
 │   │   │   └── fmt.ts        # Fmt command (package-json, pnpm-workspace, yaml)
 │   │   └── templates/
 │   │       └── markdownlint.gen.ts  # Generated markdownlint template data
@@ -419,7 +429,6 @@ package.json, formatting YAML) were not being committed.
 │           └── silk.jsonc    # Shareable Biome config for consumers
 ├── lib/configs/
 │   ├── lint-staged.config.ts # Dogfooding config
-│   ├── eslint.config.ts      # TSDoc ESLint config
 │   ├── .markdownlint-cli2.jsonc  # Source of truth for markdownlint rules
 │   └── .yaml-lint.json       # yaml-lint schema configuration
 ├── dist/
@@ -450,7 +459,6 @@ package.json, formatting YAML) were not being committed.
 │  │                      Utility Classes                            │ │
 │  │                                                                 │ │
 │  │  Command         - PM detection, tool finding, findSavvyLint() │ │
-│  │  ConfigSearch    - cosmiconfig config discovery (incl yamllint) │ │
 │  │  Filter          - Include/exclude filtering, shellEscape()    │ │
 │  │  TsDocLinter     - Programmatic ESLint for TSDoc               │ │
 │  │  TsDocResolver   - Workspace-aware TSDoc file resolution       │ │
@@ -471,11 +479,15 @@ package.json, formatting YAML) were not being committed.
 │  ┌────────────────────────────────────────────────────────────────┐ │
 │  │                CLI (savvy-lint)                                  │ │
 │  │                                                                 │ │
-│  │  init             - Hook/config setup                           │ │
-│  │  check            - Validate setup                              │ │
+│  │  init             - Hook/config setup (ManagedSection,          │ │
+│  │                     BiomeSchemaSync services)                   │ │
+│  │  check            - Validate setup (ManagedSection,             │ │
+│  │                     BiomeSchemaSync services)                   │ │
 │  │  fmt package-json - Sort package.json (sort-package-json)      │ │
 │  │  fmt pnpm-workspace - Sort/format pnpm-workspace.yaml (yaml)  │ │
 │  │  fmt yaml         - Format YAML files (Prettier)               │ │
+│  │                                                                 │ │
+│  │  Layer: ManagedSectionLive + BiomeSchemaSyncLive + NodeContext  │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────────┐ │
@@ -487,10 +499,12 @@ package.json, formatting YAML) were not being committed.
 │  │  yaml-lint        - YAML validation (Yaml handler)             │ │
 │  │  eslint           - Programmatic TSDoc linting (TypeScript)    │ │
 │  │  eslint-plugin-tsdoc - TSDoc rule (TypeScript)                 │ │
-│  │  cosmiconfig      - Config file discovery (ConfigSearch)       │ │
 │  │  workspace-tools  - Monorepo workspace detection               │ │
-│  │  jsonc-parser     - JSONC parsing/surgical edits (CLI init)    │ │
+│  │  jsonc-effect     - JSONC parsing/surgical edits (CLI init)    │ │
 │  │  @effect/cli      - CLI framework (savvy-lint commands)        │ │
+│  │  effect           - Effect runtime (CLI dependency)             │ │
+│  │  @savvy-web/silk-effects - ManagedSection, BiomeSchemaSync,    │ │
+│  │                            ConfigDiscovery services             │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -778,7 +792,8 @@ class Biome {
 **Auto-discovery:**
 
 - Uses `Command.findTool('biome')` for command discovery
-- Uses `ConfigSearch.find('biome')` for config file discovery
+- Uses inline `existsSync()` checks for config file discovery
+  (`lib/configs/biome.jsonc` then `biome.jsonc` at root)
 - Throws at handler invocation if biome not available
 
 ### Markdown Handler
@@ -823,7 +838,8 @@ class Markdown {
 **Auto-discovery:**
 
 - Uses `Command.findTool('markdownlint-cli2')` for command discovery
-- Uses `ConfigSearch.find('markdownlint')` for config file discovery
+- Uses inline `existsSync()` checks for config file discovery
+  (`lib/configs/.markdownlint-cli2.jsonc` then standard locations)
 - Throws at handler invocation if markdownlint-cli2 not available
 
 ### PnpmWorkspace Handler
@@ -985,7 +1001,8 @@ class Yaml {
 
 **Config file discovery:**
 
-- Uses `ConfigSearch.find('yamllint')` which searches `lib/configs/.yaml-lint.json`
+- Uses inline `existsSync()` checks to search `lib/configs/.yaml-lint.json` then
+  `.yaml-lint.json` at repo root
 - The `.yaml-lint.json` config file specifies the YAML schema (e.g., `DEFAULT_SCHEMA`)
 - Schema is passed to yaml-lint for validation
 
@@ -1175,56 +1192,45 @@ All filter methods use `string.includes()` for pattern matching.
 - Used by `fmtCommand()` methods to safely pass file paths to CLI commands
 - Returns space-separated string of escaped paths
 
-### ConfigSearch Utility
+### Config Discovery (silk-effects)
 
-Configuration file discovery using cosmiconfig.
+The `ConfigSearch` utility class and its `cosmiconfig` dependency have been removed. Config
+file discovery is now handled in two ways:
+
+1. **Inline `existsSync()` checks** in handler `findConfig()` methods (Biome, Markdown, Yaml)
+   for simple, synchronous config discovery at handler invocation time.
+2. **`ConfigDiscovery` service** from `@savvy-web/silk-effects/config`, re-exported from the
+   public API for consumers needing programmatic, Effect-based config search.
 
 ```typescript
-interface ConfigSearchResult {
-  filepath: string | undefined;
-  found: boolean;
-}
+// Re-exported from @savvy-web/silk-effects/config
+export { ConfigDiscovery, ConfigDiscoveryLive } from '@savvy-web/silk-effects/config';
+export type { ConfigDiscoveryOptions, ConfigLocation, ConfigSource } from '@savvy-web/silk-effects/config';
+```
 
-interface ConfigSearchOptions {
-  searchFrom?: string;
-  stopDir?: string;
-}
+**Handler config discovery pattern (inline):**
 
-class ConfigSearch {
-  static readonly libConfigDir = 'lib/configs';
-
-  // Find config for known tools
-  static find(
-    tool: 'markdownlint' | 'biome' | 'eslint' | 'prettier' | 'yamllint',
-    options?: ConfigSearchOptions,
-  ): ConfigSearchResult;
-
-  // Custom config search
-  static findFile(moduleName: string, options?: {
-    libConfigFiles?: string[];
-    standardPlaces?: string[];
-    searchFrom?: string;
-    stopDir?: string;
-  }): ConfigSearchResult;
-
-  // Simple existence check
-  static exists(filepath: string): boolean;
-  static resolve(filename: string, fallback: string): string;
+```typescript
+// Example: Biome.findConfig()
+static findConfig(): string | undefined {
+  const libPath = 'lib/configs/biome.jsonc';
+  if (existsSync(libPath)) return libPath;
+  if (existsSync('biome.jsonc')) return 'biome.jsonc';
+  if (existsSync('biome.json')) return 'biome.json';
+  return undefined;
 }
 ```
 
-**Supported Tools:**
+**Migration from ConfigSearch:**
 
-- `markdownlint` - `.markdownlint-cli2.jsonc`, `.markdownlint.json`, etc.
-- `biome` - `biome.jsonc`, `biome.json`
-- `eslint` - `eslint.config.ts`, `eslint.config.js`, `eslint.config.mjs`
-- `prettier` - `.prettierrc`, `prettier.config.js`, etc.
-- `yamllint` - `.yaml-lint.json`
-
-**Search Priority:**
-
-1. `lib/configs/` directory (agency convention)
-2. Standard locations (repo root, package.json, etc.)
+| Old API | New API |
+| :--- | :--- |
+| `ConfigSearch.find('biome')` | `Biome.findConfig()` (inline `existsSync`) |
+| `ConfigSearch.find('markdownlint')` | `Markdown.findConfig()` (inline `existsSync`) |
+| `ConfigSearch.find('yamllint')` | `Yaml.findConfig()` (inline `existsSync`) |
+| `ConfigSearch` class | `ConfigDiscovery` from `@savvy-web/silk-effects/config` |
+| `ConfigSearchOptions` type | `ConfigDiscoveryOptions` from `@savvy-web/silk-effects/config` |
+| `ConfigSearchResult` type | `ConfigLocation` from `@savvy-web/silk-effects/config` |
 
 ### TsDocLinter Utility
 
@@ -1503,14 +1509,24 @@ their changes committed.
 ### Architecture
 
 The `fmt` command is built with `@effect/cli` and registered as a subcommand of the
-root `savvy-lint` command alongside `init` and `check`:
+root `savvy-lint` command alongside `init` and `check`. The CLI composes silk-effects
+service layers for managed sections and biome schema sync:
 
 ```typescript
 // src/cli/index.ts
+const SilkLive = Layer.mergeAll(ManagedSectionLive, BiomeSchemaSyncLive);
+const AppLayer = Layer.provideMerge(SilkLive, NodeContext.layer);
+
 const rootCommand = Command.make('savvy-lint').pipe(
   Command.withSubcommands([initCommand, checkCommand, fmtCommand]),
 );
+
+// CLI runner provides the composed Layer
+const main = Effect.suspend(() => cli(process.argv)).pipe(Effect.provide(AppLayer));
 ```
+
+The `init` and `check` commands consume `ManagedSection` and `BiomeSchemaSync` services
+via `yield*` in their Effect pipelines. The `fmt` command does not use these services.
 
 ### Subcommands
 
@@ -1630,15 +1646,17 @@ separation), and JSON/CSS handling.
 - `yaml-lint` - YAML validation (Yaml handler)
 - `eslint` + `@typescript-eslint/parser` - Programmatic linting
 - `eslint-plugin-tsdoc` - TSDoc syntax validation
-- `cosmiconfig` - Configuration file discovery
 - `workspace-tools` - Monorepo workspace detection, project root finding
-- `jsonc-parser` - JSONC parsing and surgical edits (CLI init/check commands)
+- `jsonc-effect` - JSONC parsing and surgical edits (CLI init/check commands)
 - `@effect/cli` - CLI framework for savvy-lint commands
 - `effect` - Effect runtime (CLI dependency)
+- `@savvy-web/silk-effects` - ManagedSection, BiomeSchemaSync, ConfigDiscovery services
 
 **No longer used:**
 
 - ~~`yq`~~ - Replaced by bundled yaml package
+- ~~`cosmiconfig`~~ - Replaced by inline `existsSync` checks and `ConfigDiscovery` from silk-effects
+- ~~`jsonc-parser`~~ - Replaced by `jsonc-effect` (Effect-native wrapper)
 
 ---
 
@@ -1778,6 +1796,22 @@ __fixtures__/
 - [x] `Filter.shellEscape()` utility for safe shell command construction
 - [x] `Command.findRoot()` utility for reliable project root discovery
 
+### Completed (v0.7.x - silk-effects adoption)
+
+- [x] Replaced `ConfigSearch` utility with inline `existsSync()` checks in handlers
+- [x] Replaced `BiomeSchema` utility with `BiomeSchemaSync` service from `@savvy-web/silk-effects/biome`
+- [x] Replaced inline managed section logic (BEGIN_MARKER, END_MARKER, etc.) with `ManagedSection`
+      service from `@savvy-web/silk-effects/hooks`
+- [x] CLI Layer composition: `ManagedSectionLive` + `BiomeSchemaSyncLive` + `NodeContext`
+- [x] Re-exported `ConfigDiscovery`, `ConfigDiscoveryLive`, and related types from silk-effects
+- [x] Removed `cosmiconfig` dependency
+- [x] Removed `ConfigSearch`, `ConfigSearchOptions`, `ConfigSearchResult` from public API
+- [x] Added `ConfigDiscovery`, `ConfigDiscoveryLive`, `ConfigDiscoveryOptions`, `ConfigLocation`,
+      `ConfigSource` to public API
+- [x] Replaced `jsonc-parser` with `jsonc-effect` (Effect-native JSONC operations)
+- [x] Removed `lib/configs/eslint.config.ts` (no longer needed)
+- [x] Deleted `src/utils/BiomeSchema.ts` and `src/utils/ConfigSearch.ts`
+
 ### Future Enhancements
 
 **Short-term:**
@@ -1819,7 +1853,7 @@ __fixtures__/
 
 ---
 
-**Document Status:** Current - Synced with implementation (v0.3.x, fix/lint-order branch)
+**Document Status:** Current - Synced with implementation (v0.7.x, feat/silk-effects branch)
 
 **Implementation Notes:**
 
@@ -1828,6 +1862,8 @@ __fixtures__/
 - Bundled dependencies reduce external requirements
 - Workspace-aware TSDoc resolution is more sophisticated than originally planned
 - CLI init/check commands manage markdownlint config with surgical JSONC edits
+- CLI init/check commands use `ManagedSection` and `BiomeSchemaSync` services from
+  `@savvy-web/silk-effects`, composed via `Layer.provideMerge` in the CLI entry point
 - CLI fmt commands solve lint-staged v16 staging problem for in-place modifications
 - `fmtCommand()` pattern separates formatting (CLI, auto-staged) from validation (handler)
 - `createConfig()` uses lint-staged array syntax for sequential format-then-validate steps
@@ -1835,6 +1871,9 @@ __fixtures__/
 - Yaml handler uses Prettier for formatting and yaml-lint for validation
 - Codegen pipeline generates TypeScript templates from source JSONC configs
 - Shareable Biome config available for consumers via package exports
+- `ConfigSearch` utility replaced: handlers use inline `existsSync()` checks; `ConfigDiscovery`
+  from silk-effects re-exported for consumers needing programmatic config search
+- `cosmiconfig` dependency removed in favor of simpler inline checks + silk-effects services
 
 **Maintenance:**
 

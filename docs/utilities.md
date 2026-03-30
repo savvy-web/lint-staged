@@ -80,40 +80,49 @@ const result = Filter.apply(files, {
 | `include(files, patterns)` | Keep only files matching any pattern |
 | `apply(files, options)` | Apply both include and exclude filters |
 
-## ConfigSearch
+## ConfigDiscovery
 
-Discovery for configuration files using cosmiconfig.
+Config file discovery via `@savvy-web/silk-effects/config`. Re-exported from
+this package for convenience.
 
 ```typescript
-import { ConfigSearch } from '@savvy-web/lint-staged';
+import { ConfigDiscovery, ConfigDiscoveryLive } from '@savvy-web/lint-staged';
+import { Effect } from 'effect';
+import { NodeContext } from '@effect/platform-node';
 
-// Find a config file
-const result = ConfigSearch.find('biome');
-// Searches: lib/configs/ first, then standard locations
+const program = Effect.gen(function* () {
+  const discovery = yield* ConfigDiscovery;
 
-if (result.filepath) {
-  console.log(`Found config at: ${result.filepath}`);
-  console.log(`Config content:`, result.config);
-}
+  // Find highest-priority config location
+  const result = yield* discovery.find('biome.json');
+  if (result) {
+    console.log(`Found at: ${result.path} (source: ${result.source})`);
+  }
 
-// Find yaml-lint config
-const yamlConfig = ConfigSearch.find('yamllint');
-
-// Search with custom options
-const custom = ConfigSearch.find('eslint', {
-  searchFrom: './packages/app',
-  stopDir: process.cwd(),
+  // Find all config locations in priority order
+  const all = yield* discovery.findAll('biome.json');
+  for (const loc of all) {
+    console.log(`${loc.source}: ${loc.path}`);
+  }
 });
+
+await Effect.runPromise(
+  program.pipe(
+    Effect.provide(ConfigDiscoveryLive),
+    Effect.provide(NodeContext.layer),
+  ),
+);
 ```
 
 **Search Order:**
 
-1. `lib/configs/` directory (package-specific configs)
-2. Standard cosmiconfig locations (project root)
+1. `lib/configs/{name}` (package-provided shared configs)
+2. `{cwd}/{name}` (workspace root override)
 
 | Method | Description |
 | ------ | ----------- |
-| `find(tool, options?)` | Find config for a tool |
+| `find(name, options?)` | Find highest-priority config location |
+| `findAll(name, options?)` | Find all config locations in priority order |
 
 ## EntryExtractor
 
