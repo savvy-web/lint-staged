@@ -20,17 +20,12 @@
  */
 
 export type { ConfigLocation } from "@savvy-web/silk-effects";
-// Config discovery (from silk-effects)
 export { ConfigDiscovery, ConfigDiscoveryLive } from "@savvy-web/silk-effects";
-// CLI
 export { checkCommand, fmtCommand, initCommand, rootCommand, runCli } from "./cli/index.js";
-// Configuration utilities
 export { createConfig } from "./config/createConfig.js";
 export type { PresetExtendOptions } from "./config/Preset.js";
 export { Preset } from "./config/Preset.js";
-// Base class (for extension)
 export { Handler } from "./Handler.js";
-// Handler classes
 export { Biome } from "./handlers/Biome.js";
 export { Markdown } from "./handlers/Markdown.js";
 export { PackageJson } from "./handlers/PackageJson.js";
@@ -40,7 +35,6 @@ export { ShellScripts } from "./handlers/ShellScripts.js";
 export type { TypeScriptCompiler } from "./handlers/TypeScript.js";
 export { TypeScript } from "./handlers/TypeScript.js";
 export { Yaml } from "./handlers/Yaml.js";
-// Types
 export type {
 	BaseHandlerOptions,
 	BiomeOptions,
@@ -57,7 +51,6 @@ export type {
 	YamlOptions,
 } from "./types.js";
 export type { PackageManager, ToolSearchResult } from "./utils/Command.js";
-// Utility classes
 export { Command } from "./utils/Command.js";
 export type { EntryExtractionResult, ExportsField } from "./utils/EntryExtractor.js";
 export { EntryExtractor } from "./utils/EntryExtractor.js";
