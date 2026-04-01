@@ -70,7 +70,7 @@
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@biomejs/biome": "catalog:silk",
+		"@biomejs/biome": "2.4.9",
 		"@types/node": "catalog:silkPeers",
 		"@typescript/native-preview": "catalog:silkPeers",
 		"husky": "^9.1.0",

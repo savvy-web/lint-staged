@@ -1609,7 +1609,7 @@ can extend it in their own `biome.jsonc`:
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.9/schema.json",
   "extends": ["@savvy-web/lint-staged/biome/silk.jsonc"]
 }
 ```
