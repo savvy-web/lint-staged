@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.7.2
+
+### Bug Fixes
+
+* [`9d60389`](https://github.com/savvy-web/lint-staged/commit/9d60389f6d6c2f742316f90f2ed55ccd50623b55) Fixed `savvy-lint init` writing Biome schema URLs containing the literal string `"catalog:silk"` instead of the resolved version number. The `@biomejs/biome` peer dependency is now pinned to `2.4.9` directly rather than via a pnpm catalog reference, so the version is available at publish time when schema URLs are generated (fixes #98).
+
 ## 0.7.1
 
 ### Bug Fixes
