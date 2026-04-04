@@ -125,6 +125,10 @@ All exported classes, functions, and interfaces require TSDoc with:
 
 Package publishes to both GitHub Packages and npm with provenance.
 
+#### Shell Scripts
+
+Shell scripts (`.sh`) are stored without executable permission (644). Lint-staged enforces `chmod -x` on all `*.sh` files. Hook scripts are invoked via `bash "path/to/script.sh"` in `hooks.json` — never rely on the executable bit.
+
 ## Design Documentation
 
 For detailed architectural decisions and handler specifications:
