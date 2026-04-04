@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.7.3
+
+### Bug Fixes
+
+* [`f905f27`](https://github.com/savvy-web/lint-staged/commit/f905f2786d8c5f41ed178bfbf6e80d25459bb2f4) Fix session-start hook JSON output validation by adding hookEventName, consuming stdin, and converting additionalContext to XML tags
+
 ## 0.7.2
 
 ### Bug Fixes
