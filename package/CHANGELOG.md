@@ -1,5 +1,11 @@
 # @savvy-web/lint-staged
 
+## 0.8.0
+
+### Other
+
+* [`84f3a35`](https://github.com/savvy-web/lint-staged/commit/84f3a35b09b6344fecf91fac213c32046aa7cfac) Supports TypeScript v6
+
 ## 0.7.3
 
 ### Bug Fixes
