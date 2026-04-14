@@ -1,10 +1,7 @@
 ---
-"@savvy-web/lint-staged": patch
+"@savvy-web/lint-staged": minor
 ---
 
-## Dependencies
+## Other
 
-| Dependency | Type | Action | From | To |
-| :--- | :--- | :--- | :--- | :--- |
-| @savvy-web/rslib-builder | devDependency | updated | ^0.19.1 | ^0.20.0 |
-| turbo | devDependency | updated | ^2.9.3 | ^2.9.6 |
+Supports TypeScript v6
