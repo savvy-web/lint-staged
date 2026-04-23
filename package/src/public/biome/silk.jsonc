@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
 	"assist": {
 		"actions": {
 			"source": {
@@ -133,9 +133,12 @@
 			"!**/.vitest",
 			"!**/.coverage",
 			"!coverage",
+			"!**/__test__/fixtures",
+			"!**/__test__/snapshots",
 			"!**/__test__/**/fixtures",
 			"!**/__test__/**/snapshots",
-			"!**/__fixtures__"
+			"!**/__fixtures__",
+			"!**/__snapshots__"
 		]
 	}
 }

@@ -13,9 +13,9 @@ sensible defaults and easy customization.
 - Composable handlers for Biome, Markdown, YAML, TypeScript, and more
 - Zero-config presets for instant setup
 - CLI tool (`savvy-lint`) to bootstrap and validate your configuration
-- Workspace-aware TSDoc validation for public APIs
+- Workspace-aware config discovery anchored to workspace root
 - Shareable Biome configuration via `@savvy-web/lint-staged/biome/silk.jsonc`
-- Static class API with excellent TypeScript and TSDoc support
+- Static class API with excellent TypeScript support
 
 ## Installation
 
@@ -79,7 +79,7 @@ export default {
 | `Yaml` | `**/*.{yml,yaml}` | Format (Prettier) and validate (yaml-lint) |
 | `PnpmWorkspace` | `pnpm-workspace.yaml` | Sort and format |
 | `ShellScripts` | `**/*.sh` | Manage permissions |
-| `TypeScript` | `*.{ts,cts,mts,tsx}` | TSDoc validation + typecheck |
+| `TypeScript` | `*.{ts,cts,mts,tsx}` | Type checking (tsgo/tsc) |
 
 ## CLI
 

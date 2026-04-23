@@ -240,14 +240,13 @@ import { TypeScript } from '@savvy-web/lint-staged';
 
 // Or with options
 [TypeScript.glob]: TypeScript.create({
-  skipTypecheck: true,  // Only TSDoc validation
-  excludeTsdoc: ['.test.', '.spec.'],
+  skipTypecheck: false,
+  typecheckCommand: 'tsc --noEmit',
 }),
 ```
 
-**Note:** The new handler uses intelligent workspace detection and import graph
-analysis to determine which files need TSDoc linting. It automatically finds
-public API files from package exports.
+**Note:** The TypeScript handler now focuses on type checking only. The compiler
+(tsgo or tsc) is auto-detected at runtime via `Command.findTool()`.
 
 ## Keeping Custom Handlers
 
@@ -360,7 +359,7 @@ The new handlers may behave slightly differently:
 
 - **Yaml:** Uses Prettier for formatting and yaml-lint for validation (bundled)
 - **PackageJson:** Sorts files in-place before returning Biome command
-- **TypeScript:** Uses workspace-aware TSDoc detection instead of simple patterns
+- **TypeScript:** Runs pure type checking only (tsgo/tsc auto-detected)
 
 If you need the exact previous behavior, you can keep your custom handlers
 alongside the library ones.

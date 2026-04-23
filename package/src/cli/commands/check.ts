@@ -7,16 +7,10 @@ import { isDeepStrictEqual } from "node:util";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
 import type { SectionBlock } from "@savvy-web/silk-effects";
-import {
-	BiomeSchemaSync,
-	CheckResult,
-	ConfigDiscovery,
-	ManagedSection,
-	ToolDefinition,
-	ToolDiscovery,
-} from "@savvy-web/silk-effects";
+import { CheckResult, ConfigDiscovery, ManagedSection, ToolDefinition, ToolDiscovery } from "@savvy-web/silk-effects";
 import { Effect } from "effect";
 import { parse } from "jsonc-effect";
+import { Biome } from "../../handlers/Biome.js";
 import {
 	HUSKY_HOOK_PATH,
 	MARKDOWNLINT_CONFIG_PATH,
@@ -175,6 +169,10 @@ function checkMarkdownlintConfig(content: string) {
 /**
  * Check biome config `$schema` URLs against the expected peer dependency version.
  *
+ * @remarks
+ * Uses `Biome.findAllConfigs()` for workspace-aware discovery, then validates
+ * each config's `$schema` URL by reading and parsing the file directly with JSONC.
+ *
  * @returns Object with warnings and per-config status
  */
 function checkBiomeSchemas() {
@@ -184,17 +182,24 @@ function checkBiomeSchemas() {
 
 		if (!version) return { statuses, warnings: [] as string[] };
 
-		const syncer = yield* BiomeSchemaSync;
-		const result = yield* syncer.check(version);
+		const fs = yield* FileSystem.FileSystem;
 		const warnings: string[] = [];
+		const expectedSchema = `https://biomejs.dev/schemas/${version}/schema.json`;
 
-		for (const configPath of result.current) {
-			statuses.push({ path: configPath, matches: true });
-		}
+		// Use Biome.findAllConfigs() for workspace-aware discovery
+		const configPaths = Biome.findAllConfigs();
 
-		for (const configPath of result.updated) {
-			statuses.push({ path: configPath, matches: false });
-			warnings.push(`${WARNING}  ${configPath}: biome $schema is outdated.\n   Run 'savvy-lint init' to update it.`);
+		for (const configPath of configPaths) {
+			const content = yield* fs.readFileString(configPath);
+			const parsed = (yield* parse(content)) as Record<string, unknown>;
+			const currentSchema = parsed.$schema as string | undefined;
+
+			if (currentSchema === expectedSchema) {
+				statuses.push({ path: configPath, matches: true });
+			} else {
+				statuses.push({ path: configPath, matches: false });
+				warnings.push(`${WARNING}  ${configPath}: biome $schema is outdated.\n   Run 'savvy-lint init' to update it.`);
+			}
 		}
 
 		return { statuses, warnings };
@@ -277,7 +282,7 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 
 		// Check biome schemas
 		const biomeSchemaStatus = yield* checkBiomeSchemas().pipe(
-			Effect.catchTag("BiomeSyncError", () =>
+			Effect.catchAll(() =>
 				Effect.succeed({
 					statuses: [] as { path: string; matches: boolean }[],
 					warnings: [`${WARNING}  Could not check biome $schema URLs.`],
@@ -399,13 +404,6 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 			yield* Effect.log(`  ${CHECK_MARK} TypeScript (tsc)`);
 		} else {
 			yield* Effect.log(`  ${BULLET} TypeScript: not installed`);
-		}
-
-		const tsdocConfig = yield* discovery.find("tsdoc.json");
-		if (tsdocConfig) {
-			yield* Effect.log(`  ${CHECK_MARK} TSDoc (tsdoc.json found)`);
-		} else {
-			yield* Effect.log(`  ${BULLET} TSDoc: no tsdoc.json found`);
 		}
 
 		// Markdownlint config status

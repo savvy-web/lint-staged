@@ -3,8 +3,8 @@ status: current
 module: lint-staged
 category: architecture
 created: 2026-01-25
-updated: 2026-03-29
-last-synced: 2026-03-29
+updated: 2026-04-22
+last-synced: 2026-04-22
 completeness: 100
 related: []
 dependencies: []
@@ -23,14 +23,15 @@ template repositories and provide version-controlled, shareable pre-commit tooli
 3. [Rationale](#rationale)
 4. [System Architecture](#system-architecture)
 5. [Handler Specifications](#handler-specifications)
-6. [Configuration API](#configuration-api)
-7. [CLI Configuration Management](#cli-configuration-management)
-8. [CLI Formatting Commands](#cli-formatting-commands)
-9. [Integration Points](#integration-points)
-10. [Build Pipeline](#build-pipeline)
-11. [Testing Strategy](#testing-strategy)
-12. [Future Enhancements](#future-enhancements)
-13. [Related Documentation](#related-documentation)
+6. [Utility Modules](#utility-modules)
+7. [Configuration API](#configuration-api)
+8. [CLI Configuration Management](#cli-configuration-management)
+9. [CLI Formatting Commands](#cli-formatting-commands)
+10. [Integration Points](#integration-points)
+11. [Build Pipeline](#build-pipeline)
+12. [Testing Strategy](#testing-strategy)
+13. [Implementation Status](#implementation-status)
+14. [Related Documentation](#related-documentation)
 
 ---
 
@@ -61,49 +62,52 @@ customization.
 
 ### Implementation Summary
 
-The `@savvy-web/lint-staged` package is **fully implemented** with all eight handler
-classes, utility classes, and configuration presets. The package dogfoods itself via
-`lib/configs/lint-staged.config.ts`.
+The `@savvy-web/lint-staged` package is **fully implemented** with seven handler
+classes, workspace-aware utility modules, and configuration presets. The package
+dogfoods itself via `lib/configs/lint-staged.config.ts`. Version 1.0.0 removes TSDoc
+linting infrastructure and adds workspace-aware config discovery.
 
 ### Source Files
 
 ```text
 scripts/
 └── generate-markdownlint-template.ts  # Codegen: JSONC → TypeScript template
-src/
-├── index.ts              # Public API exports
-├── index.test.ts         # Public API tests
-├── types.ts              # TypeScript type definitions
-├── Handler.ts            # Abstract base Handler class
-├── utils/
-│   ├── Command.ts        # Command availability, package manager detection, savvy-lint finder
-│   ├── EntryExtractor.ts # Package exports entry point extraction
-│   ├── Filter.ts         # File filtering utilities + shell escaping
-│   ├── ImportGraph.ts    # Import dependency tracing
-│   ├── TsDocLinter.ts    # Bundled ESLint TSDoc linter
-│   └── TsDocResolver.ts  # Workspace-aware TSDoc file resolution
-├── handlers/
-│   ├── Biome.ts          # JS/TS/JSON formatting (inline existsSync config discovery)
-│   ├── Markdown.ts       # Markdown linting (inline existsSync config discovery)
-│   ├── PackageJson.ts    # package.json sorting/formatting + fmtCommand()
-│   ├── PnpmWorkspace.ts  # pnpm-workspace.yaml handling + fmtCommand()
-│   ├── ShellScripts.ts   # Shell script permissions
-│   ├── TypeScript.ts     # TSDoc validation + type checking (runtime tool detection)
-│   └── Yaml.ts           # YAML formatting/validation + fmtCommand()
-├── config/
-│   ├── createConfig.ts   # Full config factory (array syntax for sequential execution)
-│   └── Preset.ts         # Preset configurations (minimal/standard/silk)
-├── cli/
-│   ├── index.ts          # CLI root command; composes silk-effects Layer
-│   ├── commands/
-│   │   ├── init.ts       # Init command (hooks, configs, managed sections, biome schema)
-│   │   ├── check.ts      # Check command (validate setup)
-│   │   └── fmt.ts        # Fmt command (package-json, pnpm-workspace, yaml)
-│   └── templates/
-│       └── markdownlint.gen.ts  # Generated markdownlint template (committed)
-└── public/
-    └── biome/
-        └── silk.jsonc    # Shareable Biome config for consumers
+package/
+├── src/
+│   ├── index.ts              # Public API exports
+│   ├── types.ts              # TypeScript type definitions
+│   ├── Handler.ts            # Abstract base Handler class
+│   ├── utils/
+│   │   ├── Command.ts        # Command availability, package manager detection, savvy-lint finder
+│   │   ├── Filter.ts         # File filtering utilities + shell escaping
+│   │   └── Workspace.ts      # Workspace-aware discovery (cached sync APIs)
+│   ├── handlers/
+│   │   ├── Biome.ts          # JS/TS/JSON formatting (workspace-anchored config discovery)
+│   │   ├── Markdown.ts       # Markdown linting (workspace-anchored config discovery)
+│   │   ├── PackageJson.ts    # package.json sorting/formatting + workspace whitelist filtering
+│   │   ├── PnpmWorkspace.ts  # pnpm-workspace.yaml handling + fmtCommand()
+│   │   ├── ShellScripts.ts   # Shell script permissions
+│   │   ├── TypeScript.ts     # Type checking only (runtime compiler detection)
+│   │   └── Yaml.ts           # YAML formatting/validation + fmtCommand()
+│   ├── config/
+│   │   ├── createConfig.ts   # Full config factory (array syntax for sequential execution)
+│   │   └── Preset.ts         # Preset configurations (minimal/standard/silk)
+│   ├── cli/
+│   │   ├── index.ts          # CLI root command; composes WorkspacesLive + silk-effects Layer
+│   │   ├── commands/
+│   │   │   ├── init.ts       # Init command (hooks, configs, managed sections, biome schema)
+│   │   │   ├── check.ts      # Check command (workspace-aware biome schema validation)
+│   │   │   └── fmt.ts        # Fmt command (package-json, pnpm-workspace, yaml)
+│   │   └── templates/
+│   │       └── markdownlint.gen.ts  # Generated markdownlint template (committed)
+│   └── public/
+│       └── biome/
+│           └── silk.jsonc    # Shareable Biome config for consumers
+├── __test__/
+│   ├── index.test.ts                          # Public API tests
+│   ├── workspace.test.ts                      # Workspace utility tests
+│   └── integration/
+│       └── workspace-discovery.int.test.ts    # Integration tests with fixture monorepos
 ```
 
 ### Handler Classes (Implemented)
@@ -118,13 +122,13 @@ All seven handler classes follow the static class pattern with:
 
 | Handler | Glob | Implementation |
 | :--- | :--- | :--- |
-| PackageJson | `**/package.json` | Bundled sort-package-json + Biome; `fmtCommand()` for CLI sorting |
-| Biome | `*.{js,ts,cjs,mjs,...}` | Auto-discovers command and config |
-| Markdown | `**/*.{md,mdx}` | Auto-discovers markdownlint-cli2 |
+| PackageJson | `**/package.json` | Bundled sort-package-json + Biome; workspace whitelist filtering; `fmtCommand()` |
+| Biome | `*.{js,ts,cjs,mjs,...}` | Auto-discovers command; workspace-anchored config discovery; `findAllConfigs()` |
+| Markdown | `**/*.{md,mdx}` | Auto-discovers markdownlint-cli2; workspace-anchored config discovery |
 | PnpmWorkspace | `pnpm-workspace.yaml` | Bundled yaml package; `fmtCommand()` for CLI sort/format |
 | ShellScripts | `**/*.sh` | chmod permission management |
-| Yaml | `**/*.{yml,yaml}` | Prettier formatting + yaml-lint validation; `fmtCommand()` for CLI format |
-| TypeScript | `*.{ts,cts,mts,tsx}` | Bundled ESLint + workspace-aware TSDoc; runtime tool detection |
+| Yaml | `**/*.{yml,yaml}` | Prettier formatting + yaml-lint validation; workspace-anchored config; `fmtCommand()` |
+| TypeScript | `*.{ts,cts,mts,tsx}` | Pure type checking only; runtime compiler detection (tsgo/tsc) |
 
 ### Utility Classes (Implemented)
 
@@ -132,10 +136,7 @@ All seven handler classes follow the static class pattern with:
 | :--- | :--- |
 | Command | Package manager detection, tool availability checks, `findSavvyLint()` |
 | Filter | Include/exclude pattern filtering, shell escaping |
-| TsDocLinter | Programmatic ESLint for TSDoc validation |
-| TsDocResolver | Workspace-aware TSDoc file resolution |
-| ImportGraph | Import dependency tracing from package exports |
-| EntryExtractor | Package.json exports field parsing |
+| Workspace | Workspace root/package discovery, whitelist path checking (cached sync APIs) |
 
 **Silk-effects services (from `@savvy-web/silk-effects`):**
 
@@ -147,12 +148,15 @@ All seven handler classes follow the static class pattern with:
 
 ### Key Implementation Decisions Made
 
-1. **Bundled dependencies** - yaml, sort-package-json, ESLint, Prettier, yaml-lint are bundled
-2. **Programmatic ESLint** - TsDocLinter uses ESLint Node.js API, not CLI
-3. **Workspace-aware TSDoc** - Uses workspace-tools to detect monorepo packages
-4. **Inline config discovery** - Handlers use `existsSync()` checks for config file discovery
-   (Biome, Markdown, Yaml); `ConfigDiscovery` from `@savvy-web/silk-effects` re-exported for
-   consumers needing programmatic config search
+1. **Bundled dependencies** - yaml, sort-package-json, Prettier, yaml-lint are bundled
+2. **Workspace-aware config discovery** - Handlers anchor config searches to workspace root
+   via `Workspace.getWorkspaceRoot()`, falling back to CWD for non-workspace repos
+3. **Workspace whitelist filtering** - PackageJson handler filters files to workspace root +
+   leaf workspace roots only via `isWorkspacePackagePath()`, preventing processing of nested
+   package.json files in non-workspace directories
+4. **Inline config discovery** - Handlers use `existsSync()` checks anchored to workspace root
+   for config file discovery (Biome, Markdown, Yaml); `ConfigDiscovery` from
+   `@savvy-web/silk-effects` re-exported for consumers needing programmatic config search
 5. **fmtCommand() pattern** - Handlers that modify files in-place expose a `fmtCommand()` static
    method that returns a CLI command (`savvy-lint fmt ...`) so lint-staged can detect and
    auto-stage the modifications
@@ -163,6 +167,10 @@ All seven handler classes follow the static class pattern with:
 8. **Silk-effects for CLI services** - CLI commands consume `ManagedSection` and
    `BiomeSchemaSync` Effect services from `@savvy-web/silk-effects` via Layer composition,
    replacing inline managed-section markers and the BiomeSchema utility class
+9. **TypeScript handler simplified** - TSDoc linting infrastructure (TsDocLinter, TsDocResolver,
+   ImportGraph, EntryExtractor) removed; TypeScript handler now performs pure type checking only
+10. **WorkspacesLive composite layer** - CLI Layer uses `WorkspacesLive` from `workspaces-effect`
+    as the base layer, providing workspace discovery services to all silk-effects layers
 
 ---
 
@@ -391,42 +399,42 @@ package.json, formatting YAML) were not being committed.
 @savvy-web/lint-staged/
 ├── scripts/
 │   └── generate-markdownlint-template.ts  # Codegen script (run with bun)
-├── src/
-│   ├── index.ts              # Public API exports (classes, types, utilities)
-│   ├── index.test.ts         # Public API tests
-│   ├── types.ts              # TypeScript type definitions (LintStagedEntry, etc.)
-│   ├── Handler.ts            # Abstract base Handler class
-│   ├── utils/
-│   │   ├── Command.ts        # PM detection, tool finding, findSavvyLint()
-│   │   ├── EntryExtractor.ts # Package.json exports parsing
-│   │   ├── Filter.ts         # Include/exclude file filtering, shellEscape()
-│   │   ├── ImportGraph.ts    # Import dependency tracing
-│   │   ├── TsDocLinter.ts    # Bundled ESLint TSDoc linter
-│   │   └── TsDocResolver.ts  # Workspace-aware TSDoc resolution
-│   ├── handlers/
-│   │   ├── Biome.ts          # JS/TS/JSON formatting (inline existsSync discovery)
-│   │   ├── Markdown.ts       # Markdown linting (inline existsSync discovery)
-│   │   ├── PackageJson.ts    # sort-package-json + Biome; fmtCommand()
-│   │   ├── PnpmWorkspace.ts  # Bundled yaml sorting; fmtCommand()
-│   │   ├── ShellScripts.ts   # chmod permission management
-│   │   ├── TypeScript.ts     # TSDoc + typecheck (runtime tool detection)
-│   │   ├── Yaml.ts           # Prettier + yaml-lint; fmtCommand()
-│   │   └── index.ts          # Re-exports
-│   ├── config/
-│   │   ├── createConfig.ts   # Config factory (array syntax for sequential steps)
-│   │   ├── Preset.ts         # Preset configurations (minimal/standard/silk)
-│   │   └── index.ts          # Re-exports
-│   ├── cli/
-│   │   ├── index.ts          # Root command; composes ManagedSectionLive + BiomeSchemaSyncLive
-│   │   ├── commands/
-│   │   │   ├── init.ts       # Init command (hooks, managed sections, biome schema, markdownlint)
-│   │   │   ├── check.ts      # Check command (validate setup, managed sections, biome schema)
-│   │   │   └── fmt.ts        # Fmt command (package-json, pnpm-workspace, yaml)
-│   │   └── templates/
-│   │       └── markdownlint.gen.ts  # Generated markdownlint template data
-│   └── public/
-│       └── biome/
-│           └── silk.jsonc    # Shareable Biome config for consumers
+├── package/
+│   ├── src/
+│   │   ├── index.ts              # Public API exports (classes, types, utilities)
+│   │   ├── types.ts              # TypeScript type definitions (LintStagedEntry, etc.)
+│   │   ├── Handler.ts            # Abstract base Handler class
+│   │   ├── utils/
+│   │   │   ├── Command.ts        # PM detection, tool finding, findSavvyLint()
+│   │   │   ├── Filter.ts         # Include/exclude file filtering, shellEscape()
+│   │   │   └── Workspace.ts      # Workspace root/package discovery (cached sync APIs)
+│   │   ├── handlers/
+│   │   │   ├── Biome.ts          # JS/TS/JSON formatting (workspace-anchored config discovery)
+│   │   │   ├── Markdown.ts       # Markdown linting (workspace-anchored config discovery)
+│   │   │   ├── PackageJson.ts    # sort-package-json + Biome; workspace whitelist; fmtCommand()
+│   │   │   ├── PnpmWorkspace.ts  # Bundled yaml sorting; fmtCommand()
+│   │   │   ├── ShellScripts.ts   # chmod permission management
+│   │   │   ├── TypeScript.ts     # Pure type checking (runtime compiler detection)
+│   │   │   └── Yaml.ts           # Prettier + yaml-lint; workspace-anchored config; fmtCommand()
+│   │   ├── config/
+│   │   │   ├── createConfig.ts   # Config factory (array syntax for sequential steps)
+│   │   │   └── Preset.ts         # Preset configurations (minimal/standard/silk)
+│   │   ├── cli/
+│   │   │   ├── index.ts          # Root command; composes WorkspacesLive + silk-effects Layer
+│   │   │   ├── commands/
+│   │   │   │   ├── init.ts       # Init command (hooks, managed sections, biome schema, markdownlint)
+│   │   │   │   ├── check.ts      # Check command (workspace-aware biome schema validation)
+│   │   │   │   └── fmt.ts        # Fmt command (package-json, pnpm-workspace, yaml)
+│   │   │   └── templates/
+│   │   │       └── markdownlint.gen.ts  # Generated markdownlint template data
+│   │   └── public/
+│   │       └── biome/
+│   │           └── silk.jsonc    # Shareable Biome config for consumers
+│   └── __test__/
+│       ├── index.test.ts                         # Public API tests
+│       ├── workspace.test.ts                     # Workspace utility tests
+│       └── integration/
+│           └── workspace-discovery.int.test.ts   # Integration tests with fixture monorepos
 ├── lib/configs/
 │   ├── lint-staged.config.ts # Dogfooding config
 │   ├── .markdownlint-cli2.jsonc  # Source of truth for markdownlint rules
@@ -453,17 +461,16 @@ package.json, formatting YAML) were not being committed.
 │  │  Static API: .glob  .defaultExcludes  .handler  .create()      │ │
 │  │  Static methods: findConfig() isAvailable() (some handlers)    │ │
 │  │  CLI format:  .fmtCommand() (PackageJson, PnpmWorkspace, Yaml) │ │
+│  │  Workspace:   findAllConfigs() (Biome)                         │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────────┐ │
-│  │                      Utility Classes                            │ │
+│  │                      Utility Modules                            │ │
 │  │                                                                 │ │
 │  │  Command         - PM detection, tool finding, findSavvyLint() │ │
 │  │  Filter          - Include/exclude filtering, shellEscape()    │ │
-│  │  TsDocLinter     - Programmatic ESLint for TSDoc               │ │
-│  │  TsDocResolver   - Workspace-aware TSDoc file resolution       │ │
-│  │  ImportGraph     - Import dependency tracing                    │ │
-│  │  EntryExtractor  - Package.json exports parsing                │ │
+│  │  Workspace       - Workspace root/package discovery (cached),   │ │
+│  │                    whitelist path checking                      │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 │                                                                      │
 │  ┌────────────────────┐  ┌───────────────────────────────────────┐ │
@@ -471,7 +478,7 @@ package.json, formatting YAML) were not being committed.
 │  │                     │  │                                       │ │
 │  │  createConfig()     │  │  Preset.minimal()  - formatting only  │ │
 │  │  - Array syntax for │  │  Preset.standard() - + linting        │ │
-│  │    sequential steps │  │  Preset.silk()     - + TSDoc          │ │
+│  │    sequential steps │  │  Preset.silk()     - + typecheck      │ │
 │  │  - Custom additions │  │  Preset.get(name)  - by name          │ │
 │  │  - Per-handler opts │  │                                       │ │
 │  └────────────────────┘  └───────────────────────────────────────┘ │
@@ -481,13 +488,13 @@ package.json, formatting YAML) were not being committed.
 │  │                                                                 │ │
 │  │  init             - Hook/config setup (ManagedSection,          │ │
 │  │                     BiomeSchemaSync services)                   │ │
-│  │  check            - Validate setup (ManagedSection,             │ │
-│  │                     BiomeSchemaSync services)                   │ │
+│  │  check            - Validate setup (workspace-aware biome       │ │
+│  │                     schema, ManagedSection services)            │ │
 │  │  fmt package-json - Sort package.json (sort-package-json)      │ │
 │  │  fmt pnpm-workspace - Sort/format pnpm-workspace.yaml (yaml)  │ │
 │  │  fmt yaml         - Format YAML files (Prettier)               │ │
 │  │                                                                 │ │
-│  │  Layer: ManagedSectionLive + BiomeSchemaSyncLive + NodeContext  │ │
+│  │  Layer: WorkspacesLive + SilkLive + NodeContext                │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────────┐ │
@@ -497,14 +504,12 @@ package.json, formatting YAML) were not being committed.
 │  │  sort-package-json - package.json sorting (PackageJson, fmt)   │ │
 │  │  prettier         - YAML formatting (Yaml handler, fmt CLI)    │ │
 │  │  yaml-lint        - YAML validation (Yaml handler)             │ │
-│  │  eslint           - Programmatic TSDoc linting (TypeScript)    │ │
-│  │  eslint-plugin-tsdoc - TSDoc rule (TypeScript)                 │ │
-│  │  workspace-tools  - Monorepo workspace detection               │ │
+│  │  workspaces-effect - Workspace discovery (sync APIs)            │ │
 │  │  jsonc-effect     - JSONC parsing/surgical edits (CLI init)    │ │
 │  │  @effect/cli      - CLI framework (savvy-lint commands)        │ │
 │  │  effect           - Effect runtime (CLI dependency)             │ │
 │  │  @savvy-web/silk-effects - ManagedSection, BiomeSchemaSync,    │ │
-│  │                            ConfigDiscovery services             │ │
+│  │                            ConfigDiscovery, ToolDiscovery      │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -523,12 +528,12 @@ package.json, formatting YAML) were not being committed.
    - For arrays: each step runs sequentially, staging between steps
 7. Handler performs filtering:
    - Filter.exclude() removes unwanted files
-   - Some handlers (TypeScript) do workspace-aware filtering
+   - PackageJson: isWorkspacePackagePath() whitelist filter (root + leaf roots)
 8. Handler performs processing:
    - Command-returning: return command strings for lint-staged to run
    - fmtCommand(): returns `savvy-lint fmt ...` CLI command
    - In-place processing: modify files directly and return []
-   - TypeScript: programmatic ESLint + returns typecheck command
+   - TypeScript: returns typecheck command (tsgo/tsc --noEmit)
 9. lint-staged executes returned commands and auto-stages file changes
 ```
 
@@ -554,10 +559,9 @@ The handlers fall into four categories:
 - Yaml.create() - formats via Prettier, validates via yaml-lint, returns `[]`
 - PnpmWorkspace.create() - sorts/formats via bundled yaml package, returns `[]`
 
-**Async/programmatic handlers:**
+**Command-returning handlers (synchronous):**
 
-- TypeScript - runs bundled ESLint TSDoc linter programmatically, throws on
-  errors, returns typecheck command
+- TypeScript - returns typecheck command (tsgo/tsc --noEmit)
 
 ### Class Initialization
 
@@ -567,13 +571,14 @@ import { Biome, PackageJson, TypeScript, Yaml } from '@savvy-web/lint-staged';
 
 // Static properties immediately available
 Biome.glob           // '*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}'
-Biome.defaultExcludes // ['package-lock.json', '__fixtures__']
+Biome.defaultExcludes // ['package.json', 'package-lock.json', '__fixtures__', '__test__/fixtures']
 Biome.handler        // Pre-configured handler
 
 // Static discovery methods
 Biome.findBiome()    // Returns command string or undefined
 Biome.isAvailable()  // Returns boolean
-Biome.findConfig()   // Returns config path or undefined
+Biome.findConfig()   // Returns config path (workspace-anchored) or undefined
+Biome.findAllConfigs() // Returns all workspace config paths (root + leaf roots)
 
 // Custom configuration
 Biome.create({ exclude: ['vendor/'] })
@@ -584,6 +589,7 @@ Biome.create({ exclude: ['vendor/'] })
 // fmtCommand pattern (PackageJson, PnpmWorkspace, Yaml)
 PackageJson.fmtCommand()
   → Returns: (filenames: readonly string[]) => string | string[]
+  → Filters to workspace root + leaf roots via isWorkspacePackagePath()
   → Returns `savvy-lint fmt package-json <files>` CLI command
   → lint-staged runs this command and auto-stages modifications
 
@@ -591,11 +597,9 @@ Yaml.fmtCommand({ exclude: ['generated/'] })
   → Returns: (filenames: readonly string[]) => string | string[]
   → Returns `savvy-lint fmt yaml <files>` CLI command
 
-// TypeScript with workspace-aware TSDoc and runtime compiler detection
+// TypeScript with runtime compiler detection (type checking only)
 TypeScript.create({ skipTypecheck: false })
-  → Returns: async (filenames: readonly string[]) => Promise<string[]>
-  → Uses TsDocResolver to find public API files
-  → Uses TsDocLinter (bundled ESLint) for validation
+  → Returns: (filenames: readonly string[]) => string | string[]
   → detectCompiler() checks for tsgo first, then tsc via Command.findTool()
   → Returns typecheck command (e.g., 'pnpm exec tsgo --noEmit')
 ```
@@ -694,7 +698,7 @@ abstract class Handler {
 
 ### PackageJson Handler
 
-Sorts package.json fields and formats with Biome.
+Sorts package.json fields and formats with Biome. Filters to workspace roots only.
 
 ```typescript
 /**
@@ -712,13 +716,14 @@ interface PackageJsonOptions extends BaseHandlerOptions {
 /**
  * Handler for package.json files.
  * Sorts fields with sort-package-json and formats with Biome.
+ * Filters to workspace root and leaf workspace roots only.
  *
  * @example
  * ```typescript
  * import { PackageJson } from '@savvy-web/lint-staged';
  *
  * export default {
- *   // Use defaults
+ *   // Use defaults (workspace-aware filtering)
  *   [PackageJson.glob]: PackageJson.handler,
  *
  *   // Or use array syntax for reliable staging
@@ -739,16 +744,27 @@ class PackageJson extends Handler {
 }
 ```
 
+**Workspace filtering:**
+
+Both `create()` and `fmtCommand()` use `filterToWorkspaceRoots()` which:
+
+1. Applies exclude patterns first (backward compatible with custom excludes)
+2. Filters remaining files via `isWorkspacePackagePath()` to workspace root +
+   leaf workspace roots only
+3. Falls back permissively when not in a workspace (single-package repos work)
+
 **create() behavior:**
 
-1. Sorts files in-place via bundled sort-package-json (unless `skipSort: true`)
-2. Returns `biome check --write --max-diagnostics=none {files}` (unless `skipFormat: true`)
+1. Filters to workspace roots via `filterToWorkspaceRoots()`
+2. Sorts files in-place via bundled sort-package-json (unless `skipSort: true`)
+3. Returns `biome check --write --max-diagnostics=none {files}` (unless `skipFormat: true`)
 
 **fmtCommand() behavior:**
 
-1. Returns `savvy-lint fmt package-json {files}` CLI command
-2. lint-staged runs the command and auto-stages modifications
-3. Used in `createConfig()` array syntax: `[PackageJson.fmtCommand(), Biome.create()]`
+1. Filters to workspace roots via `filterToWorkspaceRoots()`
+2. Returns `savvy-lint fmt package-json {files}` CLI command
+3. lint-staged runs the command and auto-stages modifications
+4. Used in `createConfig()` array syntax: `[PackageJson.fmtCommand(), Biome.create()]`
 
 ### Biome Handler
 
@@ -771,29 +787,32 @@ interface BiomeOptions extends BaseHandlerOptions {
  *
  * Auto-discovers biome command and config file:
  * - Command: global biome > pnpm exec biome > npx biome
- * - Config: lib/configs/biome.json[c] > biome.json[c] at root
+ * - Config: biome.jsonc > biome.json at workspace root (or CWD)
  */
 class Biome {
   static readonly glob = '*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}';
-  static readonly defaultExcludes = ['package-lock.json', '__fixtures__'] as const;
+  static readonly defaultExcludes = ['package.json', 'package-lock.json', '__fixtures__', '__test__/fixtures'] as const;
   static readonly handler: LintStagedHandler;
 
-  static findBiome(): string | undefined;    // Find biome command
-  static isAvailable(): boolean;              // Check if biome available
-  static findConfig(): string | undefined;    // Find config file
+  static findBiome(): string | undefined;       // Find biome command
+  static isAvailable(): boolean;                 // Check if biome available
+  static findConfig(): string | undefined;       // Find config at workspace root
+  static findAllConfigs(): string[];             // Find configs across all workspace roots
   static create(options?: BiomeOptions): LintStagedHandler;
 }
 ```
 
 **Commands:**
 
-1. `{biome-cmd} check --write --no-errors-on-unmatched [--config={config}] {files}`
+1. `{biome-cmd} check --write --no-errors-on-unmatched [--config-path={config}] {files}`
 
 **Auto-discovery:**
 
 - Uses `Command.findTool('biome')` for command discovery
-- Uses inline `existsSync()` checks for config file discovery
-  (`lib/configs/biome.jsonc` then `biome.jsonc` at root)
+- `findConfig()` searches workspace root (via `getWorkspaceRoot()`) for `biome.jsonc`
+  then `biome.json`, falling back to CWD when not in a workspace
+- `findAllConfigs()` searches workspace root and all leaf workspace roots, collecting
+  at most one config per directory; used by CLI `check` command for schema validation
 - Throws at handler invocation if biome not available
 
 ### Markdown Handler
@@ -838,8 +857,8 @@ class Markdown {
 **Auto-discovery:**
 
 - Uses `Command.findTool('markdownlint-cli2')` for command discovery
-- Uses inline `existsSync()` checks for config file discovery
-  (`lib/configs/.markdownlint-cli2.jsonc` then standard locations)
+- `findConfig()` searches workspace root (via `getWorkspaceRoot()`) in `lib/configs/`
+  then root directory for standard markdownlint config names, falling back to CWD
 - Throws at handler invocation if markdownlint-cli2 not available
 
 ### PnpmWorkspace Handler
@@ -970,7 +989,7 @@ interface YamlOptions extends BaseHandlerOptions {
  */
 class Yaml {
   static readonly glob = '**/*.{yml,yaml}';
-  static readonly defaultExcludes = ['pnpm-lock.yaml', 'pnpm-workspace.yaml'] as const;
+  static readonly defaultExcludes = ['pnpm-lock.yaml', 'pnpm-workspace.yaml', '__test__/fixtures'] as const;
   static readonly handler: LintStagedHandler;
 
   static findConfig(): string | undefined;     // Find yaml-lint config
@@ -1001,8 +1020,8 @@ class Yaml {
 
 **Config file discovery:**
 
-- Uses inline `existsSync()` checks to search `lib/configs/.yaml-lint.json` then
-  `.yaml-lint.json` at repo root
+- `findConfig()` searches workspace root (via `getWorkspaceRoot()`) in `lib/configs/`
+  then root directory for `.yaml-lint.json`, falling back to CWD
 - The `.yaml-lint.json` config file specifies the YAML schema (e.g., `DEFAULT_SCHEMA`)
 - Schema is passed to yaml-lint for validation
 
@@ -1014,35 +1033,22 @@ is done via CLI for reliable lint-staged staging.
 
 ### TypeScript Handler
 
-Validates TSDoc syntax and runs type checking with intelligent workspace detection.
+Runs type checking with runtime compiler detection.
 
 ```typescript
 /**
  * Options for the TypeScript handler.
  */
 interface TypeScriptOptions extends BaseHandlerOptions {
-  /** Additional patterns to exclude from TSDoc linting */
-  excludeTsdoc?: string[];
-  /** Skip TSDoc validation */
-  skipTsdoc?: boolean;
   /** Skip type checking */
   skipTypecheck?: boolean;
   /** Command for type checking */
   typecheckCommand?: string;
-  /** Root directory for workspace detection */
-  rootDir?: string;
 }
 
 /**
  * Handler for TypeScript files.
- * Validates TSDoc syntax programmatically and runs type checking.
- *
- * TSDoc validation is workspace-aware:
- * 1. Detects workspaces using workspace-tools
- * 2. Checks for tsdoc.json at workspace or repo level
- * 3. Extracts entry points from package.json exports
- * 4. Traces imports from entries using ImportGraph
- * 5. Only lints files that are part of the public API
+ * Runs type checking only (TSDoc linting removed in v1.0.0).
  *
  * Type checking uses runtime tool detection:
  * - Command.findTool('tsgo') first (native TypeScript)
@@ -1052,27 +1058,20 @@ interface TypeScriptOptions extends BaseHandlerOptions {
 class TypeScript {
   static readonly glob = '*.{ts,cts,mts,tsx}';
   static readonly defaultExcludes = [] as const;
-  static readonly defaultTsdocExcludes = ['.test.', '.spec.', '__test__', '__tests__'] as const;
   static readonly handler: LintStagedHandler;
 
   static detectCompiler(_cwd?: string): 'tsgo' | 'tsc' | undefined;
   static isAvailable(): boolean;
   static getDefaultTypecheckCommand(): string;
   static clearCache(): void;
-  static isTsdocAvailable(cwd?: string): boolean;
   static create(options?: TypeScriptOptions): LintStagedHandler;
 }
 ```
 
-**Processing (async):**
+**Processing (synchronous):**
 
 1. Filter files using exclude patterns
-2. If TSDoc enabled:
-   - Create TsDocResolver with workspace detection
-   - Filter staged files to only public API files
-   - Run TsDocLinter (bundled ESLint) on each group
-   - **Throw Error** if any TSDoc errors found
-3. If typecheck enabled:
+2. If typecheck enabled:
    - Lazy-load typecheck command to avoid throwing during import
    - Return typecheck command (auto-detected or custom)
 
@@ -1085,20 +1084,14 @@ class TypeScript {
   package manager detection step
 - `clearCache()` resets the cached result for testing or environment changes
 
-**Key Components:**
-
-- `TsDocResolver` - Finds workspaces, extracts exports, traces imports
-- `TsDocLinter` - Programmatic ESLint with tsdoc/syntax rule
-- `ImportGraph` - Traces import dependencies from entry points
-- `EntryExtractor` - Parses package.json exports field
-
-**Note:** No longer uses external ESLint CLI. All TSDoc validation is
-programmatic using the ESLint Node.js API. Compiler detection uses runtime
-tool availability rather than parsing package.json dependencies.
+**Note:** TSDoc linting infrastructure (TsDocLinter, TsDocResolver, ImportGraph,
+EntryExtractor) was removed in v1.0.0. The TypeScript handler now performs pure
+type checking only. Compiler detection uses runtime tool availability rather
+than parsing package.json dependencies.
 
 ---
 
-## Utility Classes
+## Utility Modules
 
 ### Command Utility
 
@@ -1138,9 +1131,8 @@ class Command {
 
 **Project Root Discovery:**
 
-- Uses `findProjectRoot()` from `workspace-tools` to locate the nearest
-  directory containing a `package.json`
-- Falls back to provided `cwd` (or `process.cwd()`) on error
+- Walks up the directory tree from `cwd` to find the nearest `package.json`
+- Falls back to `process.cwd()` if no `package.json` found
 - More reliable than `process.cwd()` in Husky hooks
 - Caches result for performance
 
@@ -1192,105 +1184,68 @@ All filter methods use `string.includes()` for pattern matching.
 - Used by `fmtCommand()` methods to safely pass file paths to CLI commands
 - Returns space-separated string of escaped paths
 
+### Workspace Utility
+
+Workspace-aware discovery with cached synchronous APIs.
+
+```typescript
+// Workspace root discovery (cached)
+function getWorkspaceRoot(): string | null;
+
+// Leaf workspace packages (excludes root, cached)
+function getWorkspacePackages(): WorkspacePackageInfo[] | null;
+
+// Leaf workspace paths (cached)
+function getWorkspacePackagePaths(): string[];
+
+// Whitelist check: file at workspace root or leaf root
+function isWorkspacePackagePath(filePath: string): boolean;
+
+// Clear cache (for tests)
+function resetWorkspaceCache(): void;
+```
+
+**Design:**
+
+- Wraps synchronous APIs from `workspaces-effect` (`findWorkspaceRootSync`,
+  `getWorkspacePackagesSync`)
+- All results are cached on first access; workspace layout does not change
+  during a lint-staged run
+- `isWorkspacePackagePath()` returns `true` as a permissive fallback when not
+  in a workspace, so single-package repos continue to work
+- Used by handlers (Biome, Markdown, Yaml, PackageJson) for config discovery
+  and file filtering
+
 ### Config Discovery (silk-effects)
 
 The `ConfigSearch` utility class and its `cosmiconfig` dependency have been removed. Config
 file discovery is now handled in two ways:
 
-1. **Inline `existsSync()` checks** in handler `findConfig()` methods (Biome, Markdown, Yaml)
-   for simple, synchronous config discovery at handler invocation time.
+1. **Workspace-anchored `existsSync()` checks** in handler `findConfig()` methods (Biome,
+   Markdown, Yaml) anchored to workspace root via `getWorkspaceRoot()`, falling back to CWD.
 2. **`ConfigDiscovery` service** from `@savvy-web/silk-effects/config`, re-exported from the
    public API for consumers needing programmatic, Effect-based config search.
 
 ```typescript
-// Re-exported from @savvy-web/silk-effects/config
-export { ConfigDiscovery, ConfigDiscoveryLive } from '@savvy-web/silk-effects/config';
-export type { ConfigDiscoveryOptions, ConfigLocation, ConfigSource } from '@savvy-web/silk-effects/config';
+// Re-exported from @savvy-web/silk-effects
+export { ConfigDiscovery, ConfigDiscoveryLive } from '@savvy-web/silk-effects';
+export type { ConfigLocation } from '@savvy-web/silk-effects';
 ```
 
-**Handler config discovery pattern (inline):**
+**Handler config discovery pattern (workspace-anchored):**
 
 ```typescript
 // Example: Biome.findConfig()
 static findConfig(): string | undefined {
-  const libPath = 'lib/configs/biome.jsonc';
-  if (existsSync(libPath)) return libPath;
-  if (existsSync('biome.jsonc')) return 'biome.jsonc';
-  if (existsSync('biome.json')) return 'biome.json';
+  const root = getWorkspaceRoot();
+  const searchDir = root ?? process.cwd();
+  for (const name of ['biome.jsonc', 'biome.json']) {
+    const fullPath = join(searchDir, name);
+    if (existsSync(fullPath)) return fullPath;
+  }
   return undefined;
 }
 ```
-
-**Migration from ConfigSearch:**
-
-| Old API | New API |
-| :--- | :--- |
-| `ConfigSearch.find('biome')` | `Biome.findConfig()` (inline `existsSync`) |
-| `ConfigSearch.find('markdownlint')` | `Markdown.findConfig()` (inline `existsSync`) |
-| `ConfigSearch.find('yamllint')` | `Yaml.findConfig()` (inline `existsSync`) |
-| `ConfigSearch` class | `ConfigDiscovery` from `@savvy-web/silk-effects/config` |
-| `ConfigSearchOptions` type | `ConfigDiscoveryOptions` from `@savvy-web/silk-effects/config` |
-| `ConfigSearchResult` type | `ConfigLocation` from `@savvy-web/silk-effects/config` |
-
-### TsDocLinter Utility
-
-Programmatic ESLint for TSDoc validation.
-
-```typescript
-interface TsDocLintResult {
-  filePath: string;
-  errorCount: number;
-  warningCount: number;
-  messages: TsDocLintMessage[];
-}
-
-class TsDocLinter {
-  constructor(options?: { ignorePatterns?: string[] });
-
-  async lintFiles(filePaths: string[]): Promise<TsDocLintResult[]>;
-  async lintFilesAndThrow(filePaths: string[]): Promise<void>;
-
-  static formatResults(results: TsDocLintResult[]): string;
-  static hasErrors(results: TsDocLintResult[]): boolean;
-}
-```
-
-**Bundled Configuration:**
-
-- Uses `@typescript-eslint/parser`
-- Uses `eslint-plugin-tsdoc` with `tsdoc/syntax: 'error'`
-- Ignores node_modules, dist, coverage by default
-
-### TsDocResolver Utility
-
-Workspace-aware TSDoc file resolution.
-
-```typescript
-interface TsDocWorkspace {
-  name: string;
-  path: string;
-  tsdocConfigPath: string;
-  files: string[];       // Public API files to lint
-  errors: string[];
-}
-
-class TsDocResolver {
-  constructor(options: { rootDir: string; excludePatterns?: string[] });
-
-  resolve(): { workspaces: TsDocWorkspace[]; isMonorepo: boolean };
-  filterStagedFiles(stagedFiles: string[]): { files: string[]; tsdocConfigPath: string }[];
-  needsLinting(filePath: string): boolean;
-  getTsDocConfig(filePath: string): string | undefined;
-  findWorkspace(filePath: string): TsDocWorkspace | undefined;
-}
-```
-
-**Resolution Process:**
-
-1. Uses `workspace-tools` to detect workspaces
-2. Checks for `tsdoc.json` at workspace/repo level
-3. Extracts entry points from package.json `exports`
-4. Uses `ImportGraph` to trace all public API files
 
 ---
 
@@ -1335,10 +1290,9 @@ export default {
     exclude: ['vendor/', 'generated/'],
   }),
 
-  // Disable type checking, keep TSDoc
+  // Disable type checking
   [TypeScript.glob]: TypeScript.create({
     skipTypecheck: true,
-    sourcePatterns: ['src/', 'lib/'],
   }),
 };
 ```
@@ -1509,13 +1463,18 @@ their changes committed.
 ### Architecture
 
 The `fmt` command is built with `@effect/cli` and registered as a subcommand of the
-root `savvy-lint` command alongside `init` and `check`. The CLI composes silk-effects
-service layers for managed sections and biome schema sync:
+root `savvy-lint` command alongside `init` and `check`. The CLI composes a layered
+service architecture with `WorkspacesLive` as the base layer:
 
 ```typescript
 // src/cli/index.ts
-const SilkLive = Layer.mergeAll(ManagedSectionLive, BiomeSchemaSyncLive);
-const AppLayer = Layer.provideMerge(SilkLive, NodeContext.layer);
+const SilkLive = Layer.mergeAll(
+  ManagedSectionLive, BiomeSchemaSyncLive, ConfigDiscoveryLive, ToolDiscoveryLive,
+);
+const AppLayer = SilkLive.pipe(
+  Layer.provideMerge(WorkspacesLive),
+  Layer.provideMerge(NodeContext.layer),
+);
 
 const rootCommand = Command.make('savvy-lint').pipe(
   Command.withSubcommands([initCommand, checkCommand, fmtCommand]),
@@ -1525,8 +1484,11 @@ const rootCommand = Command.make('savvy-lint').pipe(
 const main = Effect.suspend(() => cli(process.argv)).pipe(Effect.provide(AppLayer));
 ```
 
-The `init` and `check` commands consume `ManagedSection` and `BiomeSchemaSync` services
-via `yield*` in their Effect pipelines. The `fmt` command does not use these services.
+The `init` and `check` commands consume `ManagedSection`, `BiomeSchemaSync`,
+`ConfigDiscovery`, and `ToolDiscovery` services via `yield*` in their Effect
+pipelines. The `check` command uses `Biome.findAllConfigs()` for workspace-aware
+biome schema validation across all workspace roots. The `fmt` command does not
+use these services.
 
 ### Subcommands
 
@@ -1589,19 +1551,6 @@ export default {
 Handlers use Biome for JavaScript/TypeScript/JSON formatting. The consuming
 project must have Biome installed and configured.
 
-### ESLint Integration (TSDoc)
-
-The TypeScript handler uses ESLint with eslint-plugin-tsdoc. The package
-includes a bundled ESLint config:
-
-```typescript
-// Uses bundled config by default
-typescript()
-
-// Or specify custom config
-typescript({ eslintConfig: './custom-eslint.config.ts' })
-```
-
 ### Biome Config Export
 
 The package exports an optional shareable Biome config at `./biome/silk.jsonc`. Consumers
@@ -1644,19 +1593,22 @@ separation), and JSON/CSS handling.
 - `sort-package-json` - Package.json sorting (PackageJson handler, fmt CLI)
 - `prettier` - YAML formatting (Yaml handler, fmt CLI)
 - `yaml-lint` - YAML validation (Yaml handler)
-- `eslint` + `@typescript-eslint/parser` - Programmatic linting
-- `eslint-plugin-tsdoc` - TSDoc syntax validation
-- `workspace-tools` - Monorepo workspace detection, project root finding
+- `workspaces-effect` - Workspace discovery (sync + Effect APIs)
 - `jsonc-effect` - JSONC parsing and surgical edits (CLI init/check commands)
 - `@effect/cli` - CLI framework for savvy-lint commands
 - `effect` - Effect runtime (CLI dependency)
-- `@savvy-web/silk-effects` - ManagedSection, BiomeSchemaSync, ConfigDiscovery services
+- `@savvy-web/silk-effects` - ManagedSection, BiomeSchemaSync, ConfigDiscovery,
+  ToolDiscovery services
 
 **No longer used:**
 
 - ~~`yq`~~ - Replaced by bundled yaml package
 - ~~`cosmiconfig`~~ - Replaced by inline `existsSync` checks and `ConfigDiscovery` from silk-effects
 - ~~`jsonc-parser`~~ - Replaced by `jsonc-effect` (Effect-native wrapper)
+- ~~`eslint`~~ - TSDoc linting removed in v1.0.0
+- ~~`@typescript-eslint/parser`~~ - TSDoc linting removed in v1.0.0
+- ~~`eslint-plugin-tsdoc`~~ - TSDoc linting removed in v1.0.0
+- ~~`workspace-tools`~~ - Replaced by `workspaces-effect` (provides both sync and Effect APIs)
 
 ---
 
@@ -1717,7 +1669,7 @@ ensures the CLI template always matches the project's own config.
 
 ### Unit Tests
 
-**Location:** `src/**/*.test.ts`
+**Location:** `package/__test__/*.test.ts`
 
 **Coverage target:** 90%
 
@@ -1728,30 +1680,26 @@ ensures the CLI template always matches the project's own config.
 - Command generation for different file sets
 - Options merging with defaults
 - Edge cases (empty file arrays, all files excluded)
+- Workspace utility caching and fallback behavior
 
 ### Integration Tests
 
-**Location:** `src/**/*.integration.test.ts`
+**Location:** `package/__test__/integration/*.int.test.ts`
 
 **What to test:**
 
+- Workspace discovery across fixture monorepos
 - Handler output matches lint-staged expectations
 - Commands execute successfully on sample files
 - Error handling for missing dependencies
-- isCommandAvailable utility accuracy
+- Workspace whitelist filtering for PackageJson handler
 
-### Test Fixtures
+### Test Migration
 
-```text
-__fixtures__/
-├── package.json          # Test package.json file
-├── sample.ts             # TypeScript source file
-├── sample.test.ts        # Test file (should be excluded)
-├── sample.md             # Markdown file
-├── sample.yaml           # YAML file
-└── dist/
-    └── package.json      # Should be excluded
-```
+Tests were moved from co-located `src/**/*.test.ts` to a separate
+`package/__test__/` directory. This separates test code from source
+during builds and aligns with the `__test__/fixtures` exclude patterns
+used by handlers.
 
 ---
 
@@ -1812,6 +1760,30 @@ __fixtures__/
 - [x] Removed `lib/configs/eslint.config.ts` (no longer needed)
 - [x] Deleted `src/utils/BiomeSchema.ts` and `src/utils/ConfigSearch.ts`
 
+### Completed (v1.0.0 - workspace-aware discovery)
+
+- [x] Removed TSDoc linting infrastructure (TsDocLinter, TsDocResolver, EntryExtractor,
+      ImportGraph utilities and all tests)
+- [x] Removed `eslint`, `@typescript-eslint/parser`, `eslint-plugin-tsdoc` dependencies
+- [x] TypeScript handler simplified to pure type checking only (synchronous)
+- [x] Added `Workspace` utility module wrapping `workspaces-effect` sync APIs with caching
+- [x] PackageJson handler uses whitelist filtering via `isWorkspacePackagePath()` (workspace
+      root + leaf workspace roots only)
+- [x] `Biome.findConfig()` anchored to workspace root; added `Biome.findAllConfigs()`
+- [x] `Markdown.findConfig()` anchored to workspace root
+- [x] `Yaml.findConfig()` anchored to workspace root
+- [x] CLI Layer upgraded to `WorkspacesLive` composite layer from `workspaces-effect`
+- [x] CLI `check` command uses `Biome.findAllConfigs()` for workspace-aware biome schema validation
+- [x] CLI Layer now includes `ConfigDiscoveryLive` and `ToolDiscoveryLive` services
+- [x] Tests migrated from co-located `src/` to `package/__test__/` pattern
+- [x] Added integration tests with fixture monorepos
+- [x] Replaced `workspace-tools` with `workspaces-effect` (provides both sync and Effect APIs)
+- [x] `Biome.defaultExcludes` updated to include `__test__/fixtures`
+- [x] `Yaml.defaultExcludes` updated to include `__test__/fixtures`
+- [x] Workspace utility exports added to public API (`getWorkspaceRoot`, `getWorkspacePackages`,
+      `getWorkspacePackagePaths`, `isWorkspacePackagePath`, `resetWorkspaceCache`)
+- [x] `TypeScriptOptions` simplified (removed `excludeTsdoc`, `skipTsdoc`, `rootDir`)
+
 ### Future Enhancements
 
 **Short-term:**
@@ -1824,7 +1796,6 @@ __fixtures__/
 - [ ] Plugin architecture for custom handlers
 - [ ] Handler composition utilities
 - [ ] Community handler registry
-- [ ] Cache layer for expensive operations (workspace detection, import tracing)
 
 **Long-term:**
 
@@ -1853,17 +1824,19 @@ __fixtures__/
 
 ---
 
-**Document Status:** Current - Synced with implementation (v0.7.x, feat/silk-effects branch)
+**Document Status:** Current - Synced with implementation (v1.0.0, feat/update-deps branch)
 
 **Implementation Notes:**
 
 - Package is fully implemented and dogfooding itself
-- All handlers, utilities, and presets are functional
-- Bundled dependencies reduce external requirements
-- Workspace-aware TSDoc resolution is more sophisticated than originally planned
+- Seven handler classes (TSDoc linting removed in v1.0.0; TypeScript handler is pure typecheck)
+- Workspace-aware config discovery anchored to workspace root for all handlers
+- PackageJson handler whitelist-filters to workspace root + leaf workspace roots
+- `Biome.findAllConfigs()` enables workspace-wide biome schema validation in CLI check command
+- CLI Layer uses `WorkspacesLive` composite layer from `workspaces-effect`
 - CLI init/check commands manage markdownlint config with surgical JSONC edits
-- CLI init/check commands use `ManagedSection` and `BiomeSchemaSync` services from
-  `@savvy-web/silk-effects`, composed via `Layer.provideMerge` in the CLI entry point
+- CLI init/check commands use `ManagedSection`, `BiomeSchemaSync`, `ConfigDiscovery`, and
+  `ToolDiscovery` services from `@savvy-web/silk-effects`
 - CLI fmt commands solve lint-staged v16 staging problem for in-place modifications
 - `fmtCommand()` pattern separates formatting (CLI, auto-staged) from validation (handler)
 - `createConfig()` uses lint-staged array syntax for sequential format-then-validate steps
@@ -1871,14 +1844,14 @@ __fixtures__/
 - Yaml handler uses Prettier for formatting and yaml-lint for validation
 - Codegen pipeline generates TypeScript templates from source JSONC configs
 - Shareable Biome config available for consumers via package exports
-- `ConfigSearch` utility replaced: handlers use inline `existsSync()` checks; `ConfigDiscovery`
-  from silk-effects re-exported for consumers needing programmatic config search
-- `cosmiconfig` dependency removed in favor of simpler inline checks + silk-effects services
+- Workspace utility caches results from `workspaces-effect` sync APIs; `resetWorkspaceCache()`
+  available for tests
+- Tests migrated to `package/__test__/` with integration tests using fixture monorepos
 
 **Maintenance:**
 
 - Update this document when adding new handlers or utilities
-- Keep utility class signatures in sync with source code
+- Keep utility module signatures in sync with source code
 - Update "Implementation Status" checklist as features complete
 - Regenerate templates after modifying `lib/configs/.markdownlint-cli2.jsonc`
 - When adding new `fmtCommand()` handlers, update the `fmt.ts` CLI command

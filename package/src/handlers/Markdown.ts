@@ -5,9 +5,11 @@
  */
 
 import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { LintStagedHandler, MarkdownOptions } from "../types.js";
 import { Command } from "../utils/Command.js";
 import { Filter } from "../utils/Filter.js";
+import { getWorkspaceRoot } from "../utils/Workspace.js";
 
 /**
  * Handler for Markdown files.
@@ -88,13 +90,18 @@ export class Markdown {
 	/**
 	 * Find the markdownlint config file.
 	 *
+	 * Paths are anchored to the workspace root (via {@link getWorkspaceRoot}),
+	 * falling back to `process.cwd()` when not inside a workspace.
+	 *
 	 * Searches in order:
-	 * 1. `lib/configs/` directory
-	 * 2. Standard locations (repo root)
+	 * 1. `{workspaceRoot}/lib/configs/` directory
+	 * 2. `{workspaceRoot}/` (repo root)
 	 *
 	 * @returns The config file path, or undefined if not found
 	 */
 	static findConfig(): string | undefined {
+		const root = getWorkspaceRoot() ?? process.cwd();
+
 		const filenames = [
 			".markdownlint-cli2.jsonc",
 			".markdownlint-cli2.json",
@@ -105,9 +112,10 @@ export class Markdown {
 			".markdownlint.yaml",
 		];
 		for (const name of filenames) {
-			const libPath = `lib/configs/${name}`;
+			const libPath = join(root, "lib/configs", name);
 			if (existsSync(libPath)) return libPath;
-			if (existsSync(name)) return name;
+			const rootPath = join(root, name);
+			if (existsSync(rootPath)) return rootPath;
 		}
 		return undefined;
 	}

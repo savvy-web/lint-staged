@@ -52,25 +52,12 @@ export type {
 } from "./types.js";
 export type { PackageManager, ToolSearchResult } from "./utils/Command.js";
 export { Command } from "./utils/Command.js";
-export type { EntryExtractionResult, ExportsField } from "./utils/EntryExtractor.js";
-export { EntryExtractor } from "./utils/EntryExtractor.js";
 export { Filter } from "./utils/Filter.js";
-export type {
-	ImportGraphError,
-	ImportGraphErrorType,
-	ImportGraphOptions,
-	ImportGraphResult,
-} from "./utils/ImportGraph.js";
-export { ImportGraph } from "./utils/ImportGraph.js";
-export type {
-	TsDocLintMessage,
-	TsDocLintResult,
-	TsDocLinterOptions,
-} from "./utils/TsDocLinter.js";
-export { TsDocLinter } from "./utils/TsDocLinter.js";
-export type {
-	TsDocResolverOptions,
-	TsDocResolverResult,
-	TsDocWorkspace,
-} from "./utils/TsDocResolver.js";
-export { TsDocResolver } from "./utils/TsDocResolver.js";
+export type { WorkspacePackageInfo } from "./utils/Workspace.js";
+export {
+	getWorkspacePackagePaths,
+	getWorkspacePackages,
+	getWorkspaceRoot,
+	isWorkspacePackagePath,
+	resetWorkspaceCache,
+} from "./utils/Workspace.js";

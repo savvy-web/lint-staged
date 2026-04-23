@@ -5,11 +5,13 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { format, resolveConfig } from "prettier";
 import { lint } from "yaml-lint";
 import type { LintStagedHandler, YamlOptions } from "../types.js";
 import { Command } from "../utils/Command.js";
 import { Filter } from "../utils/Filter.js";
+import { getWorkspaceRoot } from "../utils/Workspace.js";
 
 /**
  * Handler for YAML files.
@@ -56,16 +58,21 @@ export class Yaml {
 	/**
 	 * Find the yaml-lint config file.
 	 *
+	 * Paths are anchored to the workspace root (via {@link getWorkspaceRoot}),
+	 * falling back to `process.cwd()` when not inside a workspace.
+	 *
 	 * Searches in order:
-	 * 1. `lib/configs/` directory
-	 * 2. Standard locations (repo root)
+	 * 1. `{workspaceRoot}/lib/configs/.yaml-lint.json`
+	 * 2. `{workspaceRoot}/.yaml-lint.json`
 	 *
 	 * @returns The config file path, or undefined if not found
 	 */
 	static findConfig(): string | undefined {
-		const libPath = "lib/configs/.yaml-lint.json";
+		const root = getWorkspaceRoot() ?? process.cwd();
+		const libPath = join(root, "lib/configs/.yaml-lint.json");
 		if (existsSync(libPath)) return libPath;
-		if (existsSync(".yaml-lint.json")) return ".yaml-lint.json";
+		const rootPath = join(root, ".yaml-lint.json");
+		if (existsSync(rootPath)) return rootPath;
 		return undefined;
 	}
 

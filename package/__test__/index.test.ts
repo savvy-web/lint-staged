@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { findWorkspaceRootSync, getWorkspacePackagesSync } from "workspaces-effect";
 import {
 	Biome,
 	Command,
@@ -15,10 +16,23 @@ import {
 	TypeScript,
 	Yaml,
 	createConfig,
-} from "./index.js";
+} from "../src/index.js";
+import { resetWorkspaceCache } from "../src/utils/Workspace.js";
+
+// Mock workspaces-effect so workspace detection does not interfere with tests.
+// By default the mocks return null (not in a workspace), which causes
+// isWorkspacePackagePath() to fall back to permissive mode (returns true for all paths).
+vi.mock("workspaces-effect", async (importOriginal) => {
+	const mod = await importOriginal<typeof import("workspaces-effect")>();
+	return {
+		...mod,
+		findWorkspaceRootSync: vi.fn((): string | null => null),
+		getWorkspacePackagesSync: vi.fn(() => []),
+	};
+});
 
 // Test fixtures directory for handler tests
-const FIXTURES_DIR: string = join(import.meta.dirname, "__test_fixtures__");
+const FIXTURES_DIR: string = join(import.meta.dirname, "fixtures");
 
 describe("Handler classes", () => {
 	beforeAll(() => {
@@ -36,6 +50,18 @@ describe("Handler classes", () => {
 	});
 
 	describe("PackageJson", () => {
+		beforeAll(async () => {
+			// Ensure workspace cache is clear so mock (no workspace = permissive) takes effect
+			const { resetWorkspaceCache } = await import("../src/utils/Workspace.js");
+			resetWorkspaceCache();
+		});
+
+		afterAll(async () => {
+			// Clear workspace cache after PackageJson tests finish
+			const { resetWorkspaceCache } = await import("../src/utils/Workspace.js");
+			resetWorkspaceCache();
+		});
+
 		it("should have correct glob pattern", () => {
 			expect(PackageJson.glob).toBe("**/package.json");
 		});
@@ -110,6 +136,35 @@ describe("Handler classes", () => {
 			const result = handler(["dist/package.json"]);
 			expect(result).toEqual([]);
 		});
+
+		it("should filter to workspace roots only via fmtCommand", async () => {
+			const { findWorkspaceRootSync, getWorkspacePackagesSync } = await import("workspaces-effect");
+			const { resetWorkspaceCache } = await import("../src/utils/Workspace.js");
+
+			vi.mocked(findWorkspaceRootSync).mockReturnValue("/repo");
+			vi.mocked(getWorkspacePackagesSync).mockReturnValue([
+				{ name: "@org/a", path: "/repo/packages/a" },
+			] as unknown as ReturnType<typeof getWorkspacePackagesSync>);
+			resetWorkspaceCache();
+
+			const handler = PackageJson.fmtCommand();
+			const result = handler([
+				"/repo/package.json",
+				"/repo/packages/a/package.json",
+				"/repo/packages/a/dist/package.json",
+				"/repo/node_modules/foo/package.json",
+			]);
+
+			expect(result).toContain("/repo/package.json");
+			expect(result).toContain("/repo/packages/a/package.json");
+			expect(result).not.toContain("dist/package.json");
+			expect(result).not.toContain("node_modules");
+
+			// Restore to non-workspace default for remaining tests
+			vi.mocked(findWorkspaceRootSync).mockReturnValue(null);
+			vi.mocked(getWorkspacePackagesSync).mockReturnValue([]);
+			resetWorkspaceCache();
+		});
 	});
 
 	describe("Biome", () => {
@@ -143,6 +198,43 @@ describe("Handler classes", () => {
 			expect(typeof Biome.isAvailable).toBe("function");
 			// Biome is a dev dependency, so it should be available
 			expect(Biome.isAvailable()).toBe(true);
+		});
+
+		it("should find biome config at workspace root", () => {
+			const mockFindRoot = vi.mocked(findWorkspaceRootSync);
+			const mockGetPackages = vi.mocked(getWorkspacePackagesSync);
+			mockFindRoot.mockReturnValue(process.cwd());
+			mockGetPackages.mockReturnValue([]);
+			resetWorkspaceCache();
+
+			const config = Biome.findConfig();
+			// This repo has biome.jsonc at root
+			expect(config).toMatch(/biome\.jsonc?$/);
+
+			resetWorkspaceCache();
+			mockFindRoot.mockReturnValue(null);
+			mockGetPackages.mockReturnValue([]);
+		});
+
+		it("should find all biome configs across workspace roots", () => {
+			// Mock workspace with one leaf package
+			const mockFindRoot = vi.mocked(findWorkspaceRootSync);
+			const mockGetPackages = vi.mocked(getWorkspacePackagesSync);
+			const cwd = process.cwd();
+			mockFindRoot.mockReturnValue(cwd);
+			mockGetPackages.mockReturnValue([{ name: "@org/a", path: join(cwd, "packages/a") }] as unknown as ReturnType<
+				typeof getWorkspacePackagesSync
+			>);
+			resetWorkspaceCache();
+
+			const configs = Biome.findAllConfigs();
+			// Should find at least the root biome.jsonc
+			expect(configs.length).toBeGreaterThanOrEqual(1);
+			expect(configs[0]).toMatch(/biome\.jsonc?$/);
+
+			resetWorkspaceCache();
+			mockFindRoot.mockReturnValue(null);
+			mockGetPackages.mockReturnValue([]);
 		});
 	});
 
@@ -194,7 +286,8 @@ describe("Handler classes", () => {
 			const unformatted = "key:   value\nother:    value2";
 			writeFileSync(testFile, unformatted, "utf-8");
 
-			const handler = Yaml.create();
+			// Use explicit excludes so the fixture file (inside __test__/fixtures) is not filtered out
+			const handler = Yaml.create({ exclude: ["pnpm-lock.yaml", "pnpm-workspace.yaml"] });
 			const result = await handler([testFile, "pnpm-lock.yaml", "pnpm-workspace.yaml"]);
 
 			// Formatting is done in-place; lint-staged auto-stages modified files
@@ -211,7 +304,12 @@ describe("Handler classes", () => {
 			const content = "key:   value\n";
 			writeFileSync(testFile, content, "utf-8");
 
-			const handler = Yaml.create({ skipFormat: true, skipValidate: true });
+			// Use explicit excludes so the fixture file (inside __test__/fixtures) is not filtered out
+			const handler = Yaml.create({
+				skipFormat: true,
+				skipValidate: true,
+				exclude: ["pnpm-lock.yaml", "pnpm-workspace.yaml"],
+			});
 			const result = await handler([testFile]);
 
 			expect(result).toEqual([]);
@@ -223,7 +321,8 @@ describe("Handler classes", () => {
 			const testFile = join(FIXTURES_DIR, "invalid.yaml");
 			writeFileSync(testFile, "key: value\n  invalid: indent", "utf-8");
 
-			const handler = Yaml.create({ skipFormat: true });
+			// Use explicit excludes so the fixture file (inside __test__/fixtures) is not filtered out
+			const handler = Yaml.create({ skipFormat: true, exclude: ["pnpm-lock.yaml", "pnpm-workspace.yaml"] });
 			await expect(handler([testFile])).rejects.toThrow("Invalid YAML");
 		});
 
@@ -415,26 +514,16 @@ describe("Handler classes", () => {
 			expect(TypeScript.glob).toBe("*.{ts,cts,mts,tsx}");
 		});
 
-		it("should run typecheck when tsdoc is skipped", async () => {
-			const handler = TypeScript.create({ skipTsdoc: true });
-			const result = await handler(["src/index.ts"]);
-			expect(result).toHaveLength(1);
-			expect((result as string[])[0]).toContain("tsgo");
-		});
-
-		it("should run tsdoc linting programmatically and return only typecheck", async () => {
-			// TSDoc linting now runs programmatically (not as a command)
-			// The handler returns only the typecheck command
+		it("should run typecheck by default", () => {
 			const handler = TypeScript.create();
-			const result = await handler(["src/index.ts"]);
-			// Should only have typecheck command (TSDoc runs programmatically)
+			const result = handler(["src/index.ts"]);
 			expect(result).toHaveLength(1);
 			expect((result as string[])[0]).toContain("tsgo --noEmit");
 		});
 
-		it("should return empty when both tsdoc and typecheck are skipped", async () => {
-			const handler = TypeScript.create({ skipTsdoc: true, skipTypecheck: true });
-			const result = await handler(["src/index.ts"]);
+		it("should return empty when typecheck is skipped", () => {
+			const handler = TypeScript.create({ skipTypecheck: true });
+			const result = handler(["src/index.ts"]);
 			expect(result).toEqual([]);
 		});
 
@@ -456,22 +545,11 @@ describe("Handler classes", () => {
 			expect(TypeScript.isAvailable()).toBe(true);
 		});
 
-		it("should have isTsdocAvailable method", () => {
-			expect(typeof TypeScript.isTsdocAvailable).toBe("function");
-		});
-
-		it("should check isTsdocAvailable against cwd", () => {
-			// tsdoc.json is in the package directory — walk up from there finds it
-			const packageDir = import.meta.dirname.replace(/\/src$/, "");
-			expect(TypeScript.isTsdocAvailable(packageDir)).toBe(true);
-		});
-
-		it("should return empty when all files are excluded", async () => {
+		it("should return empty when all files are excluded", () => {
 			const handler = TypeScript.create({
-				skipTsdoc: true,
 				exclude: ["src/"],
 			});
-			const result = await handler(["src/index.ts"]);
+			const result = handler(["src/index.ts"]);
 			expect(result).toEqual([]);
 		});
 

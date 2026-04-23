@@ -1,17 +1,13 @@
 /**
  * Handler for TypeScript files.
  *
- * Validates TSDoc syntax with ESLint and runs type checking.
+ * Runs type checking with tsgo or tsc.
  */
 
-import { existsSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { LintStagedHandler, TypeScriptOptions } from "../types.js";
 import type { ToolSearchResult } from "../utils/Command.js";
 import { Command } from "../utils/Command.js";
 import { Filter } from "../utils/Filter.js";
-import { TsDocLinter } from "../utils/TsDocLinter.js";
-import { TsDocResolver } from "../utils/TsDocResolver.js";
 
 /**
  * TypeScript compiler to use.
@@ -21,38 +17,25 @@ export type TypeScriptCompiler = "tsgo" | "tsc";
 /**
  * Handler for TypeScript files.
  *
- * Validates TSDoc syntax with ESLint and runs type checking.
+ * Runs type checking with tsgo or tsc.
  *
  * @remarks
- * TSDoc validation uses intelligent file discovery based on workspace
- * configuration:
- *
- * 1. Detects workspaces using the npm/pnpm/yarn workspace protocol
- * 2. A workspace is enabled for TSDoc if it has `tsdoc.json` or the repo root has one
- * 3. For enabled workspaces, extracts entry points from `package.json` exports
- * 4. Traces imports from entries to find all public API files
- * 5. Only lints files that are part of the public API
- *
- * This ensures that:
- * - Only documented public API files are linted
- * - Internal implementation files are skipped
- * - Test files and fixtures are automatically excluded
- *
  * Type checking runs on all staged TypeScript files using the configured
- * compiler (tsgo or tsc).
+ * compiler (tsgo or tsc). The compiler is auto-detected at runtime using
+ * `Command.findTool()`, which correctly handles pnpm catalogs, peer
+ * dependencies, and hoisted/transitive deps.
  *
  * @example
  * ```typescript
  * import { TypeScript } from '\@savvy-web/lint-staged';
  *
  * export default {
- *   // Auto-discovers workspaces and lints public API files
+ *   // Auto-detects compiler and runs type checking
  *   [TypeScript.glob]: TypeScript.handler,
  *
  *   // Or explicit config
  *   [TypeScript.glob]: TypeScript.create({
  *     skipTypecheck: true,
- *     skipTsdoc: false,
  *   }),
  * };
  * ```
@@ -70,12 +53,6 @@ export class TypeScript {
 	 * @defaultValue `[]`
 	 */
 	static readonly defaultExcludes = [] as const;
-
-	/**
-	 * Default patterns to exclude from TSDoc linting.
-	 * @defaultValue `['.test.', '.spec.', '__test__', '__tests__']`
-	 */
-	static readonly defaultTsdocExcludes = [".test.", ".spec.", "__test__", "__tests__"] as const;
 
 	/** Cached compiler detection result */
 	private static cachedCompilerResult: { compiler: TypeScriptCompiler; tool: ToolSearchResult } | null = null;
@@ -157,30 +134,8 @@ export class TypeScript {
 
 	/**
 	 * Pre-configured handler with default options.
-	 * Auto-discovers workspaces for TSDoc linting.
 	 */
 	static readonly handler: LintStagedHandler = TypeScript.create();
-
-	/**
-	 * Check if TSDoc linting is available for the repository.
-	 *
-	 * TSDoc linting requires:
-	 * 1. A `tsdoc.json` file at repo root or workspace level
-	 * 2. Package(s) with `exports` field in package.json
-	 *
-	 * @param cwd - Directory to search from (defaults to process.cwd())
-	 * @returns `true` if TSDoc linting can be performed
-	 */
-	static isTsdocAvailable(cwd: string = process.cwd()): boolean {
-		let dir = resolve(cwd);
-		while (true) {
-			if (existsSync(join(dir, "tsdoc.json"))) return true;
-			const parent = dirname(dir);
-			if (parent === dir) break;
-			dir = parent;
-		}
-		return false;
-	}
 
 	/**
 	 * Create a handler with custom options.
@@ -190,10 +145,7 @@ export class TypeScript {
 	 */
 	static create(options: TypeScriptOptions = {}): LintStagedHandler {
 		const excludes = options.exclude ?? [...TypeScript.defaultExcludes];
-		const tsdocExcludes = options.excludeTsdoc ?? [...TypeScript.defaultTsdocExcludes];
-		const skipTsdoc = options.skipTsdoc ?? false;
 		const skipTypecheck = options.skipTypecheck ?? false;
-		const rootDir = options.rootDir ?? Command.findRoot();
 
 		// Lazy-load typecheck command to avoid throwing during import
 		let typecheckCommand: string | undefined;
@@ -204,52 +156,11 @@ export class TypeScript {
 			return typecheckCommand;
 		};
 
-		return async (filenames: readonly string[]): Promise<string | string[]> => {
+		return (filenames: readonly string[]): string | string[] => {
 			const filtered = Filter.exclude(filenames, excludes);
-
-			if (filtered.length === 0) {
-				return [];
-			}
-
-			const commands: string[] = [];
-
-			// TSDoc validation using intelligent workspace-aware file discovery
-			if (!skipTsdoc) {
-				const resolver = new TsDocResolver({
-					rootDir,
-					excludePatterns: [...tsdocExcludes],
-				});
-
-				// Convert relative paths to absolute for comparison
-				const absoluteFiles = filtered.map((f) => (isAbsolute(f) ? f : join(rootDir, f)));
-
-				// Filter to only files that need TSDoc linting
-				const tsdocGroups = resolver.filterStagedFiles(absoluteFiles);
-
-				// Lint each group of files using bundled ESLint
-				for (const group of tsdocGroups) {
-					if (group.files.length > 0) {
-						const linter = new TsDocLinter({
-							ignorePatterns: tsdocExcludes.map((p) => `**/*${p}*`),
-						});
-
-						const results = await linter.lintFiles(group.files);
-
-						if (TsDocLinter.hasErrors(results)) {
-							// Format and throw to fail the lint-staged task
-							const output = TsDocLinter.formatResults(results);
-							throw new Error(`TSDoc validation failed:\n${output}`);
-						}
-					}
-				}
-			}
-
-			// Type checking - runs on the project, not individual files
-			if (!skipTypecheck && filtered.length > 0) {
-				commands.push(getTypecheckCommand());
-			}
-
-			return commands;
+			if (filtered.length === 0) return [];
+			if (!skipTypecheck) return [getTypecheckCommand()];
+			return [];
 		};
 	}
 }
