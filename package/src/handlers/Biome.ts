@@ -131,10 +131,12 @@ export class Biome {
 		const configs: string[] = [];
 
 		if (root === null) {
-			// Fallback: check CWD
+			// Fallback: check CWD with absolute paths
+			const cwd = process.cwd();
 			for (const name of Biome.CONFIG_NAMES) {
-				if (existsSync(name)) {
-					configs.push(name);
+				const fullPath = join(cwd, name);
+				if (existsSync(fullPath)) {
+					configs.push(fullPath);
 					break;
 				}
 			}

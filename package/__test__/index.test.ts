@@ -236,6 +236,21 @@ describe("Handler classes", () => {
 			mockFindRoot.mockReturnValue(null);
 			mockGetPackages.mockReturnValue([]);
 		});
+
+		it("should return absolute paths in findAllConfigs fallback when not in a workspace", () => {
+			const mockFindRoot = vi.mocked(findWorkspaceRootSync);
+			mockFindRoot.mockReturnValue(null);
+			resetWorkspaceCache();
+
+			const configs = Biome.findAllConfigs();
+			// This repo has biome.jsonc at CWD — fallback should return absolute path
+			if (configs.length > 0) {
+				expect(configs[0]).toMatch(/^\//); // absolute path
+				expect(configs[0]).toMatch(/biome\.jsonc?$/);
+			}
+
+			resetWorkspaceCache();
+		});
 	});
 
 	describe("Markdown", () => {
