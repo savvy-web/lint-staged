@@ -17,17 +17,14 @@ import {
 	ToolDiscoveryLive,
 } from "@savvy-web/silk-effects";
 import { Effect, Layer } from "effect";
-import { PackageManagerDetectorLive, WorkspaceRootLive } from "workspaces-effect";
+import { WorkspacesLive } from "workspaces-effect";
 import { checkCommand, fmtCommand, initCommand } from "./commands/index.js";
-
-/** workspaces-effect layers required by ToolDiscoveryLive. */
-const WorkspaceLive = Layer.mergeAll(PackageManagerDetectorLive, WorkspaceRootLive);
 
 /** Silk-effects service layers (all require FileSystem from NodeContext). */
 const SilkLive = Layer.mergeAll(ManagedSectionLive, BiomeSchemaSyncLive, ConfigDiscoveryLive, ToolDiscoveryLive);
 
-/** Combined application layer: platform + workspace + silk services. */
-const AppLayer = SilkLive.pipe(Layer.provideMerge(WorkspaceLive), Layer.provideMerge(NodeContext.layer));
+/** Combined application layer: platform + workspaces-effect composite layer + silk services. */
+const AppLayer = SilkLive.pipe(Layer.provideMerge(WorkspacesLive), Layer.provideMerge(NodeContext.layer));
 
 /** Root command for the CLI with all subcommands. */
 const rootCommand = Command.make("savvy-lint").pipe(Command.withSubcommands([initCommand, checkCommand, fmtCommand]));

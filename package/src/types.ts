@@ -157,19 +157,6 @@ export interface YamlOptions extends BaseHandlerOptions {
  */
 export interface TypeScriptOptions extends BaseHandlerOptions {
 	/**
-	 * Additional patterns to exclude from TSDoc linting.
-	 * These are in addition to the default test file exclusions.
-	 * @defaultValue ['.test.', '.spec.', '__test__', '__tests__']
-	 */
-	excludeTsdoc?: string[];
-
-	/**
-	 * Skip TSDoc validation.
-	 * @defaultValue false
-	 */
-	skipTsdoc?: boolean;
-
-	/**
 	 * Skip type checking.
 	 * @defaultValue false
 	 */
@@ -177,16 +164,9 @@ export interface TypeScriptOptions extends BaseHandlerOptions {
 
 	/**
 	 * Command for type checking.
-	 * @defaultValue Auto-detected based on package manager and compiler
+	 * @defaultValue Auto-detected
 	 */
 	typecheckCommand?: string;
-
-	/**
-	 * Root directory for workspace detection.
-	 * Used to find workspaces and tsdoc.json configuration.
-	 * @defaultValue process.cwd()
-	 */
-	rootDir?: string;
 }
 
 /**

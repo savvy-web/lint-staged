@@ -48,20 +48,17 @@
 		"@effect/cli": "catalog:silk",
 		"@effect/platform": "catalog:silk",
 		"@effect/platform-node": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.2.2",
-		"@typescript-eslint/parser": "^8.58.2",
+		"@savvy-web/silk-effects": "^0.3.0",
 		"effect": "catalog:silk",
-		"eslint": "^10.2.0",
-		"eslint-plugin-tsdoc": "^0.5.2",
 		"jsonc-effect": "^0.2.1",
-		"prettier": "^3.8.2",
+		"prettier": "^3.8.3",
 		"sort-package-json": "^3.6.1",
-		"workspaces-effect": "^0.3.0",
+		"workspaces-effect": "^0.4.1",
 		"yaml": "^2.8.3",
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/rslib-builder": "^0.20.1",
+		"@savvy-web/rslib-builder": "^0.20.2",
 		"@types/node": "catalog:silk",
 		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "catalog:silk",
@@ -69,7 +66,7 @@
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@biomejs/biome": "2.4.9",
+		"@biomejs/biome": "2.4.12",
 		"@types/node": "catalog:silkPeers",
 		"@typescript/native-preview": "catalog:silkPeers",
 		"husky": "^9.1.0",

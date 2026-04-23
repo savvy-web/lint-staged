@@ -94,7 +94,7 @@ savvy-lint check [options]
 - Managed sections are up-to-date
 - Shell script hooks are current (post-checkout, post-merge)
 - Markdownlint config matches the template
-- Tool availability (Biome, markdownlint-cli2, TypeScript, TSDoc)
+- Tool availability (Biome, markdownlint-cli2, TypeScript)
 
 **Examples:**
 
@@ -121,7 +121,6 @@ Tool availability:
   ✓ Biome (config: biome.jsonc)
   ✓ markdownlint-cli2 (config: lib/configs/.markdownlint-cli2.jsonc)
   ✓ TypeScript (tsgo)
-  ✓ TSDoc (tsdoc.json found)
   ✓ .markdownlint-cli2.jsonc: up-to-date
 
 ✓ Lint-staged is configured correctly.

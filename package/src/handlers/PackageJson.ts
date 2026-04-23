@@ -9,6 +9,7 @@ import sortPackageJson from "sort-package-json";
 import type { LintStagedHandler, PackageJsonOptions } from "../types.js";
 import { Command } from "../utils/Command.js";
 import { Filter } from "../utils/Filter.js";
+import { isWorkspacePackagePath } from "../utils/Workspace.js";
 
 /**
  * Handler for package.json files.
@@ -51,6 +52,23 @@ export class PackageJson {
 	static readonly handler: LintStagedHandler = PackageJson.create();
 
 	/**
+	 * Filter filenames to workspace roots only.
+	 *
+	 * @remarks
+	 * Applies exclude patterns first (for backward compatibility with custom
+	 * excludes), then filters to workspace root and leaf workspace roots only.
+	 * Falls back permissively when not in a workspace.
+	 *
+	 * @param filenames - Incoming file list from lint-staged
+	 * @param excludes - Patterns to exclude before workspace filtering
+	 * @returns Filtered list of files at workspace roots
+	 */
+	private static filterToWorkspaceRoots(filenames: readonly string[], excludes: readonly string[]): string[] {
+		const excluded = Filter.exclude(filenames, [...excludes]);
+		return excluded.filter((f) => isWorkspacePackagePath(f));
+	}
+
+	/**
 	 * Create a handler with custom options.
 	 *
 	 * @param options - Configuration options
@@ -72,7 +90,7 @@ export class PackageJson {
 		const excludes = options.exclude ?? [...PackageJson.defaultExcludes];
 
 		return (filenames: readonly string[]): string | string[] => {
-			const filtered = Filter.exclude(filenames, excludes);
+			const filtered = PackageJson.filterToWorkspaceRoots(filenames, excludes);
 
 			if (filtered.length === 0) {
 				return [];
@@ -95,7 +113,7 @@ export class PackageJson {
 		const skipFormat = options.skipFormat ?? false;
 
 		return (filenames: readonly string[]): string | string[] => {
-			const filtered = Filter.exclude(filenames, excludes);
+			const filtered = PackageJson.filterToWorkspaceRoots(filenames, excludes);
 
 			if (filtered.length === 0) {
 				return [];

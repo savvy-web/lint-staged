@@ -6,7 +6,9 @@ code in this repository.
 ## Project Status
 
 This package provides composable lint-staged handlers with a static class-based
-API. All eight handler classes are implemented and the package dogfoods itself.
+API. Seven handler classes are implemented (Biome, Markdown, PackageJson,
+PnpmWorkspace, ShellScripts, TypeScript, Yaml) and the package dogfoods itself.
+Workspace-aware config discovery anchors handler lookups to the workspace root.
 
 ## Commands
 
@@ -34,7 +36,7 @@ pnpm run build:prod        # Build production/npm output only
 
 ```bash
 # Run a specific test file
-pnpm vitest run src/index.test.ts
+pnpm vitest run package/__test__/index.test.ts
 
 # Run tests matching a pattern
 pnpm vitest run -t "Biome"
@@ -44,29 +46,41 @@ pnpm vitest run -t "Biome"
 
 ### Package Structure
 
-- **Source**: `src/` with handlers, config utilities, and utils
-- **Handlers**: `src/handlers/` - Biome, Markdown, TypeScript, etc.
-- **Config**: `src/config/` - Preset and createConfig utilities
-- **Utils**: `src/utils/` - Filter, Command, TsDocLinter, etc.
-- **CLI**: `src/cli/` - Effect-based CLI with silk-effects service layers
+- **Source**: `package/src/` with handlers, config utilities, and utils
+- **Handlers**: `package/src/handlers/` - Biome, Markdown, TypeScript, PackageJson, PnpmWorkspace, ShellScripts, Yaml
+- **Config**: `package/src/config/` - Preset and createConfig utilities
+- **Utils**: `package/src/utils/` - Filter, Command, Workspace
+- **CLI**: `package/src/cli/` - Effect-based CLI with silk-effects and workspaces-effect service layers
+- **Tests**: `package/__test__/` - Unit and integration tests (not co-located in src/)
 - **Shared Configs**: `lib/configs/` - lint-staged, markdownlint configs
 
 ### Key Dependencies
 
 - **`@savvy-web/silk-effects`**: Provides `ManagedSection`, `BiomeSchemaSync`,
-  `ConfigDiscovery`, and `ConfigDiscoveryLive` as Effect service layers
+  `ConfigDiscovery`, `ConfigDiscoveryLive`, and `ToolDiscoveryLive` as Effect service layers
+- **`workspaces-effect`**: Provides `WorkspacesLive` composite layer and
+  synchronous APIs (`findWorkspaceRootSync`, `getWorkspacePackagesSync`) for
+  workspace-aware discovery
 - **`effect` / `@effect/cli` / `@effect/platform`**: Functional runtime for CLI
-- `cosmiconfig` was removed; handlers use inline `existsSync` for config
-  discovery, CLI uses silk-effects services
 
 ### Config Discovery
 
-- **Handlers** (`Biome`, `Markdown`, `Yaml`): Use `existsSync` to probe
-  `lib/configs/` then project root for config files (synchronous, no deps)
-- **CLI layer**: Composes `ManagedSectionLive` and `BiomeSchemaSyncLive` via
-  `Layer.mergeAll` on top of `NodeContext.layer`
+All config discovery is workspace-aware via `package/src/utils/Workspace.ts`:
+
+- **Workspace utility**: Wraps `workspaces-effect` synchronous APIs with
+  caching; provides `getWorkspaceRoot()`, `getWorkspacePackagePaths()`,
+  `isWorkspacePackagePath()`
+- **Biome handler**: Searches workspace root only for `biome.jsonc`/`biome.json`
+  (no `lib/configs/` fallback); falls back to CWD outside a workspace
+- **Markdown/Yaml handlers**: Search `lib/configs/` then workspace root for
+  config files (anchored via `getWorkspaceRoot()`)
+- **PackageJson handler**: Filters staged files to workspace root + leaf roots
+  using `isWorkspacePackagePath()` whitelist
+- **CLI layer**: Composes `WorkspacesLive`, silk-effects services
+  (`ManagedSectionLive`, `BiomeSchemaSyncLive`, `ConfigDiscoveryLive`,
+  `ToolDiscoveryLive`), and `NodeContext.layer`
 - **Public API**: Re-exports `ConfigDiscovery` and `ConfigDiscoveryLive` from
-  `@savvy-web/silk-effects/config` for consumers
+  `@savvy-web/silk-effects` for consumers
 
 ### Build Pipeline
 
@@ -96,6 +110,8 @@ Uses Rslib with dual output:
 
 - **Framework**: Vitest with v8 coverage
 - **Pool**: Uses forks (not threads) for Effect-TS compatibility
+- **Location**: `package/__test__/` (not co-located in `src/`)
+- **Integration tests**: `package/__test__/integration/` with fixture workspaces
 
 ## Conventions
 
@@ -140,4 +156,4 @@ For detailed architectural decisions and handler specifications:
 - Adding new handler types
 - Modifying handler configuration options
 - Understanding the composable architecture
-- Debugging handler behavior or file filtering
+- Debugging handler behavior, file filtering, or workspace-aware discovery

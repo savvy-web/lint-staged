@@ -232,24 +232,19 @@ export default {
 
 ## TypeScript
 
-Validates TSDoc syntax with bundled ESLint and runs type checking.
+Runs type checking with tsgo or tsc.
 
 **Glob:** `*.{ts,cts,mts,tsx}`
 
 **Default Excludes:** `[]`
-
-**Default TSDoc Excludes:** `['.test.', '.spec.', '__test__', '__tests__']`
 
 ```typescript
 import { TypeScript } from '@savvy-web/lint-staged';
 
 export default {
   [TypeScript.glob]: TypeScript.create({
-    skipTsdoc: false,
-    skipTypecheck: true,      // Only validate TSDoc
-    excludeTsdoc: ['.test.', '__test__'],
+    skipTypecheck: false,
     typecheckCommand: 'tsc --noEmit',
-    rootDir: process.cwd(),
   }),
 };
 ```
@@ -257,24 +252,21 @@ export default {
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
 | `exclude` | `string[]` | `[]` | Patterns to exclude |
-| `excludeTsdoc` | `string[]` | `['.test.', '.spec.', '__test__', '__tests__']` | Exclude from TSDoc linting |
-| `skipTsdoc` | `boolean` | `false` | Skip TSDoc validation |
 | `skipTypecheck` | `boolean` | `false` | Skip type checking |
 | `typecheckCommand` | `string` | Auto-detected | Typecheck command |
-| `rootDir` | `string` | `process.cwd()` | Root for workspace detection |
 
-**TSDoc Linting Process:**
+**Compiler Detection:**
 
-1. Uses `TsDocResolver` to detect workspaces via `workspace-tools`
-2. Checks for `tsdoc.json` at workspace or repo root level
-3. For enabled workspaces, extracts entry points from `package.json` exports
-4. Uses `ImportGraph` to trace imports and find all public API files
-5. Runs bundled `TsDocLinter` (ESLint + eslint-plugin-tsdoc) on matched files
-6. Throws if any TSDoc errors found
+The handler auto-detects which TypeScript compiler to use via
+`Command.findTool()`, which correctly handles pnpm catalogs, peer dependencies,
+and hoisted/transitive deps:
+
+1. Checks for `tsgo` (native TypeScript) first
+2. Falls back to `tsc` (standard TypeScript)
 
 **Static Methods:**
 
-- `TypeScript.detectCompiler()` - Returns `'tsgo'` or `'tsc'` based on dependencies
+- `TypeScript.detectCompiler()` - Returns `'tsgo'` or `'tsc'` based on available tools
 - `TypeScript.isAvailable()` - Check if a TypeScript compiler is installed
 - `TypeScript.getDefaultTypecheckCommand()` - Get the default typecheck command
-- `TypeScript.isTsdocAvailable()` - Check if TSDoc linting can be performed
+- `TypeScript.clearCache()` - Clear the cached compiler detection result

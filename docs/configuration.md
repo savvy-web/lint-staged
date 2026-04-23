@@ -186,11 +186,8 @@ const options: CreateConfigOptions = {
   },
   typescript: {
     exclude: [],
-    excludeTsdoc: ['.test.', '.spec.', '__test__'],
-    skipTsdoc: false,
     skipTypecheck: false,
     typecheckCommand: 'tsc --noEmit',
-    rootDir: process.cwd(),
   },
   custom: {
     '*.css': (files) => `stylelint ${files.join(' ')}`,
@@ -237,7 +234,6 @@ export default {
   ...(process.env.STRICT_MODE && {
     [TypeScript.glob]: TypeScript.create({
       skipTypecheck: false,
-      skipTsdoc: false,
     }),
   }),
 };
@@ -271,7 +267,7 @@ export default createConfig({
 export default {
   ...Preset.standard(),
   ...(isCI && {
-    '*.ts': TypeScript.create({ skipTsdoc: false }),
+    '*.ts': TypeScript.create({ skipTypecheck: false }),
   }),
 };
 ```
