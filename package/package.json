@@ -53,16 +53,16 @@
 		"jsonc-effect": "^0.2.1",
 		"prettier": "^3.8.3",
 		"sort-package-json": "^3.6.1",
-		"workspaces-effect": "^0.4.1",
-		"yaml": "^2.8.3",
+		"workspaces-effect": "^0.6.0",
+		"yaml": "^2.8.4",
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/rslib-builder": "^0.20.2",
+		"@savvy-web/rslib-builder": "^0.20.3",
 		"@types/node": "catalog:silk",
 		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "catalog:silk",
-		"turbo": "^2.9.6",
+		"turbo": "^2.9.8",
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
