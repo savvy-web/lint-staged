@@ -58,11 +58,11 @@
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/rslib-builder": "^0.20.2",
+		"@savvy-web/rslib-builder": "^0.20.3",
 		"@types/node": "catalog:silk",
 		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "catalog:silk",
-		"turbo": "^2.9.6",
+		"turbo": "^2.9.12",
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
