@@ -1,5 +1,15 @@
 # @savvy-web/lint-staged
 
+## 1.0.1
+
+### Dependencies
+
+* | [`7b0ffe8`](https://github.com/savvy-web/lint-staged/commit/7b0ffe84092e7b544d2ef77a0eb91b72d8b4916e) | Dependency     | Type    | Action | From   | To |
+  | ----------------------------------------------------------------------------------------------------- | -------------- | ------- | ------ | ------ | -- |
+  | workspaces-effect                                                                                     | dependency     | updated | ^0.4.1 | ^1.0.0 |    |
+  | yaml                                                                                                  | dependency     | updated | ^2.8.3 | ^2.9.0 |    |
+  | @biomejs/biome                                                                                        | peerDependency | updated | 2.4.12 | 2.4.15 |    |
+
 ## 1.0.0
 
 ### Breaking Changes
