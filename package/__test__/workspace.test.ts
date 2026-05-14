@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { WorkspacePackage } from "workspaces-effect";
 import {
 	getWorkspacePackagePaths,
 	getWorkspacePackages,
@@ -22,7 +23,7 @@ const MOCK_PACKAGES = [
 	{ name: "root-package", path: "/workspace" },
 	{ name: "@org/pkg-a", path: "/workspace/packages/pkg-a" },
 	{ name: "@org/pkg-b", path: "/workspace/packages/pkg-b" },
-];
+] as unknown as readonly WorkspacePackage[];
 
 afterEach(() => {
 	resetWorkspaceCache();
@@ -221,7 +222,7 @@ describe("resetWorkspaceCache()", () => {
 		const updatedPackages = [
 			{ name: "root-package", path: "/workspace" },
 			{ name: "@org/pkg-c", path: "/workspace/packages/pkg-c" },
-		];
+		] as unknown as readonly WorkspacePackage[];
 		mockGetWorkspacePackagesSync.mockReturnValue(updatedPackages);
 
 		const second = getWorkspacePackagePaths();

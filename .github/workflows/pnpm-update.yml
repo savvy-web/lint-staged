@@ -61,7 +61,11 @@ jobs:
             lint-staged
             markdownlint-cli2
             markdownlint-cli2-formatter-codequality
+            sort-package-json
             turbo
+            workspaces-effect
+            yaml
+            yaml-lint
           peer-lock: |
             markdownlint-cli2-formatter-codequality
           peer-minor: |
