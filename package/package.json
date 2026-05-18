@@ -62,7 +62,7 @@
 		"@types/node": "catalog:silk",
 		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "catalog:silk",
-		"turbo": "^2.9.12",
+		"turbo": "^2.9.14",
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
