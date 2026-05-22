@@ -60,8 +60,11 @@
 	"devDependencies": {
 		"@savvy-web/rslib-builder": "^0.20.5",
 		"@types/node": "catalog:silk",
-		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "catalog:silk",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.0.5",
+		"markdownlint-cli2": "^0.22.1",
+		"markdownlint-cli2-formatter-codequality": "^0.0.7",
 		"turbo": "^2.9.14",
 		"typescript": "catalog:silk"
 	},
@@ -69,11 +72,11 @@
 		"@biomejs/biome": "2.4.15",
 		"@types/node": "catalog:silkPeers",
 		"@typescript/native-preview": "catalog:silkPeers",
-		"husky": "^9.1.0",
-		"lint-staged": "^16.4.0",
-		"markdownlint-cli2": "^0.22.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.0.5",
+		"markdownlint-cli2": "^0.22.1",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.9.0",
+		"turbo": "^2.9.14",
 		"typescript": "catalog:silkPeers"
 	},
 	"peerDependenciesMeta": {
