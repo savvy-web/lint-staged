@@ -54,8 +54,6 @@ jobs:
             @savvy-web/pnpm-plugin-silk
           dependencies: |
             @savvy-web/*
-            eslint
-            eslint-plugin-tsdoc
             husky
             jsonc-effect
             lint-staged
@@ -67,12 +65,11 @@ jobs:
             yaml
             yaml-lint
           peer-lock: |
-            markdownlint-cli2-formatter-codequality
-          peer-minor: |
             turbo
             husky
-            markdownlint-cli2
             lint-staged
+            markdownlint-cli2
+            markdownlint-cli2-formatter-codequality
           run: |
             pnpm savvy-commit init
             pnpm savvy-changesets init
