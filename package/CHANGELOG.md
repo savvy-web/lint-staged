@@ -1,5 +1,12 @@
 # @savvy-web/lint-staged
 
+## 1.1.0
+
+### Bug Fixes
+
+* [`5275a39`](https://github.com/savvy-web/lint-staged/commit/5275a39b940c90852d04a1ee18cb76bcfacce3c1) Upgrades lint-staged to v17.
+* Locks turbo upgrade versions due to package vulnerability
+
 ## 1.0.1
 
 ### Dependencies
