@@ -58,7 +58,7 @@
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/rslib-builder": "^0.20.6",
+		"@savvy-web/rslib-builder": "^0.20.7",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"husky": "^9.1.7",
