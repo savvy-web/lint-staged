@@ -1,34 +1,26 @@
 # savvy-web-lint-staged
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-Monorepo containing the [`@savvy-web/lint-staged`](./package/) npm package and a
-Claude Code companion plugin for code quality context injection.
+Monorepo containing the [`@savvy-web/lint-staged`](./package/) npm package and a Claude Code companion plugin for code quality context injection.
 
 ## Packages
 
 ### @savvy-web/lint-staged
 
-Composable, configurable lint-staged handlers for pre-commit hooks. Provides
-reusable handlers for Biome, Markdown, YAML, TypeScript, and more.
+Composable, configurable lint-staged handlers for pre-commit hooks. Provides reusable handlers for Biome, Markdown, YAML, TypeScript, and more.
 
 See the full package documentation at [`package/README.md`](./package/README.md).
 
-### Claude Code Plugin
+### Claude Code plugin
 
-A companion plugin that injects code quality context at the start of every Claude
-Code session. It detects your project's tooling and informs the agent about:
+A companion plugin that injects code quality context at the start of every Claude Code session. It detects your project's tooling and informs the agent about:
 
-- **Biome** formatting and linting rules (indent style, line width, import
-  conventions)
-- **markdownlint** configuration (enabled rules, allowed HTML elements, table
-  style)
+- **Biome** formatting and linting rules (indent style, line width, import conventions)
+- **markdownlint** configuration (enabled rules, allowed HTML elements, table style)
 - **TypeScript** conventions (strict mode, ESM imports, `verbatimModuleSyntax`)
 
-This means Claude Code automatically follows your project's code style without
-needing to be told each session.
+This means Claude Code automatically follows your project's code style without needing to be told each session.
 
-#### Plugin Installation
+#### Plugin installation
 
 ```bash
 # Add the Savvy Web plugin marketplace (one-time setup)
@@ -38,7 +30,7 @@ needing to be told each session.
 /plugin install lint-staged@savvy-web-systems --scope project
 ```
 
-## Repository Structure
+## Repository structure
 
 ```text
 lint-staged/
@@ -84,4 +76,4 @@ pnpm run typecheck
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](LICENSE)

@@ -3,7 +3,8 @@
  *
  * @internal
  */
-import { SectionDefinition, ShellSectionDefinition } from "@savvy-web/silk-effects";
+import type { SectionBlock } from "@savvy-web/silk-effects";
+import { SectionDefinition, savvyToolSection } from "@savvy-web/silk-effects";
 
 /** Path for the husky pre-commit hook. */
 export const HUSKY_HOOK_PATH = ".husky/pre-commit";
@@ -20,88 +21,48 @@ export const DEFAULT_CONFIG_PATH = "lib/configs/lint-staged.config.ts";
 /** Path for the markdownlint-cli2 config file. */
 export const MARKDOWNLINT_CONFIG_PATH = "lib/configs/.markdownlint-cli2.jsonc";
 
-/** Section definition for savvy-lint managed sections in shell hooks. */
-export const SavvyLintSection = ShellSectionDefinition.make({ toolName: "SAVVY-LINT" });
+/** Identity definition for the savvy-lint tool section (read / check / remove). */
+export const SavvyLintSectionDef = SectionDefinition.make({ toolName: "savvy-lint" });
 
 /**
- * Plain section definition for identity operations (`read`, `isManaged`) on savvy-lint sections.
+ * Identity definition for the legacy `SAVVY-LINT` hygiene section that previously
+ * lived in `.husky/post-checkout` and `.husky/post-merge`.
  *
  * @remarks
- * Use this with {@link ManagedSection.read} or {@link ManagedSection.isManaged}.
- * For content operations use {@link SavvyLintSection}.
+ * The hygiene block has been replaced by a co-owned `savvy-hooks` section emitted from
+ * silk-effects. Use this definition with `ManagedSection.remove` during migration to
+ * delete the leftover block from those hooks.
  */
-export const SavvyLintSectionDef = SectionDefinition.make({ toolName: "SAVVY-LINT" });
+export const LegacySavvyLintHygieneDef = SectionDefinition.make({ toolName: "SAVVY-LINT" });
 
 /**
- * Generate the managed section content for the pre-commit hook.
+ * Build the lint-staged command run inside the savvy-lint tool section.
+ *
+ * @param configPath - Path to the lint-staged config file (relative to repo root)
+ */
+function lintStagedCommand(configPath: string): string {
+	return `lint-staged --config "$ROOT/${configPath}"`;
+}
+
+/**
+ * Build the savvy-lint tool section block for the given config path.
+ *
+ * @remarks
+ * Depends on the savvy-base preamble (`in_ci`, `pm_exec`) preceding it in the hook.
+ */
+export function savvyLintBlock(configPath: string): SectionBlock {
+	return savvyToolSection("savvy-lint", lintStagedCommand(configPath));
+}
+
+/**
+ * Rendered content of the savvy-lint tool section.
+ *
+ * @remarks
+ * Equivalent to `savvyLintBlock(configPath).content`. Retained for the check command
+ * and tests.
  *
  * @param configPath - Path to the lint-staged config file
- * @returns The managed section content (without markers)
  */
 export function generateManagedContent(configPath: string): string {
-	return `# DO NOT EDIT between these markers - managed by savvy-lint
-# Skip in CI environment
-if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
-
-# Get repo root directory
-ROOT=$(git rev-parse --show-toplevel)
-
-# Detect package manager from package.json or lockfiles
-detect_pm() {
-  # Check packageManager field in package.json (e.g., "pnpm@9.0.0")
-  if [ -f "$ROOT/package.json" ]; then
-    pm=$(jq -r '.packageManager // empty' "$ROOT/package.json" 2>/dev/null | cut -d'@' -f1)
-    if [ -n "$pm" ]; then
-      echo "$pm"
-      return
-    fi
-  fi
-
-  # Fallback to lockfile detection
-  if [ -f "$ROOT/pnpm-lock.yaml" ]; then
-    echo "pnpm"
-  elif [ -f "$ROOT/yarn.lock" ]; then
-    echo "yarn"
-  elif [ -f "$ROOT/bun.lock" ]; then
-    echo "bun"
-  else
-    echo "npm"
-  fi
+	return savvyLintBlock(configPath).content;
 }
-
-# Run lint-staged with the detected package manager
-PM=$(detect_pm)
-case "$PM" in
-  pnpm) pnpm exec lint-staged --config "$ROOT/${configPath}" ;;
-  yarn) yarn exec lint-staged --config "$ROOT/${configPath}" ;;
-  bun)  bunx lint-staged --config "$ROOT/${configPath}" ;;
-  *)    npx --no -- lint-staged --config "$ROOT/${configPath}" ;;
-esac
-
-fi`;
-}
-
-/**
- * Generate the managed section content for shell script hooks (post-checkout, post-merge).
- *
- * @returns The managed section content (without markers)
- */
-export function generateShellScriptsManagedContent(): string {
-	return `# DO NOT EDIT between these markers - managed by savvy-lint
-if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
-
-# Configure git to ignore executable bit changes
-# This ensures hook scripts can be made executable locally without git tracking the change
-git config core.fileMode false
-
-# Ensure all shell scripts tracked by git are executable
-git ls-files -z '*.sh' | xargs -0 -r chmod +x 2>/dev/null || true
-
-fi`;
-}
-
-/** Block factory for pre-commit hook content. */
-export const preCommitBlock = SavvyLintSection.generate(generateManagedContent);
-
-/** Create a section block for shell script hooks (post-checkout, post-merge). */
-export const shellScriptsBlock = () => SavvyLintSection.block(generateShellScriptsManagedContent());

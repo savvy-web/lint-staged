@@ -1,14 +1,13 @@
 # Contributing
 
-Thank you for your interest in contributing to `@savvy-web/lint-staged`! This
-document provides guidelines and instructions for development.
+Thank you for your interest in contributing to `@savvy-web/lint-staged`. This document provides guidelines and instructions for development.
 
 ## Prerequisites
 
 - Node.js 24+
-- pnpm 10.33+
+- pnpm 10.34+
 
-## Development Setup
+## Development setup
 
 ```bash
 # Clone the repository
@@ -25,7 +24,7 @@ pnpm run build
 pnpm run test
 ```
 
-## Project Structure
+## Project structure
 
 This is a monorepo managed with pnpm workspaces and Turborepo.
 
@@ -50,7 +49,7 @@ lint-staged/
 └── turbo.json
 ```
 
-## Available Scripts
+## Available scripts
 
 | Script | Description |
 | --- | --- |
@@ -70,7 +69,7 @@ To run a specific test file:
 pnpm vitest run src/index.test.ts
 ```
 
-## Code Quality
+## Code quality
 
 This project uses:
 
@@ -80,10 +79,9 @@ This project uses:
 - **markdownlint-cli2** for markdown linting
 - **tsgo** (native TypeScript) for type checking
 
-### Commit Format
+### Commit format
 
-All commits must follow the [Conventional Commits](https://conventionalcommits.org)
-specification and include a DCO signoff:
+All commits must follow the [Conventional Commits](https://conventionalcommits.org) specification and include a DCO signoff:
 
 ```text
 feat: add new feature
@@ -91,13 +89,13 @@ feat: add new feature
 Signed-off-by: Your Name <your.email@example.com>
 ```
 
-### Pre-commit Hooks
+### Pre-commit hooks
 
 The following checks run automatically:
 
-- **pre-commit**: Runs lint-staged (using this package!)
-- **commit-msg**: Validates commit message format
-- **post-checkout / post-merge**: Ensures shell script permissions
+- **pre-commit**: Runs lint-staged via the shared `SAVVY-BASE` preamble and the `SAVVY-LINT` tool section (this package dogfoods itself).
+- **commit-msg**: Validates commit message format.
+- **post-checkout / post-merge**: Co-owned `SAVVY-HOOKS` hygiene block that disables `core.fileMode` and restores executable bits on tracked `*.sh` files.
 
 ## Testing
 
@@ -124,7 +122,7 @@ pnpm vitest run -t "Biome"
 - ES2022/ES2023 targets
 - Import extensions required (`.js` for ESM)
 
-### Import Conventions
+### Import conventions
 
 ```typescript
 // Use .js extensions for relative imports (ESM requirement)
@@ -138,7 +136,7 @@ import type { LintStagedHandler } from "./types.js";
 import { Filter } from "./utils/Filter.js";
 ```
 
-### TSDoc Requirements
+### TSDoc requirements
 
 All exported classes, functions, and interfaces must have TSDoc documentation:
 
@@ -164,7 +162,7 @@ export function myFunction(name: string): string {
 }
 ```
 
-## Submitting Changes
+## Submitting changes
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/my-feature`
@@ -174,7 +172,7 @@ export function myFunction(name: string): string {
 6. Commit with conventional format and DCO signoff
 7. Push and open a pull request
 
-## Adding a New Handler
+## Adding a new handler
 
 To add a new handler:
 
@@ -188,5 +186,4 @@ To add a new handler:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the
-MIT License.
+By contributing, you agree that your contributions will be licensed under the MIT License.

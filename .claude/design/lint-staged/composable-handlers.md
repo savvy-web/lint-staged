@@ -3,8 +3,8 @@ status: current
 module: lint-staged
 category: architecture
 created: 2026-01-25
-updated: 2026-04-22
-last-synced: 2026-04-22
+updated: 2026-05-28
+last-synced: 2026-05-28
 completeness: 100
 related: []
 dependencies: []
@@ -143,8 +143,18 @@ All seven handler classes follow the static class pattern with:
 | Service | Purpose |
 | :--- | :--- |
 | ConfigDiscovery | Effect-based config file discovery (replaces cosmiconfig-based ConfigSearch) |
-| ManagedSection | Managed section read/write in hook files (replaces inline marker logic) |
+| ManagedSection | Managed section read/write/sync/check/remove in hook files; `syncMany` reconciles ordered multi-section files |
 | BiomeSchemaSync | Biome schema version synchronization (replaces inline BiomeSchema utility) |
+| ToolDiscovery | Tool availability checks used by the `check` command |
+
+**Shared section primitives (from `@savvy-web/silk-effects`, ^0.5.0):**
+
+| Primitive | Purpose |
+| :--- | :--- |
+| `SavvyBaseSection` + `savvyBasePreamble()` | Shared `SAVVY-BASE` preamble: `ROOT`, `in_ci`, `detect_pm`, `PM`, `pm_exec` |
+| `SavvyHooksSection` + `savvyHooksHygiene()` | Co-owned `SAVVY-HOOKS` repo-hygiene block written into `.husky/post-checkout` and `.husky/post-merge` by both `savvy-lint` and `@savvy-web/commitlint` |
+| `savvyToolSection(name, command)` | Builds a one-line tool section that depends on `pm_exec` / `in_ci` from the base preamble |
+| `SectionDefinition.make({ toolName })` | Section identity (no body) for `read` / `check` / `remove` |
 
 ### Key Implementation Decisions Made
 
@@ -171,6 +181,14 @@ All seven handler classes follow the static class pattern with:
    ImportGraph, EntryExtractor) removed; TypeScript handler now performs pure type checking only
 10. **WorkspacesLive composite layer** - CLI Layer uses `WorkspacesLive` from `workspaces-effect`
     as the base layer, providing workspace discovery services to all silk-effects layers
+11. **Shared and co-owned husky sections** - `.husky/pre-commit` is composed of an ordered
+    `SAVVY-BASE` preamble plus a one-line `SAVVY-LINT` tool section, written together via
+    `ManagedSection.syncMany`. `.husky/post-checkout` and `.husky/post-merge` carry a co-owned
+    `SAVVY-HOOKS` hygiene block that `savvy-lint` and `@savvy-web/commitlint` both write
+    identically. `--force` resets only the pre-commit hook and the lint-staged config; hygiene
+    sections are always reconciled via `sync` because they are co-owned. The `SAVVY-LINT`
+    marker name was preserved during the rewrite so a single re-run reconciles repos
+    bootstrapped with the previous inline `case "$PM" in` form
 
 ---
 
@@ -486,10 +504,13 @@ package.json, formatting YAML) were not being committed.
 │  ┌────────────────────────────────────────────────────────────────┐ │
 │  │                CLI (savvy-lint)                                  │ │
 │  │                                                                 │ │
-│  │  init             - Hook/config setup (ManagedSection,          │ │
-│  │                     BiomeSchemaSync services)                   │ │
-│  │  check            - Validate setup (workspace-aware biome       │ │
-│  │                     schema, ManagedSection services)            │ │
+│  │  init             - Writes pre-commit (savvy-base + savvy-lint  │ │
+│  │                     via syncMany), co-owned savvy-hooks hygiene │ │
+│  │                     in post-checkout/post-merge, markdownlint   │ │
+│  │                     and biome $schema sync                      │ │
+│  │  check            - Validates each section independently        │ │
+│  │                     (savvy-base, savvy-lint, savvy-hooks);      │ │
+│  │                     workspace-aware biome schema check          │ │
 │  │  fmt package-json - Sort package.json (sort-package-json)      │ │
 │  │  fmt pnpm-workspace - Sort/format pnpm-workspace.yaml (yaml)  │ │
 │  │  fmt yaml         - Format YAML files (Prettier)               │ │
@@ -508,8 +529,10 @@ package.json, formatting YAML) were not being committed.
 │  │  jsonc-effect     - JSONC parsing/surgical edits (CLI init)    │ │
 │  │  @effect/cli      - CLI framework (savvy-lint commands)        │ │
 │  │  effect           - Effect runtime (CLI dependency)             │ │
-│  │  @savvy-web/silk-effects - ManagedSection, BiomeSchemaSync,    │ │
-│  │                            ConfigDiscovery, ToolDiscovery      │ │
+│  │  @savvy-web/silk-effects - ManagedSection (syncMany/remove),   │ │
+│  │                            BiomeSchemaSync, ConfigDiscovery,   │ │
+│  │                            ToolDiscovery, SavvyBaseSection,    │ │
+│  │                            SavvyHooksSection, savvyToolSection │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -1370,8 +1393,52 @@ export default Preset.standard({
 ## CLI Configuration Management
 
 The `savvy-lint` CLI manages configuration files for consumers beyond just husky hooks.
-The `init` and `check` commands handle markdownlint-cli2 configuration with preset-aware
-behavior.
+The `init` and `check` commands handle husky hook composition and markdownlint-cli2
+configuration with preset-aware behavior.
+
+### Husky Hook Managed Sections
+
+`savvy-lint init` composes three managed sections across three husky hook files. The
+section identities and content generators are shared primitives from `@savvy-web/silk-effects`; `package/src/cli/sections.ts` only defines the `SAVVY-LINT` tool section and the legacy migration identity.
+
+**Section topology:**
+
+| Hook | Sections (in order) | Owner |
+| :--- | :--- | :--- |
+| `.husky/pre-commit` | `SAVVY-BASE`, `SAVVY-LINT` | savvy-lint (exclusive) |
+| `.husky/post-checkout` | `SAVVY-HOOKS` | co-owned with `@savvy-web/commitlint` |
+| `.husky/post-merge` | `SAVVY-HOOKS` | co-owned with `@savvy-web/commitlint` |
+
+**Pre-commit composition:**
+
+`init` writes both sections in one call via `ManagedSection.syncMany`, which preserves their order and reconciles content idempotently:
+
+```typescript
+yield* ms.syncMany(HUSKY_HOOK_PATH, [
+  SavvyBaseSection.block(savvyBasePreamble()),
+  savvyLintBlock(config),
+]);
+```
+
+The `SAVVY-BASE` preamble defines `ROOT`, `in_ci`, `detect_pm`, `PM`, and `pm_exec`. The `SAVVY-LINT` section is a one-liner that depends on those helpers: `in_ci || pm_exec lint-staged --config "$ROOT/<config>"`. See `savvyLintBlock` in `package/src/cli/sections.ts`.
+
+`pm_exec` standardizes on local exec semantics for every package manager (`pnpm exec`, `yarn exec`, `bun x`, `npx --no --`). The previous `bunx` form was dropped so the helper works regardless of how `bun` was installed.
+
+**Hygiene composition:**
+
+For non-minimal presets, `init` writes the co-owned `SAVVY-HOOKS` section into both hygiene hooks. Before each write it calls `ms.remove(hookPath, LegacySavvyLintHygieneDef)` to drop the leftover `SAVVY-LINT` block from earlier installs, then `ms.sync` to install the current `SAVVY-HOOKS` content. Because both `savvy-lint` and `@savvy-web/commitlint` write identical content for this section, either tool's `init` is sufficient to reconcile it.
+
+**`--force` semantics:**
+
+`--force` resets only `.husky/pre-commit` (rewritten from the header) and the lint-staged config file. Hygiene hooks are always reconciled via `sync` because they are co-owned and must not be force-overwritten by one tool out from under another.
+
+**`savvy-lint check` validation:**
+
+`check` validates each section identity independently using `ms.check`: `SAVVY-BASE` and `SAVVY-LINT` in `.husky/pre-commit`, and `SAVVY-HOOKS` in each hygiene hook. A `sectionsHealthy` flag aggregates per-section results and degrades the final verdict, so a missing or stale section is no longer hidden by a present hook file. The detected `lint-staged --config` path is extracted from the live `SAVVY-LINT` body and round-tripped through `savvyLintBlock(detectedPath)` to compare against the expected one-liner.
+
+**Migration note:**
+
+The `SAVVY-LINT` marker name was preserved during the rewrite, so a single re-run of `savvy-lint init` reconciles a repo bootstrapped against the previous inline `case "$PM" in` form by rewriting the section body in place. The hygiene-hook migration uses `LegacySavvyLintHygieneDef` (a `SectionDefinition` with `toolName: "SAVVY-LINT"`) to identify and remove the legacy block before the `SAVVY-HOOKS` section is installed.
 
 ### markdownlint-cli2 Config Management
 
@@ -1486,9 +1553,11 @@ const main = Effect.suspend(() => cli(process.argv)).pipe(Effect.provide(AppLaye
 
 The `init` and `check` commands consume `ManagedSection`, `BiomeSchemaSync`,
 `ConfigDiscovery`, and `ToolDiscovery` services via `yield*` in their Effect
-pipelines. The `check` command uses `Biome.findAllConfigs()` for workspace-aware
-biome schema validation across all workspace roots. The `fmt` command does not
-use these services.
+pipelines, and use the shared `SavvyBaseSection` / `SavvyHooksSection` blocks
+plus `savvyToolSection` from `@savvy-web/silk-effects` for hook composition (see
+the "Husky Hook Managed Sections" section above). The `check` command uses
+`Biome.findAllConfigs()` for workspace-aware biome schema validation across all
+workspace roots. The `fmt` command does not use these services.
 
 ### Subcommands
 
@@ -1597,8 +1666,10 @@ separation), and JSON/CSS handling.
 - `jsonc-effect` - JSONC parsing and surgical edits (CLI init/check commands)
 - `@effect/cli` - CLI framework for savvy-lint commands
 - `effect` - Effect runtime (CLI dependency)
-- `@savvy-web/silk-effects` - ManagedSection, BiomeSchemaSync, ConfigDiscovery,
-  ToolDiscovery services
+- `@savvy-web/silk-effects` (`^0.5.0`) - ManagedSection (incl. `syncMany`/`remove`),
+  BiomeSchemaSync, ConfigDiscovery, ToolDiscovery services plus shared section
+  primitives (`SavvyBaseSection`, `SavvyHooksSection`, `savvyBasePreamble`,
+  `savvyHooksHygiene`, `savvyToolSection`)
 
 **No longer used:**
 
@@ -1784,6 +1855,27 @@ used by handlers.
       `getWorkspacePackagePaths`, `isWorkspacePackagePath`, `resetWorkspaceCache`)
 - [x] `TypeScriptOptions` simplified (removed `excludeTsdoc`, `skipTsdoc`, `rootDir`)
 
+### Completed (v1.1.x — shared husky sections)
+
+- [x] `@savvy-web/silk-effects` bumped to `^0.5.0` for shared-section primitives
+- [x] `.husky/pre-commit` composed via `ManagedSection.syncMany` of `SAVVY-BASE`
+      preamble (shared) + `SAVVY-LINT` one-line tool section
+- [x] `.husky/post-checkout` and `.husky/post-merge` carry a co-owned
+      `SAVVY-HOOKS` section identical to what `@savvy-web/commitlint` writes
+- [x] `pm_exec` standardized on local exec semantics for every package manager
+      (`pnpm exec` / `yarn exec` / `bun x` / `npx --no --`); old `bunx` form removed
+- [x] `--force` semantics narrowed to `.husky/pre-commit` and the lint-staged
+      config only; hygiene hooks always reconcile via `sync`
+- [x] `savvy-lint check` validates each section identity independently via
+      `ms.check`; `sectionsHealthy` flag degrades the final verdict
+- [x] Legacy hygiene migration: `init` removes the leftover `SAVVY-LINT` block
+      from hygiene hooks (`LegacySavvyLintHygieneDef`) before writing `SAVVY-HOOKS`
+- [x] `package/src/cli/sections.ts` rewritten: dropped local preamble +
+      `case "$PM" in` heredoc and the shellScripts block helpers; new exports
+      `savvyLintBlock`, `SavvyLintSectionDef`, `LegacySavvyLintHygieneDef`;
+      `generateManagedContent` retained as a thin wrapper for tests/check
+- [x] New behavioural test suite at `package/__test__/init.test.ts`
+
 ### Future Enhancements
 
 **Short-term:**
@@ -1824,7 +1916,7 @@ used by handlers.
 
 ---
 
-**Document Status:** Current - Synced with implementation (v1.0.0, feat/update-deps branch)
+**Document Status:** Current - Synced with implementation (v1.1.x, feat/silk-effects-refactor branch)
 
 **Implementation Notes:**
 
@@ -1837,6 +1929,12 @@ used by handlers.
 - CLI init/check commands manage markdownlint config with surgical JSONC edits
 - CLI init/check commands use `ManagedSection`, `BiomeSchemaSync`, `ConfigDiscovery`, and
   `ToolDiscovery` services from `@savvy-web/silk-effects`
+- Husky `pre-commit` is two ordered managed sections (`SAVVY-BASE` preamble + `SAVVY-LINT`
+  one-liner) reconciled with `ManagedSection.syncMany`; hygiene hooks carry a co-owned
+  `SAVVY-HOOKS` section shared with `@savvy-web/commitlint`
+- `--force` narrows to pre-commit + config; hygiene hooks always reconcile via `sync`
+- `savvy-lint check` validates each section identity independently with `ms.check` and
+  degrades the verdict via `sectionsHealthy`
 - CLI fmt commands solve lint-staged v16 staging problem for in-place modifications
 - `fmtCommand()` pattern separates formatting (CLI, auto-staged) from validation (handler)
 - `createConfig()` uses lint-staged array syntax for sequential format-then-validate steps
@@ -1855,3 +1953,6 @@ used by handlers.
 - Update "Implementation Status" checklist as features complete
 - Regenerate templates after modifying `lib/configs/.markdownlint-cli2.jsonc`
 - When adding new `fmtCommand()` handlers, update the `fmt.ts` CLI command
+- When silk-effects changes the shape of `SavvyBaseSection`, `SavvyHooksSection`, or
+  `savvyToolSection`, re-run `savvy-lint init` on the repo and refresh the "Husky Hook
+  Managed Sections" topology table

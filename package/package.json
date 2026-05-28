@@ -48,7 +48,7 @@
 		"@effect/cli": "catalog:silk",
 		"@effect/platform": "catalog:silk",
 		"@effect/platform-node": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.4.1",
+		"@savvy-web/silk-effects": "^0.5.0",
 		"effect": "catalog:silk",
 		"jsonc-effect": "^0.2.1",
 		"prettier": "^3.8.3",
@@ -58,25 +58,25 @@
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/rslib-builder": "^0.20.7",
+		"@savvy-web/rslib-builder": "^0.20.8",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"husky": "^9.1.7",
 		"lint-staged": "^17.0.5",
 		"markdownlint-cli2": "^0.22.1",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.9.14",
+		"turbo": "^2.9.15",
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@biomejs/biome": "2.4.15",
+		"@biomejs/biome": "2.4.16",
 		"@types/node": "catalog:silkPeers",
 		"@typescript/native-preview": "catalog:silkPeers",
 		"husky": "^9.1.7",
 		"lint-staged": "^17.0.5",
 		"markdownlint-cli2": "^0.22.1",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.9.14",
+		"turbo": "^2.9.15",
 		"typescript": "catalog:silkPeers"
 	},
 	"peerDependenciesMeta": {
