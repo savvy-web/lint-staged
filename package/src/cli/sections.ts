@@ -21,6 +21,11 @@ export const DEFAULT_CONFIG_PATH = "lib/configs/lint-staged.config.ts";
 /** Path for the markdownlint-cli2 config file. */
 export const MARKDOWNLINT_CONFIG_PATH = "lib/configs/.markdownlint-cli2.jsonc";
 
+// `toolName` is normalized to uppercase when silk-effects builds section markers, so
+// `"savvy-lint"` and `"SAVVY-LINT"` both target the same `# --- BEGIN SAVVY-LINT … ---`
+// block. Both definitions below use the lowercase form for consistency with the
+// silk-effects shared exports (`savvy-base`, `savvy-hooks`).
+
 /** Identity definition for the savvy-lint tool section (read / check / remove). */
 export const SavvyLintSectionDef = SectionDefinition.make({ toolName: "savvy-lint" });
 
@@ -31,9 +36,11 @@ export const SavvyLintSectionDef = SectionDefinition.make({ toolName: "savvy-lin
  * @remarks
  * The hygiene block has been replaced by a co-owned `savvy-hooks` section emitted from
  * silk-effects. Use this definition with `ManagedSection.remove` during migration to
- * delete the leftover block from those hooks.
+ * delete the leftover block from those hooks. The marker matched is identical to
+ * `SavvyLintSectionDef`'s; the two definitions are split only by intent (live tool
+ * section vs. legacy hygiene block that lives in a different hook).
  */
-export const LegacySavvyLintHygieneDef = SectionDefinition.make({ toolName: "SAVVY-LINT" });
+export const LegacySavvyLintHygieneDef = SectionDefinition.make({ toolName: "savvy-lint" });
 
 /**
  * Build the lint-staged command run inside the savvy-lint tool section.
