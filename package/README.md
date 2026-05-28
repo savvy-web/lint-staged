@@ -1,12 +1,11 @@
 # @savvy-web/lint-staged
 
-[![npm version](https://img.shields.io/npm/v/@savvy-web/lint-staged)](https://www.npmjs.com/package/@savvy-web/lint-staged)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green)](https://nodejs.org/)
+[![npm](https://img.shields.io/npm/v/@savvy-web%2Flint-staged?label=npm&color=cb3837)](https://www.npmjs.com/package/@savvy-web/lint-staged)
+[![License: MIT](https://img.shields.io/badge/License-MIT-4caf50.svg)](https://opensource.org/licenses/MIT)
+[![Node.js %3E%3D24](https://img.shields.io/badge/Node.js-%3E%3D24-5fa04e.svg)](https://nodejs.org/)
+[![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0-3178c6.svg)](https://www.typescriptlang.org/)
 
-Composable, configurable lint-staged handlers for pre-commit hooks. Stop
-duplicating lint-staged configs across projects -- use reusable handlers with
-sensible defaults and easy customization.
+Composable, configurable lint-staged handlers for pre-commit hooks. Stop duplicating lint-staged configs across projects — reuse handlers with sensible defaults and easy customization.
 
 ## Features
 
@@ -17,7 +16,7 @@ sensible defaults and easy customization.
 - Shareable Biome configuration via `@savvy-web/lint-staged/biome/silk.jsonc`
 - Static class API with excellent TypeScript support
 
-## Installation
+## Install
 
 ```bash
 # Install the package and required peer dependencies
@@ -30,7 +29,7 @@ npm install -D @biomejs/biome
 npm install -D markdownlint-cli2
 ```
 
-## Quick Start
+## Quick start
 
 Use the CLI to bootstrap your configuration:
 
@@ -69,7 +68,7 @@ export default {
 | `standard()` | + Markdown, Yaml, PnpmWorkspace, ShellScripts |
 | `silk()` | + TypeScript |
 
-## Available Handlers
+## Available handlers
 
 | Handler | Files | Description |
 | --- | --- | --- |
@@ -86,20 +85,22 @@ export default {
 The `savvy-lint` CLI helps bootstrap, validate, and format your setup:
 
 ```bash
-savvy-lint init              # Bootstrap hooks, config, and tooling
-savvy-lint init --preset silk --force  # Overwrite with silk preset
-savvy-lint check             # Validate current configuration
-savvy-lint check --quiet     # Warnings only (for postinstall)
-savvy-lint fmt package-json  # Sort package.json fields
-savvy-lint fmt yaml          # Format YAML files with Prettier
-savvy-lint fmt pnpm-workspace  # Sort and format pnpm-workspace.yaml
+savvy-lint init                        # Bootstrap hooks, config, and tooling
+savvy-lint init --preset silk --force  # Reset pre-commit and config file
+savvy-lint check                       # Validate current configuration
+savvy-lint check --quiet               # Warnings only (for postinstall)
+savvy-lint fmt package-json            # Sort package.json fields
+savvy-lint fmt yaml                    # Format YAML files with Prettier
+savvy-lint fmt pnpm-workspace          # Sort and format pnpm-workspace.yaml
 ```
 
-## Claude Code Plugin
+`init` writes two managed sections into `.husky/pre-commit` — a shared `SAVVY-BASE` preamble that defines `pm_exec` and a `SAVVY-LINT` one-liner that runs lint-staged. It also reconciles a co-owned `SAVVY-HOOKS` hygiene section in `.husky/post-checkout` and `.husky/post-merge` that is shared with `@savvy-web/commitlint`. `--force` resets only the pre-commit hook and the lint-staged config file; the hygiene hooks are always reconciled in place because they are co-owned across the Silk Suite tools.
 
-A companion Claude Code plugin is available that automatically injects code
-quality context (Biome, markdownlint, and TypeScript conventions) at session
-start.
+`check` validates each managed section independently and reports a per-section status; a stale or missing section degrades the overall verdict even when the hook file is present.
+
+## Claude Code plugin
+
+A companion Claude Code plugin is available that automatically injects code quality context (Biome, markdownlint, and TypeScript conventions) at session start.
 
 ```bash
 # Add the Savvy Web plugin marketplace (one-time setup)
@@ -111,17 +112,16 @@ start.
 
 ## Documentation
 
-- [Handler Configuration](../docs/handlers.md) -- Detailed options for each handler
-- [Configuration API](../docs/configuration.md) -- createConfig and Preset APIs
-- [CLI Reference](../docs/cli.md) -- `savvy-lint init`, `check`, and `fmt`
-- [Utilities](../docs/utilities.md) -- Command, Filter, and advanced utilities
-- [Migration Guide](../docs/migration.md) -- Migrating from raw lint-staged configs
+- [Handler configuration](../docs/handlers.md) — Detailed options for each handler.
+- [Configuration API](../docs/configuration.md) — `createConfig` and `Preset` APIs.
+- [CLI reference](../docs/cli.md) — `savvy-lint init`, `check`, and `fmt`.
+- [Utilities](../docs/utilities.md) — `Command`, `Filter`, and advanced utilities.
+- [Migration guide](../docs/migration.md) — Migrating from raw lint-staged configs.
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](../CONTRIBUTING.md) for setup
-and guidelines.
+Contributions welcome. See [CONTRIBUTING.md](../CONTRIBUTING.md) for setup and guidelines.
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](LICENSE)

@@ -1,18 +1,17 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
 | Version | Supported |
 | --- | --- |
-| 0.3.x | :white_check_mark: |
-| < 0.3.0 | :x: |
+| 1.x | :white_check_mark: |
+| < 1.0 | :x: |
 
-As a pre-1.0 package, only the latest minor version receives security updates.
+Only the current major release receives security updates.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-To report a security vulnerability, please email
-[security@savvyweb.systems](mailto:security@savvyweb.systems).
+To report a security vulnerability, please email [security@savvyweb.systems](mailto:security@savvyweb.systems).
 
 Please include:
 
@@ -27,11 +26,8 @@ Please include:
 - Initial assessment within 1 week
 - Regular updates as we investigate
 
-We appreciate responsible disclosure and will credit reporters in release notes
-unless anonymity is requested.
+We appreciate responsible disclosure and will credit reporters in release notes unless anonymity is requested.
 
-## Security Advisories
+## Security advisories
 
-For published security advisories, see the
-[GitHub Security Advisories](https://github.com/savvy-web/lint-staged/security/advisories)
-page.
+For published security advisories, see the [GitHub Security Advisories](https://github.com/savvy-web/lint-staged/security/advisories) page.

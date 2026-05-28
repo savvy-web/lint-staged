@@ -56,8 +56,11 @@ pnpm vitest run -t "Biome"
 
 ### Key Dependencies
 
-- **`@savvy-web/silk-effects`**: Provides `ManagedSection`, `BiomeSchemaSync`,
-  `ConfigDiscovery`, `ConfigDiscoveryLive`, and `ToolDiscoveryLive` as Effect service layers
+- **`@savvy-web/silk-effects`** (^0.5.0): Provides Effect services
+  (`ManagedSection`, `BiomeSchemaSync`, `ConfigDiscovery`, `ToolDiscovery`) plus
+  the shared husky-section primitives (`SavvyBaseSection`, `SavvyHooksSection`,
+  `savvyBasePreamble`, `savvyHooksHygiene`, `savvyToolSection`,
+  `SectionDefinition`) used by `savvy-lint init` / `check`
 - **`workspaces-effect`**: Provides `WorkspacesLive` composite layer and
   synchronous APIs (`findWorkspaceRootSync`, `getWorkspacePackagesSync`) for
   workspace-aware discovery
@@ -94,10 +97,12 @@ Uses Rslib with dual output:
 - **Biome**: Unified linting and formatting
 - **markdownlint-cli2**: Markdown linting
 - **Commitlint**: Enforces conventional commits with DCO signoff
-- **Husky Hooks**:
-  - `pre-commit`: Runs lint-staged (using this package)
+- **Husky Hooks** (managed by `savvy-lint init` via silk-effects shared sections):
+  - `pre-commit`: `ManagedSection.syncMany` of `[savvy-base preamble, savvy-lint tool section]` (ordered); `--force` resets this hook and the lint-staged config file only
+  - `post-checkout` / `post-merge`: Co-owned `savvy-hooks` hygiene section (shared with `@savvy-web/commitlint`, idempotent); always reconciled via `sync`, never reset by `--force`
   - `commit-msg`: Validates commit message format
   - `pre-push`: Runs tests
+  - `savvy-lint check` independently validates each section identity (`savvy-base`, `savvy-lint`, `savvy-hooks`) and surfaces a `sectionsHealthy` flag
 
 ### TypeScript Configuration
 
@@ -157,3 +162,4 @@ For detailed architectural decisions and handler specifications:
 - Modifying handler configuration options
 - Understanding the composable architecture
 - Debugging handler behavior, file filtering, or workspace-aware discovery
+- Working on `savvy-lint init` / `check` hook-writing logic, shared/co-owned husky sections, or the `ManagedSection.syncMany` topology

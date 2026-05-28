@@ -7,27 +7,33 @@ import { dirname } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
-import type { SectionBlock } from "@savvy-web/silk-effects";
-import { BiomeSchemaSync, ManagedSection, SyncResult } from "@savvy-web/silk-effects";
+import {
+	BiomeSchemaSync,
+	ManagedSection,
+	SavvyBaseSection,
+	SavvyHooksSection,
+	savvyBasePreamble,
+	savvyHooksHygiene,
+} from "@savvy-web/silk-effects";
 import { Effect } from "effect";
 import type { JsoncFormattingOptions } from "jsonc-effect";
 import { applyEdits, modify, parse } from "jsonc-effect";
 import {
 	DEFAULT_CONFIG_PATH,
 	HUSKY_HOOK_PATH,
+	LegacySavvyLintHygieneDef,
 	MARKDOWNLINT_CONFIG_PATH,
 	POST_CHECKOUT_HOOK_PATH,
 	POST_MERGE_HOOK_PATH,
-	preCommitBlock,
-	shellScriptsBlock,
+	savvyLintBlock,
 } from "../sections.js";
 import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA, MARKDOWNLINT_TEMPLATE } from "../templates/markdownlint.gen.js";
 
 /** Unicode checkmark symbol. */
-const CHECK_MARK = "\u2713";
+const CHECK_MARK = "✓";
 
 /** Unicode warning symbol. */
-const WARNING = "\u26A0";
+const WARNING = "⚠";
 
 /** Executable file permission mode. */
 const EXECUTABLE_MODE = 0o755;
@@ -37,6 +43,14 @@ const JSONC_FORMAT: Partial<JsoncFormattingOptions> = { tabSize: 1, insertSpaces
 
 /** Available presets. */
 type PresetType = "minimal" | "standard" | "silk";
+
+/** Header written when creating a fresh pre-commit hook. */
+const PRE_COMMIT_HEADER =
+	"#!/usr/bin/env sh\n# Pre-commit hook with savvy managed sections\n# Custom hooks can go above, below, or between the managed sections\n\n";
+
+/** Header written when creating a fresh hygiene hook (post-checkout / post-merge). */
+const HYGIENE_HEADER =
+	"#!/usr/bin/env sh\n# Managed by savvy-hooks\n# Custom hooks can go above or below the managed section\n\n";
 
 /**
  * Check if a preset includes the ShellScripts handler.
@@ -172,7 +186,9 @@ function syncBiomeSchemas() {
 
 const forceOption = Options.boolean("force").pipe(
 	Options.withAlias("f"),
-	Options.withDescription("Overwrite entire hook file (not just managed section)"),
+	Options.withDescription(
+		"Overwrite the pre-commit hook and config file entirely (managed sections in post-checkout/post-merge are never force-reset)",
+	),
 	Options.withDefault(false),
 );
 
@@ -198,49 +214,13 @@ function makeExecutable(path: string) {
 	return Effect.tryPromise(() => import("node:fs/promises").then((fs) => fs.chmod(path, EXECUTABLE_MODE)));
 }
 
-/**
- * Write a hook file with create/update/force logic.
- *
- * @param fs - FileSystem service
- * @param section - ManagedSection service
- * @param hookPath - Path to the hook file
- * @param block - The section block to sync
- * @param comment - Header comment for new hook files
- * @param force - Whether to overwrite the entire file
- * @returns Effect that writes the hook
- */
-function writeHook(
-	fs: FileSystem.FileSystem,
-	section: ManagedSection["Type"],
-	hookPath: string,
-	block: SectionBlock,
-	comment: string,
-	force: boolean,
-) {
+/** Ensure a hook file exists, writing `header` if it does not. */
+function ensureHookFile(path: string, header: string) {
 	return Effect.gen(function* () {
-		const hookExists = yield* fs.exists(hookPath);
-		const header = `#!/usr/bin/env sh\n# ${comment}\n# Custom hooks can go above or below the managed section\n`;
-
-		if (!hookExists || force) {
-			if (!hookExists) {
-				yield* fs.makeDirectory(".husky", { recursive: true });
-			}
-			yield* fs.writeFileString(hookPath, header);
-		}
-
-		const result = yield* section.sync(hookPath, block);
-		yield* makeExecutable(hookPath);
-
-		if (!hookExists) {
-			yield* Effect.log(`${CHECK_MARK} Created ${hookPath}`);
-		} else if (force) {
-			yield* Effect.log(`${CHECK_MARK} Replaced ${hookPath} (--force)`);
-		} else {
-			yield* SyncResult.$match(result, {
-				Created: () => Effect.log(`${CHECK_MARK} Added managed section to ${hookPath}`),
-				Updated: () => Effect.log(`${CHECK_MARK} Updated managed section in ${hookPath}`),
-				Unchanged: () => Effect.log(`${CHECK_MARK} ${hookPath}: up-to-date`),
-			});
+		const fs = yield* FileSystem.FileSystem;
+		const exists = yield* fs.exists(path);
+		if (!exists) {
+			yield* fs.writeFileString(path, header);
 		}
 	});
 }
@@ -249,14 +229,18 @@ function writeHook(
  * Init command implementation.
  *
  * @remarks
- * Creates the necessary configuration files for lint-staged:
- * - `.husky/pre-commit` hook with managed section
- * - `.husky/post-checkout` and `.husky/post-merge` hooks (when preset includes ShellScripts)
- * - `.markdownlint-cli2.jsonc` config (when preset includes Markdown)
- * - lint-staged config at the specified path
+ * Writes:
+ * - `.husky/pre-commit` — `savvy-base` preamble + `savvy-lint` tool section, in order
+ *   (via `ManagedSection.syncMany`).
+ * - `.husky/post-checkout` and `.husky/post-merge` — co-owned `savvy-hooks` hygiene
+ *   (idempotent, shared with `@savvy-web/commitlint`). Migrates legacy `SAVVY-LINT`
+ *   hygiene blocks by removing them before writing the new section.
+ * - `.markdownlint-cli2.jsonc` config (when preset includes Markdown).
+ * - lint-staged config at the specified path.
  *
- * The managed section feature allows users to add custom hooks above/below
- * the savvy-lint section without them being overwritten on updates.
+ * Users may add custom commands above, below, or between the managed sections.
+ * `--force` resets only the pre-commit hook and the config file; the hygiene sections
+ * are always reconciled with `sync`.
  */
 export const initCommand = Command.make(
 	"init",
@@ -264,7 +248,7 @@ export const initCommand = Command.make(
 	({ force, config, preset }) =>
 		Effect.gen(function* () {
 			const fs = yield* FileSystem.FileSystem;
-			const section = yield* ManagedSection;
+			const ms = yield* ManagedSection;
 
 			if (config.startsWith("/")) {
 				yield* Effect.fail(new Error("Config path must be relative to repository root, not absolute"));
@@ -272,37 +256,37 @@ export const initCommand = Command.make(
 
 			yield* Effect.log("Initializing lint-staged configuration...\n");
 
-			// Write pre-commit hook (always)
-			yield* writeHook(
-				fs,
-				section,
-				HUSKY_HOOK_PATH,
-				preCommitBlock(config),
-				"Pre-commit hook with savvy-lint managed section",
-				force,
+			yield* fs.makeDirectory(".husky", { recursive: true });
+
+			// pre-commit: savvy-base preamble then savvy-lint tool section, in order.
+			if (force) {
+				yield* fs.writeFileString(HUSKY_HOOK_PATH, PRE_COMMIT_HEADER);
+			} else {
+				yield* ensureHookFile(HUSKY_HOOK_PATH, PRE_COMMIT_HEADER);
+			}
+			const preCommitResults = yield* ms.syncMany(HUSKY_HOOK_PATH, [
+				SavvyBaseSection.block(savvyBasePreamble()),
+				savvyLintBlock(config),
+			]);
+			yield* makeExecutable(HUSKY_HOOK_PATH);
+			yield* Effect.log(
+				`${CHECK_MARK} ${force ? "Replaced" : "Synced"} ${HUSKY_HOOK_PATH} (${preCommitResults
+					.map((r) => r._tag)
+					.join(", ")})`,
 			);
 
-			// Write post-checkout and post-merge hooks (when preset includes ShellScripts)
+			// post-checkout / post-merge: co-owned savvy-hooks hygiene (when preset enables it).
+			// Always reconciled with sync; --force does not reset these (they are co-owned with
+			// other savvy tools and may be touched by them too).
 			if (presetIncludesShellScripts(preset)) {
-				const shellBlock = shellScriptsBlock();
-
-				yield* writeHook(
-					fs,
-					section,
-					POST_CHECKOUT_HOOK_PATH,
-					shellBlock,
-					"Post-checkout hook with savvy-lint managed section",
-					force,
-				);
-
-				yield* writeHook(
-					fs,
-					section,
-					POST_MERGE_HOOK_PATH,
-					shellBlock,
-					"Post-merge hook with savvy-lint managed section",
-					force,
-				);
+				for (const hookPath of [POST_CHECKOUT_HOOK_PATH, POST_MERGE_HOOK_PATH]) {
+					yield* ensureHookFile(hookPath, HYGIENE_HEADER);
+					// Migrate legacy SAVVY-LINT hygiene section if present.
+					yield* ms.remove(hookPath, LegacySavvyLintHygieneDef);
+					yield* ms.sync(hookPath, SavvyHooksSection.block(savvyHooksHygiene()));
+					yield* makeExecutable(hookPath);
+					yield* Effect.log(`${CHECK_MARK} Synced ${hookPath}`);
+				}
 			}
 
 			// Write markdownlint config (when preset includes Markdown)

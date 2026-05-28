@@ -6,8 +6,17 @@
 import { isDeepStrictEqual } from "node:util";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
-import type { SectionBlock } from "@savvy-web/silk-effects";
-import { CheckResult, ConfigDiscovery, ManagedSection, ToolDefinition, ToolDiscovery } from "@savvy-web/silk-effects";
+import {
+	CheckResult,
+	ConfigDiscovery,
+	ManagedSection,
+	SavvyBaseSection,
+	SavvyHooksSection,
+	ToolDefinition,
+	ToolDiscovery,
+	savvyBasePreamble,
+	savvyHooksHygiene,
+} from "@savvy-web/silk-effects";
 import { Effect } from "effect";
 import { parse } from "jsonc-effect";
 import { Biome } from "../../handlers/Biome.js";
@@ -17,22 +26,21 @@ import {
 	POST_CHECKOUT_HOOK_PATH,
 	POST_MERGE_HOOK_PATH,
 	SavvyLintSectionDef,
-	preCommitBlock,
-	shellScriptsBlock,
+	savvyLintBlock,
 } from "../sections.js";
 import { MARKDOWNLINT_CONFIG, MARKDOWNLINT_SCHEMA } from "../templates/markdownlint.gen.js";
 
 /** Unicode checkmark symbol. */
-const CHECK_MARK = "\u2713";
+const CHECK_MARK = "✓";
 
 /** Unicode cross symbol. */
-const CROSS_MARK = "\u2717";
+const CROSS_MARK = "✗";
 
 /** Unicode warning symbol. */
-const WARNING = "\u26A0";
+const WARNING = "⚠";
 
 /** Unicode bullet symbol. */
-const BULLET = "\u2022";
+const BULLET = "•";
 
 /** Possible lint-staged configuration file names, in priority order. */
 const CONFIG_FILES = [
@@ -96,58 +104,6 @@ function extractConfigPathFromManaged(managedContent: string): string | null {
 	// Look for: lint-staged --config "$ROOT/{path}"
 	const match = managedContent.match(/lint-staged --config "\$ROOT\/([^"]+)"/);
 	return match ? match[1] : null;
-}
-
-/**
- * Check if a hook's managed section is up-to-date against an expected block.
- *
- * @param section - ManagedSection service
- * @param hookPath - Path to the hook file
- * @param block - The expected section block
- * @returns Object with status information
- */
-function checkHookManagedSection(section: ManagedSection["Type"], hookPath: string, block: SectionBlock) {
-	return Effect.gen(function* () {
-		const result = yield* section.check(hookPath, block);
-		return CheckResult.$match(result, {
-			Found: ({ isUpToDate }) => ({ found: true, isUpToDate, needsUpdate: !isUpToDate }),
-			NotFound: () => ({ found: false, isUpToDate: false, needsUpdate: false }),
-		});
-	});
-}
-
-/**
- * Check if the pre-commit managed section is up-to-date.
- *
- * @param section - ManagedSection service
- * @param hookPath - Path to the hook file
- * @returns Object with isUpToDate flag and any differences
- */
-function checkManagedSectionStatus(section: ManagedSection["Type"], hookPath: string) {
-	return Effect.gen(function* () {
-		const existing = yield* section.read(hookPath, SavvyLintSectionDef);
-
-		if (existing === null) {
-			return { isUpToDate: false, configPath: null as string | null, needsUpdate: false, found: false };
-		}
-
-		const configPath = extractConfigPathFromManaged(existing.text);
-
-		if (!configPath) {
-			return { isUpToDate: false, configPath: null as string | null, needsUpdate: true, found: true };
-		}
-
-		const result = yield* section.check(hookPath, preCommitBlock(configPath));
-		return CheckResult.$match(result, {
-			Found: ({ isUpToDate }) => ({
-				isUpToDate,
-				configPath: configPath as string | null,
-				needsUpdate: !isUpToDate,
-				found: true,
-			}),
-			NotFound: () => ({ isUpToDate: false, configPath: null as string | null, needsUpdate: false, found: false }),
-		});
-	});
 }
 
 /**
@@ -217,12 +173,15 @@ const quietOption = Options.boolean("quiet").pipe(
  *
  * @remarks
  * Validates the current lint-staged setup and displays detected settings.
+ * Validates the `savvy-base` and `savvy-lint` sections in the pre-commit hook and the
+ * co-owned `savvy-hooks` hygiene section in `post-checkout` / `post-merge`. Section
+ * health degrades the overall verdict even if files exist.
  * With --quiet flag, only outputs warnings (for postinstall usage).
  */
 export const checkCommand = Command.make("check", { quiet: quietOption }, ({ quiet }) =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
-		const section = yield* ManagedSection;
+		const ms = yield* ManagedSection;
 		const td = yield* ToolDiscovery;
 		const discovery = yield* ConfigDiscovery;
 
@@ -234,27 +193,50 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 		// Check husky hook
 		const hasHuskyHook = yield* fs.exists(HUSKY_HOOK_PATH);
 
-		// Check managed section status
-		let managedStatus: { isUpToDate: boolean; configPath: string | null; needsUpdate: boolean; found: boolean } = {
-			isUpToDate: false,
-			configPath: null,
-			needsUpdate: false,
-			found: false,
-		};
+		let sectionsHealthy = true;
+		let baseStatusLabel: "up-to-date" | "outdated" | "missing" = "missing";
+		let lintStatusLabel: "up-to-date" | "outdated" | "missing" = "missing";
+		let detectedConfigPath: string | null = null;
 
 		if (hasHuskyHook) {
-			managedStatus = yield* checkManagedSectionStatus(section, HUSKY_HOOK_PATH);
+			// savvy-base section
+			const baseResult = yield* ms.check(HUSKY_HOOK_PATH, SavvyBaseSection.block(savvyBasePreamble()));
+			if (CheckResult.$is("Found")(baseResult)) {
+				baseStatusLabel = baseResult.isUpToDate ? "up-to-date" : "outdated";
+				if (!baseResult.isUpToDate) sectionsHealthy = false;
+			} else {
+				sectionsHealthy = false;
+			}
 
-			if (managedStatus.found && managedStatus.needsUpdate) {
+			// savvy-lint section
+			const existing = yield* ms.read(HUSKY_HOOK_PATH, SavvyLintSectionDef);
+			if (existing) {
+				const configPath = extractConfigPathFromManaged(existing.content);
+				detectedConfigPath = configPath;
+				if (configPath) {
+					const lintResult = yield* ms.check(HUSKY_HOOK_PATH, savvyLintBlock(configPath));
+					if (CheckResult.$is("Found")(lintResult)) {
+						lintStatusLabel = lintResult.isUpToDate ? "up-to-date" : "outdated";
+						if (!lintResult.isUpToDate) sectionsHealthy = false;
+					} else {
+						lintStatusLabel = "outdated";
+						sectionsHealthy = false;
+					}
+				} else {
+					lintStatusLabel = "outdated";
+					sectionsHealthy = false;
+				}
+			} else {
+				sectionsHealthy = false;
+			}
+
+			if (baseStatusLabel !== "up-to-date" || lintStatusLabel !== "up-to-date") {
 				warnings.push(
-					`${WARNING}  Your ${HUSKY_HOOK_PATH} managed section is outdated.\n   Run 'savvy-lint init' to update it (preserves your custom hooks).`,
-				);
-			} else if (!managedStatus.found) {
-				warnings.push(
-					`${WARNING}  Your ${HUSKY_HOOK_PATH} does not have a savvy-lint managed section.\n   Run 'savvy-lint init' to add it.`,
+					`${WARNING}  Your ${HUSKY_HOOK_PATH} managed sections are out of date.\n   Run 'savvy-lint init' to update (preserves your custom hooks).`,
 				);
 			}
 		} else {
+			sectionsHealthy = false;
 			warnings.push(`${WARNING}  No husky pre-commit hook found.\n   Run 'savvy-lint init' to create it.`);
 		}
 
@@ -262,21 +244,27 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 			warnings.push(`${WARNING}  No lint-staged config file found.\n   Run 'savvy-lint init' to create one.`);
 		}
 
-		// Check shell script hooks (post-checkout, post-merge)
+		// Hygiene hooks: co-owned savvy-hooks section.
 		const shellHookPaths = [POST_CHECKOUT_HOOK_PATH, POST_MERGE_HOOK_PATH] as const;
-		const shellHookStatuses: { path: string; found: boolean; isUpToDate: boolean; needsUpdate: boolean }[] = [];
+		const shellHookStatuses: { path: string; found: boolean; isUpToDate: boolean }[] = [];
 
 		for (const hookPath of shellHookPaths) {
 			const hookExists = yield* fs.exists(hookPath);
-			if (hookExists) {
-				const status = yield* checkHookManagedSection(section, hookPath, shellScriptsBlock());
-				shellHookStatuses.push({ path: hookPath, ...status });
+			if (!hookExists) {
+				shellHookStatuses.push({ path: hookPath, found: false, isUpToDate: false });
+				continue;
+			}
+			const hygieneResult = yield* ms.check(hookPath, SavvyHooksSection.block(savvyHooksHygiene()));
+			const found = CheckResult.$is("Found")(hygieneResult);
+			const isUpToDate = CheckResult.$is("Found")(hygieneResult) && hygieneResult.isUpToDate;
+			shellHookStatuses.push({ path: hookPath, found, isUpToDate });
 
-				if (status.found && status.needsUpdate) {
-					warnings.push(
-						`${WARNING}  Your ${hookPath} managed section is outdated.\n   Run 'savvy-lint init' to update it (preserves your custom hooks).`,
-					);
-				}
+			if (!found) {
+				sectionsHealthy = false;
+				warnings.push(`${WARNING}  ${hookPath} has no savvy-hooks section.\n   Run 'savvy-lint init' to add it.`);
+			} else if (!isUpToDate) {
+				sectionsHealthy = false;
+				warnings.push(`${WARNING}  ${hookPath} savvy-hooks section is outdated.\n   Run 'savvy-lint init' to update.`);
 			}
 		}
 
@@ -343,27 +331,34 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 			yield* Effect.log(`${CROSS_MARK} No husky pre-commit hook found`);
 		}
 
-		// Managed section status
+		// Managed section status (independent per-section reporting)
 		if (hasHuskyHook) {
-			if (managedStatus.found) {
-				if (managedStatus.isUpToDate) {
-					yield* Effect.log(`${CHECK_MARK} Managed section: up-to-date`);
-				} else {
-					yield* Effect.log(`${WARNING} Managed section: outdated (run 'savvy-lint init' to update)`);
-				}
+			if (baseStatusLabel === "up-to-date") {
+				yield* Effect.log(`${CHECK_MARK} Base section: up-to-date`);
+			} else if (baseStatusLabel === "outdated") {
+				yield* Effect.log(`${WARNING} Base section: outdated (run 'savvy-lint init' to update)`);
 			} else {
-				yield* Effect.log(`${BULLET} Managed section: not found (run 'savvy-lint init' to add)`);
+				yield* Effect.log(`${BULLET} Base section: not found (run 'savvy-lint init' to add)`);
+			}
+
+			const lintLabel = detectedConfigPath ? ` (config: ${detectedConfigPath})` : "";
+			if (lintStatusLabel === "up-to-date") {
+				yield* Effect.log(`${CHECK_MARK} Lint section: up-to-date${lintLabel}`);
+			} else if (lintStatusLabel === "outdated") {
+				yield* Effect.log(`${WARNING} Lint section: outdated (run 'savvy-lint init' to update)`);
+			} else {
+				yield* Effect.log(`${BULLET} Lint section: not found (run 'savvy-lint init' to add)`);
 			}
 		}
 
-		// Shell script hook statuses
+		// Hygiene hook statuses
 		for (const status of shellHookStatuses) {
-			if (status.found) {
-				if (status.isUpToDate) {
-					yield* Effect.log(`${CHECK_MARK} ${status.path}: up-to-date`);
-				} else {
-					yield* Effect.log(`${WARNING} ${status.path}: outdated (run 'savvy-lint init' to update)`);
-				}
+			if (!status.found) {
+				yield* Effect.log(`${BULLET} ${status.path}: savvy-hooks section not found`);
+			} else if (status.isUpToDate) {
+				yield* Effect.log(`${CHECK_MARK} ${status.path}: up-to-date`);
+			} else {
+				yield* Effect.log(`${WARNING} ${status.path}: outdated (run 'savvy-lint init' to update)`);
 			}
 		}
 
@@ -431,17 +426,10 @@ export const checkCommand = Command.make("check", { quiet: quietOption }, ({ qui
 
 		// Overall status
 		yield* Effect.log("");
-		const hasShellHookIssues = shellHookStatuses.some((s) => s.found && s.needsUpdate);
 		const hasMarkdownlintIssues = hasMarkdownlintConfig && !markdownlintStatus.isUpToDate;
 		const hasBiomeSchemaIssues = biomeSchemaStatus.statuses.some((s) => !s.matches);
 		const hasIssues =
-			!foundConfig ||
-			!hasHuskyHook ||
-			!managedStatus.found ||
-			managedStatus.needsUpdate ||
-			hasShellHookIssues ||
-			hasMarkdownlintIssues ||
-			hasBiomeSchemaIssues;
+			!foundConfig || !hasHuskyHook || !sectionsHealthy || hasMarkdownlintIssues || hasBiomeSchemaIssues;
 
 		if (hasIssues) {
 			yield* Effect.log(`${WARNING} Some issues found. Run 'savvy-lint init' to fix.`);
