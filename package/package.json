@@ -58,14 +58,14 @@
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@savvy-web/rslib-builder": "^0.20.8",
+		"@savvy-web/rslib-builder": "^0.20.9",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"husky": "^9.1.7",
 		"lint-staged": "^17.0.5",
 		"markdownlint-cli2": "^0.22.1",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.9.15",
+		"turbo": "^2.9.16",
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
@@ -76,7 +76,7 @@
 		"lint-staged": "^17.0.5",
 		"markdownlint-cli2": "^0.22.1",
 		"markdownlint-cli2-formatter-codequality": "^0.0.7",
-		"turbo": "^2.9.15",
+		"turbo": "^2.9.16",
 		"typescript": "catalog:silkPeers"
 	},
 	"peerDependenciesMeta": {
