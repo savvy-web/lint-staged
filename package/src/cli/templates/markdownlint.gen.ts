@@ -24,7 +24,7 @@ export const MARKDOWNLINT_TEMPLATE = {
 		"**/.claude/plans",
 		"**/docs/superpowers",
 	],
-	customRules: ["@savvy-web/changesets/markdownlint"],
+	customRules: ["@savvy-web/silk/changesets/markdownlint"],
 	config: {
 		default: true,
 		MD001: true,

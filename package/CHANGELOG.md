@@ -469,13 +469,13 @@ Repository restructured into a pnpm workspace with the package source in `packag
 
   ### Shareable Biome config export
 
-  A new package export `@savvy-web/lint-staged/biome/silk.jsonc` provides a
+  A new package export `"@savvy-web/silk/biome` provides a
   standard Biome configuration that consumers can extend:
 
   ```json
   {
     "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
-    "extends": ["@savvy-web/lint-staged/biome/silk.jsonc"]
+    "extends": ["@savvy-web/silk/biome"]
   }
   ```
 
@@ -614,7 +614,7 @@ Repository restructured into a pnpm workspace with the package source in `packag
   **After:**
 
   ```typescript
-  import { Preset } from "@savvy-web/lint-staged";
+  import { Preset } from "@savvy-web/silk/lint";
 
   export default Preset.standard();
   ```

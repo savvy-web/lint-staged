@@ -10,6 +10,7 @@ export default NodeLibraryBuilder.create({
 		"process.env.__BIOME_PEER_VERSION__": JSON.stringify(pkg.peerDependencies["@biomejs/biome"]),
 	},
 	apiModel: {
+		suppressWarnings: [{ messageId: "ae-forgotten-export", pattern: "_base" }],
 		tsdoc: {
 			tagDefinitions: [{ tagName: "@since", syntaxKind: "block" }],
 		},

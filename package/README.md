@@ -13,7 +13,7 @@ Composable, configurable lint-staged handlers for pre-commit hooks. Stop duplica
 - Zero-config presets for instant setup
 - CLI tool (`savvy-lint`) to bootstrap and validate your configuration
 - Workspace-aware config discovery anchored to workspace root
-- Shareable Biome configuration via `@savvy-web/lint-staged/biome/silk.jsonc`
+- Shareable Biome configuration via `"@savvy-web/silk/biome`
 - Static class API with excellent TypeScript support
 
 ## Install
