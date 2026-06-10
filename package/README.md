@@ -5,6 +5,14 @@
 [![Node.js %3E%3D24](https://img.shields.io/badge/Node.js-%3E%3D24-5fa04e.svg)](https://nodejs.org/)
 [![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0-3178c6.svg)](https://www.typescriptlang.org/)
 
+> **This package is deprecated and no longer maintained.**
+> Its lint-staged handlers now ship in
+> [`@savvy-web/silk`](https://www.npmjs.com/package/@savvy-web/silk), driven by the
+> [`savvy`](https://www.npmjs.com/package/@savvy-web/cli) CLI
+> (`savvy lint` replaces `savvy-lint`).
+> Sources live in the [Silk Suite monorepo](https://github.com/savvy-web/systems).
+> No further releases, fixes, or security patches will be published here.
+
 Composable, configurable lint-staged handlers for pre-commit hooks. Stop duplicating lint-staged configs across projects — reuse handlers with sensible defaults and easy customization.
 
 ## Features
