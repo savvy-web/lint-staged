@@ -38,28 +38,27 @@
 		"savvy-lint": "./src/bin/cli.ts"
 	},
 	"scripts": {
-		"build:dev": "rslib build --env-mode dev",
-		"build:prod": "rslib build --env-mode npm",
+		"build:dev": "node savvy.build.ts --target dev",
+		"build:meta": "node savvy.build.ts --target meta",
+		"build:prod": "node savvy.build.ts --target prod",
 		"generate:templates": "node lib/scripts/generate-markdownlint-template.ts",
-		"prepare": "rslib build --config-loader native --env-mode dev",
 		"types:check": "tsgo --noEmit"
 	},
 	"dependencies": {
 		"@effect/cli": "catalog:silk",
 		"@effect/platform": "catalog:silk",
 		"@effect/platform-node": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.6.1",
+		"@savvy-web/silk-effects": "^1.0.0",
 		"effect": "catalog:silk",
 		"jsonc-effect": "^0.2.1",
 		"prettier": "^3.8.3",
 		"sort-package-json": "^4.0.0",
-		"workspaces-effect": "^1.1.0",
+		"workspaces-effect": "^1.2.0",
 		"yaml": "^2.9.0",
 		"yaml-lint": "^1.7.0"
 	},
 	"devDependencies": {
-		"@rslib/core": "^0.22.0",
-		"@savvy-web/rslib-builder": "^0.21.3",
+		"@savvy-web/bundler": "^0.2.0",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"husky": "^9.1.7",
@@ -114,23 +113,11 @@
 	},
 	"publishConfig": {
 		"access": "public",
-		"directory": "dist/dev",
+		"directory": "dist/dev/pkg",
 		"linkDirectory": true,
-		"targets": [
-			{
-				"protocol": "npm",
-				"registry": "https://npm.pkg.github.com/",
-				"directory": "dist/npm",
-				"access": "public",
-				"provenance": true
-			},
-			{
-				"protocol": "npm",
-				"registry": "https://registry.npmjs.org/",
-				"directory": "dist/npm",
-				"access": "public",
-				"provenance": true
-			}
-		]
+		"targets": {
+			"npm": true,
+			"github": true
+		}
 	}
 }
